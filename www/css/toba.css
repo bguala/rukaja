@@ -1,0 +1,161 @@
+/**
+	Incluir aquí las reglas css propias de este proyecto 
+#5584FA */
+
+.campoTexto {
+
+border : 2px solid ridge;
+background-color : #FDE9B1;
+
+}
+
+.boton {
+
+border : 3px solid groove;
+
+}
+
+.longitud {
+
+width : 680px;
+
+}
+
+.longitudCombo {
+
+width : 350px;
+
+}
+
+.bordeMultiSeleccion {
+
+border : 2px solid outset;
+background-color : #FDE9B1;
+
+}
+
+.longitud_campos_reg_aulas {
+
+width : 300px;
+
+}
+
+
+/* Longitud de los campos del formulario generar solicitud*/
+
+.solicitud {
+
+width : 295px;
+
+}
+
+/* Longitud de los campos del formulario cargar asignaciones */
+
+.asignacion {
+
+width : 288px;
+
+}
+
+/* Longitud y estilo de los campos del formulario form_datos */
+
+.form_datos {
+
+width : 700px;       /*288px*/
+border : 2px solid ridge;
+background-color : #FDE9B1; /*#FDE9B1*/
+
+}
+
+/* Estilo para las columnas del cuadro visualizacion de usos diarios */
+
+.cuadro {
+
+font-weight : bold; /* Se utiliza para aplicar estilo a la fuente */
+color : white;
+font-size : 12px;
+background-color : #033CCC;
+border : 2px solid;
+
+}
+
+/* Estilo especifico para la columna aula de visualizacion de usos diarios */
+
+.columna_aula {
+
+font-weight : bold;
+color : #E8FD03;
+font-size : 12px;
+background-color : #080807;
+border : 2px solid white;
+
+}
+
+/* Estilo para el encabezado del cuadro de visualización de usos diarios */
+
+.encabezado_cuadro_2 {
+
+background-color : #D5031F;
+color : white;
+font-weight : bold;
+font-size : 14px;
+text-align : center;
+height : 24px;
+width : 95px;
+
+}
+
+.encabezado_cuadro_1 {
+
+text-align : center;
+font-weight : bold;
+font-size : 15px;
+border : 2px solid black;
+background-color : #F5C62A;
+height : 24px;
+
+}
+
+.longitud_ef {
+
+width : 800px;
+border-radius : 7px;
+
+}
+
+.longitud_email {
+
+width : 750px;
+
+}
+
+.longitud_usos_diarios {
+
+width : 975px;
+
+}
+
+.longitud_encabezado_usos_diarios {
+
+width : 85px;
+
+}
+
+.longitud_form_persona {
+
+width : 290px;
+
+}
+
+.longitud_editar_aula {
+
+width : 770px;
+
+}
+
+.estilo_celda {
+
+bgcolor: #FFF123;
+
+
+}
