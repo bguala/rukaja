@@ -28,4 +28,64 @@ INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, i
 	NULL, --item_id
 	'2'  --item
 );
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3562'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3563'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3564'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3565'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3566'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3567'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3568'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3569'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3570'  --item
+);
+INSERT INTO apex_usuario_grupo_acc_item (proyecto, usuario_grupo_acc, item_id, item) VALUES (
+	'rukaja', --proyecto
+	'admin', --usuario_grupo_acc
+	NULL, --item_id
+	'3571'  --item
+);
 --- FIN Grupo de desarrollo 0
