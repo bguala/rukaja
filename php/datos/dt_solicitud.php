@@ -71,5 +71,31 @@ class dt_solicitud extends toba_datos_tabla
         }
 
 
+	function get_listado()
+	{
+		$sql = "SELECT
+			t_s.id_solicitud,
+			t_s.nombre,
+			t_s.apellido,
+			t_s.fecha,
+			t_s.capacidad,
+			t_s.finalidad,
+			t_s.hora_inicio,
+			t_s.hora_fin,
+			t_s.tipo,
+			t_s1.descripcion as id_sede_nombre,
+			t_s.estado,
+			t_s.legajo,
+			t_s.id_aula,
+			t_s.facultad
+		FROM
+			solicitud as t_s,
+			sede as t_s1
+		WHERE
+				t_s.id_sede = t_s1.id_sede
+		ORDER BY nombre";
+		return toba::db('rukaja')->consultar($sql);
+	}
+
 }
 ?>

@@ -7,6 +7,9 @@ class dt_sede extends toba_datos_tabla
 		return toba::db('rukaja')->consultar($sql);
 	}
         
+        /*
+         * Esta funcion se utiliza para cargar el combo sede en cascada.
+         */
         function get_sedes ($sigla){
             $sql="SELECT id_sede, descripcion
                   FROM sede 

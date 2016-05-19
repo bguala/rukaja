@@ -129,6 +129,10 @@ class ci_solicitar_aula extends toba_ci
             return $cuatrimestre;
         }
         
+        /*
+         * No tiene sentido realizar un chequeo relacionado con el dia, porque el mismo se obtiene a partir de 
+         * un date php, que puede ser Lunes, ......, Domingo. 
+         */
         function obtener_dia ($dia_numerico){
             $dias=array( 
                          1 => 'Lunes', 

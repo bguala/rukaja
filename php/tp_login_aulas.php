@@ -12,7 +12,7 @@ class login extends toba_tp_basico_titulo {
 //		$this->generar_ayuda();		
 //		echo "<div class='item-barra-tit'>".$this->titulo_item()."</div>";
 //		echo "</div>\n\n";
-            echo "<div align='center'><div class='encabezado' ><img src=\"rukaja\" /></div></div>"
+            echo "<div align='center'><div class='encabezado'>".toba_recurso::imagen_proyecto("rukaja.png", true, 425, 100)."</div></div>"
             ;
 	}
 	
@@ -38,7 +38,9 @@ class login extends toba_tp_basico_titulo {
                             width : 700px;
                             height : 120px;
                             margin : 0 auto; /*para centar horizontalmente*/
-                            padding-top : 25px;
+                            margin-top : 40px;
+                            margin-bottom : 30px;
+                            /*padding-top : 25px;*/
                             /*background-image : url('rukaja.png');*/
                             /*font-size : 30px;
                             font-family : cursive;
