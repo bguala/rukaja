@@ -1,5 +1,5 @@
 ------------------------------------------------------------
---[2907]--  Solicitar Aula - CI 
+--[2923]--  Ver Solicitudes - CI 
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -9,18 +9,18 @@
 --- INICIO Grupo de desarrollo 0
 INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, clase_proyecto, clase, punto_montaje, subclase, subclase_archivo, objeto_categoria_proyecto, objeto_categoria, nombre, titulo, colapsable, descripcion, fuente_datos_proyecto, fuente_datos, solicitud_registrar, solicitud_obj_obs_tipo, solicitud_obj_observacion, parametro_a, parametro_b, parametro_c, parametro_d, parametro_e, parametro_f, usuario, creacion, posicion_botonera) VALUES (
 	'rukaja', --proyecto
-	'2907', --objeto
+	'2923', --objeto
 	NULL, --anterior
 	NULL, --identificador
 	NULL, --reflexivo
 	'toba', --clase_proyecto
 	'toba_ci', --clase
 	'21', --punto_montaje
-	'ci_solicitar_aula', --subclase
-	'solicitar_aula/ci_solicitar_aula.php', --subclase_archivo
+	'ci_ver_solicitudes', --subclase
+	'ver_solicitudes/ci_ver_solicitudes.php', --subclase_archivo
 	NULL, --objeto_categoria_proyecto
 	NULL, --objeto_categoria
-	'Solicitar Aula - CI', --nombre
+	'Ver Solicitudes - CI', --nombre
 	NULL, --titulo
 	'0', --colapsable
 	NULL, --descripcion
@@ -36,7 +36,7 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 	NULL, --parametro_e
 	NULL, --parametro_f
 	NULL, --usuario
-	'2016-05-17 11:25:31', --creacion
+	'2016-05-19 11:23:56', --creacion
 	'abajo'  --posicion_botonera
 );
 --- FIN Grupo de desarrollo 0
@@ -48,8 +48,8 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 --- INICIO Grupo de desarrollo 0
 INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, etiqueta, maneja_datos, sobre_fila, confirmacion, estilo, imagen_recurso_origen, imagen, en_botonera, ayuda, orden, ci_predep, implicito, defecto, display_datos_cargados, grupo, accion, accion_imphtml_debug, accion_vinculo_carpeta, accion_vinculo_item, accion_vinculo_objeto, accion_vinculo_popup, accion_vinculo_popup_param, accion_vinculo_target, accion_vinculo_celda, accion_vinculo_servicio, es_seleccion_multiple, es_autovinculo) VALUES (
 	'rukaja', --proyecto
-	'1823', --evento_id
-	'2907', --objeto
+	'1845', --evento_id
+	'2923', --objeto
 	'volver', --identificador
 	'Volver', --etiqueta
 	'0', --maneja_datos
@@ -58,7 +58,7 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	NULL, --estilo
 	'apex', --imagen_recurso_origen
 	'volver.png', --imagen
-	'0', --en_botonera
+	'1', --en_botonera
 	NULL, --ayuda
 	'1', --orden
 	NULL, --ci_predep
@@ -86,10 +86,10 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 ------------------------------------------------------------
 INSERT INTO apex_objeto_mt_me (objeto_mt_me_proyecto, objeto_mt_me, ev_procesar_etiq, ev_cancelar_etiq, ancho, alto, posicion_botonera, tipo_navegacion, botonera_barra_item, con_toc, incremental, debug_eventos, activacion_procesar, activacion_cancelar, ev_procesar, ev_cancelar, objetos, post_procesar, metodo_despachador, metodo_opciones) VALUES (
 	'rukaja', --objeto_mt_me_proyecto
-	'2907', --objeto_mt_me
+	'2923', --objeto_mt_me
 	NULL, --ev_procesar_etiq
 	NULL, --ev_cancelar_etiq
-	'1000px', --ancho
+	'950px', --ancho
 	NULL, --alto
 	NULL, --posicion_botonera
 	'tab_v', --tipo_navegacion
@@ -114,9 +114,21 @@ INSERT INTO apex_objeto_mt_me (objeto_mt_me_proyecto, objeto_mt_me, ev_procesar_
 --- INICIO Grupo de desarrollo 0
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1786', --dep_id
-	'2907', --objeto_consumidor
-	'2919', --objeto_proveedor
+	'1791', --dep_id
+	'2923', --objeto_consumidor
+	'2924', --objeto_proveedor
+	'calendario', --identificador
+	NULL, --parametros_a
+	NULL, --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	NULL  --orden
+);
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
+	'1789', --dep_id
+	'2923', --objeto_consumidor
+	'2921', --objeto_proveedor
 	'cuadro', --identificador
 	NULL, --parametros_a
 	NULL, --parametros_b
@@ -126,9 +138,33 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1765', --dep_id
-	'2907', --objeto_consumidor
-	'2904', --objeto_proveedor
+	'1800', --dep_id
+	'2923', --objeto_consumidor
+	'2927', --objeto_proveedor
+	'cuadro_aulas', --identificador
+	NULL, --parametros_a
+	NULL, --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	NULL  --orden
+);
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
+	'1799', --dep_id
+	'2923', --objeto_consumidor
+	'2926', --objeto_proveedor
+	'cuadro_espacio_ocupado', --identificador
+	NULL, --parametros_a
+	NULL, --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	NULL  --orden
+);
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
+	'1788', --dep_id
+	'2923', --objeto_consumidor
+	'2920', --objeto_proveedor
 	'datos', --identificador
 	NULL, --parametros_a
 	NULL, --parametros_b
@@ -138,9 +174,9 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1784', --dep_id
-	'2907', --objeto_consumidor
-	'2917', --objeto_proveedor
+	'1798', --dep_id
+	'2923', --objeto_consumidor
+	'2925', --objeto_proveedor
 	'filtro', --identificador
 	NULL, --parametros_a
 	NULL, --parametros_b
@@ -150,34 +186,22 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1785', --dep_id
-	'2907', --objeto_consumidor
-	'2918', --objeto_proveedor
+	'1802', --dep_id
+	'2923', --objeto_consumidor
+	'2929', --objeto_proveedor
+	'form_asignacion', --identificador
+	NULL, --parametros_a
+	NULL, --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	NULL  --orden
+);
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
+	'1801', --dep_id
+	'2923', --objeto_consumidor
+	'2928', --objeto_proveedor
 	'form_datos', --identificador
-	NULL, --parametros_a
-	NULL, --parametros_b
-	NULL, --parametros_c
-	NULL, --inicializar
-	NULL  --orden
-);
-INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
-	'rukaja', --proyecto
-	'1783', --dep_id
-	'2907', --objeto_consumidor
-	'2916', --objeto_proveedor
-	'form_ingreso', --identificador
-	NULL, --parametros_a
-	NULL, --parametros_b
-	NULL, --parametros_c
-	NULL, --inicializar
-	NULL  --orden
-);
-INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
-	'rukaja', --proyecto
-	'1767', --dep_id
-	'2907', --objeto_consumidor
-	'2906', --objeto_proveedor
-	'formulario', --identificador
 	NULL, --parametros_a
 	NULL, --parametros_b
 	NULL, --parametros_c
@@ -193,29 +217,48 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 --- INICIO Grupo de desarrollo 0
 INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
 	'rukaja', --objeto_ci_proyecto
-	'2907', --objeto_ci
-	'1342', --pantalla
+	'2923', --objeto_ci
+	'1347', --pantalla
 	'pant_edicion', --identificador
 	'2', --orden
-	'Reserva', --etiqueta
+	'Solicitudes', --etiqueta
 	NULL, --descripcion
 	NULL, --tip
 	'apex', --imagen_recurso_origen
-	'editar.gif', --imagen
+	'wizard.png', --imagen
 	NULL, --objetos
 	NULL, --eventos
 	NULL, --subclase
 	NULL, --subclase_archivo
 	NULL, --template
 	NULL, --template_impresion
-	'21'  --punto_montaje
+	NULL  --punto_montaje
 );
 INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
 	'rukaja', --objeto_ci_proyecto
-	'2907', --objeto_ci
-	'1346', --pantalla
-	'pant_reserva', --identificador
+	'2923', --objeto_ci
+	'1348', --pantalla
+	'pant_inicio', --identificador
 	'1', --orden
+	'Inicio', --etiqueta
+	NULL, --descripcion
+	NULL, --tip
+	'apex', --imagen_recurso_origen
+	'calendario.gif', --imagen
+	NULL, --objetos
+	NULL, --eventos
+	NULL, --subclase
+	NULL, --subclase_archivo
+	NULL, --template
+	NULL, --template_impresion
+	NULL  --punto_montaje
+);
+INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
+	'rukaja', --objeto_ci_proyecto
+	'2923', --objeto_ci
+	'1349', --pantalla
+	'pant_busqueda', --identificador
+	'3', --orden
 	'Búsqueda', --etiqueta
 	NULL, --descripcion
 	NULL, --tip
@@ -229,6 +272,25 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	NULL, --template_impresion
 	NULL  --punto_montaje
 );
+INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
+	'rukaja', --objeto_ci_proyecto
+	'2923', --objeto_ci
+	'1350', --pantalla
+	'pant_asignacion', --identificador
+	'4', --orden
+	'Asignación', --etiqueta
+	NULL, --descripcion
+	NULL, --tip
+	'apex', --imagen_recurso_origen
+	'add.png', --imagen
+	NULL, --objetos
+	NULL, --eventos
+	NULL, --subclase
+	NULL, --subclase_archivo
+	NULL, --template
+	NULL, --template_impresion
+	'21'  --punto_montaje
+);
 --- FIN Grupo de desarrollo 0
 
 ------------------------------------------------------------
@@ -236,36 +298,60 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 ------------------------------------------------------------
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto
-	'1342', --pantalla
-	'2907', --objeto_ci
+	'1347', --pantalla
+	'2923', --objeto_ci
 	'0', --orden
-	'1767'  --dep_id
+	'1789'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto
-	'1346', --pantalla
-	'2907', --objeto_ci
+	'1348', --pantalla
+	'2923', --objeto_ci
 	'0', --orden
-	'1783'  --dep_id
+	'1791'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto
-	'1346', --pantalla
-	'2907', --objeto_ci
+	'1349', --pantalla
+	'2923', --objeto_ci
+	'0', --orden
+	'1798'  --dep_id
+);
+INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
+	'rukaja', --proyecto
+	'1349', --pantalla
+	'2923', --objeto_ci
 	'1', --orden
-	'1784'  --dep_id
+	'1799'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto
-	'1346', --pantalla
-	'2907', --objeto_ci
+	'1349', --pantalla
+	'2923', --objeto_ci
 	'2', --orden
-	'1785'  --dep_id
+	'1800'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto
-	'1346', --pantalla
-	'2907', --objeto_ci
-	'3', --orden
-	'1786'  --dep_id
+	'1350', --pantalla
+	'2923', --objeto_ci
+	'0', --orden
+	'1801'  --dep_id
+);
+INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
+	'rukaja', --proyecto
+	'1350', --pantalla
+	'2923', --objeto_ci
+	'1', --orden
+	'1802'  --dep_id
+);
+
+------------------------------------------------------------
+-- apex_eventos_pantalla
+------------------------------------------------------------
+INSERT INTO apex_eventos_pantalla (pantalla, objeto_ci, evento_id, proyecto) VALUES (
+	'1350', --pantalla
+	'2923', --objeto_ci
+	'1845', --evento_id
+	'rukaja'  --proyecto
 );

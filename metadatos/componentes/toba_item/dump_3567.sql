@@ -13,7 +13,7 @@ INSERT INTO apex_item (item_id, proyecto, item, padre_id, padre_proyecto, padre,
 	'3567', --item
 	NULL, --padre_id
 	'rukaja', --padre_proyecto
-	'1', --padre
+	'3574', --padre
 	'0', --carpeta
 	'0', --nivel_acceso
 	'web', --solicitud_tipo
