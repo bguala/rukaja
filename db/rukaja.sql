@@ -1,3 +1,8 @@
+--hay que agregar el id_sede porque cada ua elabora su propio calendario.
+--debemos quitar la tabla administrador, ahora hay que usar perfiles de datos.
+--hay que arreglar el problema de las dos fuentes de datos. Esto genera cambios en las consultas donde
+--estan involucrados los docentes.
+
 CREATE TABLE IF NOT EXISTS unidad_academica (
 
 sigla character varying (6) NOT NULL,

@@ -1,6 +1,6 @@
 <?php
 
-include_once (toba_dir().'/proyectos/gestion_aulas/php/api/HorariosDisponibles.php');
+include_once (toba_dir().'/proyectos/rukaja/php/api/HorariosDisponibles.php');
 
 class ci_buscador_de_aulas extends toba_ci
 {

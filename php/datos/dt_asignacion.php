@@ -62,7 +62,7 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion realiza una union entre conjuntos
+         * Esta funcion realiza una union entre conjuntos. Periodo se debe pasar por referencia.
          */
         function unificar_asignaciones ($periodo, $definitiva){
             foreach ($definitiva as $clave=>$valor){
