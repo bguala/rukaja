@@ -79,39 +79,6 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'0', --es_seleccion_multiple
 	'0'  --es_autovinculo
 );
-INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, etiqueta, maneja_datos, sobre_fila, confirmacion, estilo, imagen_recurso_origen, imagen, en_botonera, ayuda, orden, ci_predep, implicito, defecto, display_datos_cargados, grupo, accion, accion_imphtml_debug, accion_vinculo_carpeta, accion_vinculo_item, accion_vinculo_objeto, accion_vinculo_popup, accion_vinculo_popup_param, accion_vinculo_target, accion_vinculo_celda, accion_vinculo_servicio, es_seleccion_multiple, es_autovinculo) VALUES (
-	'rukaja', --proyecto
-	'1782', --evento_id
-	'2866', --objeto
-	'volver_a_asig', --identificador
-	'Volver', --etiqueta
-	'0', --maneja_datos
-	NULL, --sobre_fila
-	NULL, --confirmacion
-	NULL, --estilo
-	'apex', --imagen_recurso_origen
-	'volver.png', --imagen
-	'1', --en_botonera
-	NULL, --ayuda
-	'2', --orden
-	NULL, --ci_predep
-	'0', --implicito
-	'0', --defecto
-	NULL, --display_datos_cargados
-	NULL, --grupo
-	NULL, --accion
-	NULL, --accion_imphtml_debug
-	NULL, --accion_vinculo_carpeta
-	NULL, --accion_vinculo_item
-	NULL, --accion_vinculo_objeto
-	NULL, --accion_vinculo_popup
-	NULL, --accion_vinculo_popup_param
-	NULL, --accion_vinculo_target
-	NULL, --accion_vinculo_celda
-	NULL, --accion_vinculo_servicio
-	'0', --es_seleccion_multiple
-	'0'  --es_autovinculo
-);
 --- FIN Grupo de desarrollo 0
 
 ------------------------------------------------------------
@@ -313,6 +280,18 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 	NULL, --inicializar
 	NULL  --orden
 );
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
+	'1804', --dep_id
+	'2866', --objeto_consumidor
+	'2932', --objeto_proveedor
+	'formulario', --identificador
+	NULL, --parametros_a
+	NULL, --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	NULL  --orden
+);
 --- FIN Grupo de desarrollo 0
 
 ------------------------------------------------------------
@@ -419,9 +398,9 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 				[dep id=filtro_docentes]</td>
 		</tr>
 		<tr>
-			<td>
+			<td style="vertical-align: top;">
 				[dep id=cuadro_docentes]</td>
-			<td>
+			<td style="vertical-align: top;">
 				[dep id=docentes_seleccionados]</td>
 		</tr>
 	</tbody>
@@ -466,6 +445,10 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 		<tr>
 			<td>
 				[dep id=cuadro_personas]</td>
+		</tr>
+		<tr>
+			<td>
+				[dep id=formulario]</td>
 		</tr>
 	</tbody>
 </table>
@@ -569,6 +552,13 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 	'3', --orden
 	'1751'  --dep_id
 );
+INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
+	'rukaja', --proyecto
+	'1338', --pantalla
+	'2866', --objeto_ci
+	'4', --orden
+	'1804'  --dep_id
+);
 
 ------------------------------------------------------------
 -- apex_eventos_pantalla
@@ -582,12 +572,12 @@ INSERT INTO apex_eventos_pantalla (pantalla, objeto_ci, evento_id, proyecto) VAL
 INSERT INTO apex_eventos_pantalla (pantalla, objeto_ci, evento_id, proyecto) VALUES (
 	'1332', --pantalla
 	'2866', --objeto_ci
-	'1782', --evento_id
+	'1781', --evento_id
 	'rukaja'  --proyecto
 );
 INSERT INTO apex_eventos_pantalla (pantalla, objeto_ci, evento_id, proyecto) VALUES (
 	'1333', --pantalla
 	'2866', --objeto_ci
-	'1782', --evento_id
+	'1781', --evento_id
 	'rukaja'  --proyecto
 );

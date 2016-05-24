@@ -130,7 +130,23 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	NULL, --eventos
 	NULL, --subclase
 	NULL, --subclase_archivo
-	NULL, --template
+	'<table>
+	<tbody>
+		<tr>
+			<td>
+				[dep id=cuadro]</td>
+		</tr>
+		<tr>
+			<td>
+				&nbsp;</td>
+		</tr>
+		<tr>
+			<td>
+				[dep id=formulario]</td>
+		</tr>
+	</tbody>
+</table>
+<p>&nbsp;</p>', --template
 	NULL, --template_impresion
 	'21'  --punto_montaje
 );

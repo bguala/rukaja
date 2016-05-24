@@ -134,7 +134,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nombre', --nombre
-	't_p.nombre', --expresion
+	'nombre', --expresion
 	'Nombre', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -192,7 +192,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'apellido', --nombre
-	't_p.apellido', --expresion
+	'apellido', --expresion
 	'Apellido', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -250,7 +250,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'legajo', --nombre
-	't_d.legajo', --expresion
+	'legajo', --expresion
 	'Legajo', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio

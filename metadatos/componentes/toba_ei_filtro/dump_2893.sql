@@ -83,14 +83,14 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'rukaja', --proyecto
 	'1805', --evento_id
 	'2893', --objeto
-	'cancelar', --identificador
-	'Limpiar', --etiqueta
-	'0', --maneja_datos
+	'registrar', --identificador
+	'Registrar Organización', --etiqueta
+	'1', --maneja_datos
 	NULL, --sobre_fila
 	NULL, --confirmacion
 	NULL, --estilo
 	'apex', --imagen_recurso_origen
-	'limpiar.png', --imagen
+	'universidad.png', --imagen
 	'1', --en_botonera
 	NULL, --ayuda
 	'2', --orden
@@ -134,7 +134,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nro_doc', --nombre
-	't_p.nro_doc', --expresion
+	'nro_doc', --expresion
 	'Número de Documento', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -192,7 +192,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nombre', --nombre
-	't_p.nombre', --expresion
+	'nombre', --expresion
 	'Nombre', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -250,7 +250,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'apellido', --nombre
-	't_p.apellido', --expresion
+	'apellido', --expresion
 	'Apellido', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -308,7 +308,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'organizacion', --nombre
-	't_o.organizacion', --expresion
+	'organizacion', --expresion
 	'Organización', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio

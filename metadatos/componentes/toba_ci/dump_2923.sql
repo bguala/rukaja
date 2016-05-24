@@ -249,9 +249,21 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	NULL, --eventos
 	NULL, --subclase
 	NULL, --subclase_archivo
-	NULL, --template
+	'<table>
+	<tbody>
+		<tr>
+			<td>
+				[dep id=calendario]</td>
+			<td>
+				&nbsp;</td>
+			<td>
+				[dep id=cuadro]</td>
+		</tr>
+	</tbody>
+</table>
+<p>&nbsp;</p>', --template
 	NULL, --template_impresion
-	NULL  --punto_montaje
+	'21'  --punto_montaje
 );
 INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
 	'rukaja', --objeto_ci_proyecto
@@ -301,6 +313,13 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 	'1347', --pantalla
 	'2923', --objeto_ci
 	'0', --orden
+	'1789'  --dep_id
+);
+INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
+	'rukaja', --proyecto
+	'1348', --pantalla
+	'2923', --objeto_ci
+	'1', --orden
 	'1789'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
