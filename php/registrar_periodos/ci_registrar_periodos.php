@@ -2,12 +2,15 @@
 class ci_registrar_periodos extends toba_ci
 {
         protected $s__id_periodo;
+        protected $s__id_sede;
         
 	//---- Cuadro -----------------------------------------------------------------------
 
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{
-            $cuadro->set_datos($this->dep('datos')->tabla('periodo')->get_listado(date('Y')));
+            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $this->s__id_sede=1;
+            $cuadro->set_datos($this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede));
 	}
 
 	function evt__cuadro__seleccion($datos)
@@ -57,12 +60,13 @@ class ci_registrar_periodos extends toba_ci
 
 	function evt__formulario__alta($datos)
 	{
-	    $anio_lectivo=date('Y');
+	    
             $tipo_periodo=$datos['tipo_periodo'];
             $periodo=array(
                 'fecha_inicio' => $datos['fecha_inicio'],
                 'fecha_fin'    => $datos['fecha_fin'],
-                'anio_lectivo' => $anio_lectivo
+                'anio_lectivo' => date('Y'),
+                'id_sede' => $this->s__id_sede
             );
             $this->dep('datos')->tabla('periodo')->nueva_fila($periodo);
             $this->dep('datos')->tabla('periodo')->sincronizar();
@@ -110,7 +114,8 @@ class ci_registrar_periodos extends toba_ci
             $periodo=array(
                 'fecha_inicio' => $datos['fecha_inicio'],
                 'fecha_fin' => $datos['fecha_fin'],
-                'id_periodo' => $this->s__id_periodo
+                'id_periodo' => $this->s__id_periodo,
+                'id_sede' => $this->s__id_sede
             );
             switch($tipo_periodo){
                 case 'Cuatrimestre' : $this->dep('datos')->tabla('cuatrimestre')->cargar(array('id_periodo'=>$this->s__id_periodo));

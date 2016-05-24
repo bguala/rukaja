@@ -5,7 +5,7 @@ class dt_periodo extends toba_datos_tabla
          * Esta funcion se utiliza en la operacion Registrar Periodo, para actualizar un cuadro que muestra 
          * todos los periodos academicos registrados en el sistema.
          */
-	function get_listado($anio_lectivo)
+	function get_listado($anio_lectivo, $id_sede)
 	{
 		$sql_1 = "(SELECT t_p.id_periodo,
                                t_p.fecha_inicio,
@@ -15,7 +15,7 @@ class dt_periodo extends toba_datos_tabla
                                '----' as turno,
                                'Cuatrimestre' as tipo_periodo
                         FROM   periodo as t_p
-                        JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo))
+                        JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede))
                         
                    ";
                 

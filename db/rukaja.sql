@@ -171,6 +171,7 @@ id_periodo serial NOT NULL,
 fecha_inicio date,
 fecha_fin date,
 anio_lectivo integer,
+id_sede integer,
 
 CONSTRAINT pk_perido PRIMARY KEY (id_periodo)
 
@@ -247,6 +248,8 @@ CREATE TABLE IF NOT EXISTS asignacion (
   modulo integer,
   tipo_asignacion character varying(15),
   id_periodo integer,
+  id_responsable_aula integer,
+
   CONSTRAINT pk_asignacion PRIMARY KEY (id_asignacion),
   CONSTRAINT fk_asignacion_aula FOREIGN KEY (id_aula)
       REFERENCES aula (id_aula) MATCH SIMPLE
@@ -328,6 +331,7 @@ CREATE TABLE IF NOT EXISTS catedra (
 id_asignacion serial,
 nro_doc character varying (20),
 tipo_doc character varying (12),
+id_docente integer,
 
 CONSTRAINT pk_catedra PRIMARY KEY (id_asignacion,nro_doc,tipo_doc),
 CONSTRAINT fk_catedra_asignacion FOREIGN KEY (id_asignacion) REFERENCES asignacion(id_asignacion)
@@ -337,14 +341,14 @@ DELETE CASCADE ON UPDATE CASCADE
 
 );
 
-CREATE TABLE IF NOT EXISTS fecha_disponible (
+CREATE TABLE IF NOT EXISTS organizacion (
 
-id_fecha_disponible serial NOT NULL,
-id_asignacion serial,
-fecha date,
+id_organizacion serial NOT NULL,
+nombre character varying (40),
+telefono character varying (20),
+email character varying (40),
 
-CONSTRAINT pk_fecha_disponible PRIMARY KEY (id_fecha_disponible),
-CONSTRAINT fk_asignacion FOREIGN KEY (id_asignacion) REFERENCES asignacion(id_asignacion) ON DELETE 
-CASCADE ON UPDATE CASCADE
+CONSTRAINT pk_organizacion PRIMARY KEY (id_organizacion)
 
-); 
+);
+

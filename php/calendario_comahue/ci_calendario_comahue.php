@@ -187,6 +187,20 @@ class ci_calendario_comahue extends toba_ci
             }
         }
         
+        function evt__cuadro_horarios_disponibles__seleccionar ($datos){
+            $parametros=array(
+                'id_aula' => $datos['id_aula'],
+                'hora_inicio' => $datos['hora_inicio'],
+                'hora_fin' => $datos['hora_fin'],
+                'dia_semana' => utf8_decode($this->s__dia_consulta),
+                'fecha_inicio' => $this->s__fecha_consulta,
+                'fecha_fin' => $this->s__fecha_consulta
+                
+            );
+            //Generamos un vinculo a la operacion 'Cargar Asignaciones'.
+            toba::vinculador()->navegar_a("rukaja", 3567,$parametros);
+        }
+        
         /*
          * Vinculo asociado al boton PDF del cuadro horarios_disponibles. Se usa para generar un docuemento pdf
          * personalizado. Es una alternativa para generar un reporte con los horarios disponibles. Formará parte

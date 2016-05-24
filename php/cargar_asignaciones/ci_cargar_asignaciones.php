@@ -57,25 +57,25 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Formulario -------------------------------------------------------------------
         
         /*
-         * Este metodo nos permite cambiarnos de pantalla cuando utilizamos el vinculador entre 
-         * "aulas disponibles" y "cargar asignaciones"
+         * Este metodo nos permite guardar los datos transmitidos desde la operacion 'Calendario Comahue' 
+         * a treves del vinculador.
          */
         function ini__operacion (){
             
-            //obtenemos el arreglo almacenado en la operacion "aulas disponibles". Su formato es :
-            //Array ('id_aula'=>x 'hora_inicio'=>x 'hora_fin'=>x)
+            //obtenemos el arreglo almacenado en la operacion "Calendario Comahue". Su formato es :
+            //Array ('id_aula'=>x 'hora_inicio'=>y 'hora_fin'=>z, dia_semana=>w)
             $datos_ad=toba::memoria()->get_parametros();
             //esta condicion es fundamental para no quedarnos en la misma pantalla
             if(isset($datos_ad['id_aula'])){
                 $this->s__accion="Vinculo";
                 $this->s__aula_disponible=$datos_ad;
-                
+                print_r($datos_ad);
                 //eliminamos la informacion guardada en el arreglo $_SESSION
                 toba::memoria()->limpiar_memoria();
-                //$this->set_pantalla('pant_persona');
+                
             }else
                 print_r("Ejecutamos sin problemas ini operacion");
-            //$this->set_pantalla('pant_asignacion');
+            
         }
 
 	//---- Filtro -----------------------------------------------------------------------
@@ -221,6 +221,8 @@ class ci_cargar_asignaciones extends toba_ci
             //$filtro->generar_html(); nos genera un nuevo ei pero desplazado
             $filtro->get_sql_clausulas();
             print_r("Se ejecuta conf filtro busqueda <br>");
+            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $this->s__id_sede=1;
         }
         
         function evt__filtro_busqueda__filtrar (){
@@ -232,7 +234,7 @@ class ci_cargar_asignaciones extends toba_ci
             }
             
             //Es necesario que existan periodos academicos registrados en el sistema para cargar asignaciones
-            $periodos=$this->dep('datos')->tabla('periodo')->get_listado(date('Y'));
+            $periodos=$this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede);
             
             if(count($periodos)>0){
                 $this->s__accion="Registrar";
