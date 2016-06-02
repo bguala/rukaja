@@ -12,7 +12,7 @@ class login extends toba_tp_basico_titulo {
 //		$this->generar_ayuda();		
 //		echo "<div class='item-barra-tit'>".$this->titulo_item()."</div>";
 //		echo "</div>\n\n";
-            echo "<div align='center'><div class='encabezado'>".toba_recurso::imagen_proyecto("rukaja.png", true, 425, 100)."</div></div>"
+            echo "<div align='center'><div class='encabezado'>".toba_recurso::imagen_proyecto("rukaja.png", true, 420, 100)."</div></div>"
             ;
 	}
 	

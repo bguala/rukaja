@@ -62,15 +62,15 @@ class ci_cargar_asignaciones extends toba_ci
          */
         function ini__operacion (){
             
-            //obtenemos el arreglo almacenado en la operacion "Calendario Comahue". Su formato es :
+            //Obtenemos el arreglo almacenado en la operacion "Calendario Comahue". Su formato es :
             //Array ('id_aula'=>x 'hora_inicio'=>y 'hora_fin'=>z, dia_semana=>w)
             $datos_ad=toba::memoria()->get_parametros();
-            //esta condicion es fundamental para no quedarnos en la misma pantalla
+            
             if(isset($datos_ad['id_aula'])){
                 $this->s__accion="Vinculo";
                 $this->s__aula_disponible=$datos_ad;
-                print_r($datos_ad);
-                //eliminamos la informacion guardada en el arreglo $_SESSION
+                //print_r($datos_ad);
+                //Eliminamos la informacion guardada en el arreglo $_SESSION
                 toba::memoria()->limpiar_memoria();
                 
             }else
@@ -101,14 +101,18 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Cuadro -----------------------------------------------------------------------
         
         /*
-         * Este cuadro contiene todas asignaciones que se quieren borrar o editar en el periodo actual.
+         * Este cuadro contiene todas las asignaciones que se quieren borrar o editar en el periodo actual.
          */
         function conf__cuadro (toba_ei_cuadro $cuadro){
             if(isset($this->s__where)){
                 $cuadro->descolapsar();
+                //Obtenemos la sede para el usuario logueado.
+                $this->s__id_sede=$this->dep('datos')->tabla('periodo')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+                $this->s__id_sede=1;
+                //Usamos la fecha actual para buscar periodo en el sistema.
                 $fecha=date('Y-m-d');
                 $anio_lectivo=date('Y');
-                $periodos=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha, $anio_lectivo);
+                $periodos=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha, $anio_lectivo, $this->s__id_sede);
                 $cuadro->set_datos($this->procesar_periodo($periodos, "hr"));
                 $cuadro->set_titulo("Listado de asignaciones");
             }
@@ -237,7 +241,9 @@ class ci_cargar_asignaciones extends toba_ci
             $periodos=$this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede);
             
             if(count($periodos)>0){
-                $this->s__accion="Registrar";
+                if(!isset($this->s__aula_disponible)){
+                    $this->s__accion="Registrar";
+                }
                 
                 //$where=$this->dep('filtro_busqueda')->get_sql_where('OR');
                 print_r($this->dep('filtro_busqueda')->get_sql_clausulas());
@@ -425,7 +431,7 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Form Asignacion --------------------------------------------------------------------
         
         function conf__form_asignacion (toba_ei_formulario $form){
-                        
+            print_r($this->s__aula_disponible);
             if(count($this->s__datos_form_asignacion)>0){
                 $form->set_datos($this->s__datos_form_asignacion);
             }
@@ -441,7 +447,10 @@ class ci_cargar_asignaciones extends toba_ci
                 case "Nop"       : break;
                 case "Registrar" : break;
                 case "Vinculo"   : $form->set_datos($this->s__aula_disponible);
-                                   $form->set_solo_lectura(array('id_aula', 'dia_semana'));
+                                   //De esta manera cargamos el dia en el multi_seleccion_check, de otra forma no funciono
+                                   $form->ef('dias')->set_estado(array($this->s__aula_disponible['dias']));
+                                   $form->set_solo_lectura(array('id_aula', 'dias', 'fecha_inicio', 'fecha_fin', 'tipo'));
+                                   $form->desactivar_efs(array('dia_semana'));
                                    break;
                 case "Borrar"    : 
                 case "Editar"    : 
@@ -653,13 +662,13 @@ class ci_cargar_asignaciones extends toba_ci
          * se debe actualizar por cada insercion.
          */
         function obtener_asignaciones (){ //HAY QUE LLEVARLO AL DATOS_TABLA
-            //tiene cierto sentido usar la fecha actual, dado que el uso de las aulas puede ser dinamico. 
+            //Tiene cierto sentido usar la fecha actual, dado que el uso de las aulas puede ser dinamico. 
             //Necesitamos saber como es la asignacion de horarios en un momento determinado.
             $fecha=  date('Y-m-d');
             
             $anio_lectivo=date('Y');
             
-            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha, $anio_lectivo);
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha, $anio_lectivo, $this->s__id_sede);
             
             //analizamos el caso de dos periodos, cuando tenemos un turno de examen extraordinario incluido
             //en un cuatrimestre.
@@ -1289,7 +1298,7 @@ class ci_cargar_asignaciones extends toba_ci
                 $this->s__fecha_consulta=date('Y-m-d', strtotime($fecha));
                 $this->s__dia_consulta=utf8_decode($this->obtener_dia(date('N', strtotime($this->s__fecha_consulta))));
                 //con la fecha obtenemos los periodos academicos correspondientes
-                $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha, date('Y', strtotime($fecha)));
+                $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha, date('Y', strtotime($fecha)), $this->s__id_sede);
                 //con el periodo obtenemos las asignaciones, hd significa 'horarios disponibles'.
                 //Pero necesitamos las asignaciones para un aula, esta optimizacion queda para mas adelante
                 $asignaciones=$this->procesar_periodo($periodo, "hd");

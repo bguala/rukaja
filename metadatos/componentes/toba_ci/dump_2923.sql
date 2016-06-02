@@ -220,7 +220,7 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	'2923', --objeto_ci
 	'1347', --pantalla
 	'pant_edicion', --identificador
-	'2', --orden
+	'1', --orden
 	'Solicitudes', --etiqueta
 	NULL, --descripcion
 	NULL, --tip
@@ -237,40 +237,9 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
 	'rukaja', --objeto_ci_proyecto
 	'2923', --objeto_ci
-	'1348', --pantalla
-	'pant_inicio', --identificador
-	'1', --orden
-	'Inicio', --etiqueta
-	NULL, --descripcion
-	NULL, --tip
-	'apex', --imagen_recurso_origen
-	'calendario.gif', --imagen
-	NULL, --objetos
-	NULL, --eventos
-	NULL, --subclase
-	NULL, --subclase_archivo
-	'<table>
-	<tbody>
-		<tr>
-			<td>
-				[dep id=calendario]</td>
-			<td>
-				&nbsp;</td>
-			<td>
-				[dep id=cuadro]</td>
-		</tr>
-	</tbody>
-</table>
-<p>&nbsp;</p>', --template
-	NULL, --template_impresion
-	'21'  --punto_montaje
-);
-INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
-	'rukaja', --objeto_ci_proyecto
-	'2923', --objeto_ci
 	'1349', --pantalla
 	'pant_busqueda', --identificador
-	'3', --orden
+	'2', --orden
 	'Búsqueda', --etiqueta
 	NULL, --descripcion
 	NULL, --tip
@@ -289,7 +258,7 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	'2923', --objeto_ci
 	'1350', --pantalla
 	'pant_asignacion', --identificador
-	'4', --orden
+	'3', --orden
 	'Asignación', --etiqueta
 	NULL, --descripcion
 	NULL, --tip
@@ -314,20 +283,6 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 	'2923', --objeto_ci
 	'0', --orden
 	'1789'  --dep_id
-);
-INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
-	'rukaja', --proyecto
-	'1348', --pantalla
-	'2923', --objeto_ci
-	'1', --orden
-	'1789'  --dep_id
-);
-INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
-	'rukaja', --proyecto
-	'1348', --pantalla
-	'2923', --objeto_ci
-	'0', --orden
-	'1791'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto

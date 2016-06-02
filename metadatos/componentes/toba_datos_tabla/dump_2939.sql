@@ -1,5 +1,5 @@
 ------------------------------------------------------------
---[2831]--  DT - unidad_academica 
+--[2939]--  DT - docente 
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -9,23 +9,23 @@
 --- INICIO Grupo de desarrollo 0
 INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, clase_proyecto, clase, punto_montaje, subclase, subclase_archivo, objeto_categoria_proyecto, objeto_categoria, nombre, titulo, colapsable, descripcion, fuente_datos_proyecto, fuente_datos, solicitud_registrar, solicitud_obj_obs_tipo, solicitud_obj_observacion, parametro_a, parametro_b, parametro_c, parametro_d, parametro_e, parametro_f, usuario, creacion, posicion_botonera) VALUES (
 	'rukaja', --proyecto
-	'2831', --objeto
+	'2939', --objeto
 	NULL, --anterior
 	NULL, --identificador
 	NULL, --reflexivo
 	'toba', --clase_proyecto
 	'toba_datos_tabla', --clase
 	'21', --punto_montaje
-	'dt_unidad_academica', --subclase
-	'datos/dt_unidad_academica.php', --subclase_archivo
+	NULL, --subclase
+	NULL, --subclase_archivo
 	NULL, --objeto_categoria_proyecto
 	NULL, --objeto_categoria
-	'DT - unidad_academica', --nombre
+	'DT - docente', --nombre
 	NULL, --titulo
 	NULL, --colapsable
 	NULL, --descripcion
 	'rukaja', --fuente_datos_proyecto
-	'rukaja', --fuente_datos
+	'mocovi', --fuente_datos
 	NULL, --solicitud_registrar
 	NULL, --solicitud_obj_obs_tipo
 	NULL, --solicitud_obj_observacion
@@ -36,7 +36,7 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 	NULL, --parametro_e
 	NULL, --parametro_f
 	NULL, --usuario
-	'2016-05-08 09:50:51', --creacion
+	'2016-05-25 12:35:07', --creacion
 	NULL  --posicion_botonera
 );
 --- FIN Grupo de desarrollo 0
@@ -46,19 +46,19 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 ------------------------------------------------------------
 INSERT INTO apex_objeto_db_registros (objeto_proyecto, objeto, max_registros, min_registros, punto_montaje, ap, ap_clase, ap_archivo, tabla, tabla_ext, alias, modificar_claves, fuente_datos_proyecto, fuente_datos, permite_actualizacion_automatica, esquema, esquema_ext) VALUES (
 	'rukaja', --objeto_proyecto
-	'2831', --objeto
+	'2939', --objeto
 	NULL, --max_registros
 	NULL, --min_registros
 	'21', --punto_montaje
 	'1', --ap
 	NULL, --ap_clase
 	NULL, --ap_archivo
-	'unidad_academica', --tabla
+	'docente', --tabla
 	NULL, --tabla_ext
 	NULL, --alias
 	'0', --modificar_claves
 	'rukaja', --fuente_datos_proyecto
-	'rukaja', --fuente_datos
+	'mocovi', --fuente_datos
 	'1', --permite_actualizacion_automatica
 	NULL, --esquema
 	'public'  --esquema_ext
@@ -71,30 +71,86 @@ INSERT INTO apex_objeto_db_registros (objeto_proyecto, objeto, max_registros, mi
 --- INICIO Grupo de desarrollo 0
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
 	'rukaja', --objeto_proyecto
-	'2831', --objeto
-	'1088', --col_id
-	'sigla', --columna
-	'C', --tipo
+	'2939', --objeto
+	'1143', --col_id
+	'id_docente', --columna
+	'E', --tipo
 	'1', --pk
-	'', --secuencia
-	'6', --largo
+	'docente_id_docente_seq', --secuencia
+	NULL, --largo
 	NULL, --no_nulo
 	'1', --no_nulo_db
 	'0', --externa
-	'unidad_academica'  --tabla
+	'docente'  --tabla
 );
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
 	'rukaja', --objeto_proyecto
-	'2831', --objeto
-	'1089', --col_id
-	'descripcion', --columna
-	'C', --tipo
+	'2939', --objeto
+	'1144', --col_id
+	'legajo', --columna
+	'E', --tipo
 	'0', --pk
 	'', --secuencia
-	'50', --largo
+	NULL, --largo
 	NULL, --no_nulo
 	'0', --no_nulo_db
 	'0', --externa
-	'unidad_academica'  --tabla
+	'docente'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2939', --objeto
+	'1145', --col_id
+	'apellido', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	NULL, --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'docente'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2939', --objeto
+	'1146', --col_id
+	'nombre', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	NULL, --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'docente'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2939', --objeto
+	'1147', --col_id
+	'tipo_docum', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	'4', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'docente'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2939', --objeto
+	'1148', --col_id
+	'nro_docum', --columna
+	'E', --tipo
+	'0', --pk
+	'', --secuencia
+	NULL, --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'docente'  --tabla
 );
 --- FIN Grupo de desarrollo 0

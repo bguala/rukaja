@@ -6,17 +6,22 @@ class ci_buscador_de_aulas extends toba_ci
 {
 
 	//---- Cuadro -----------------------------------------------------------------------
-
+        
+        /*
+         * Debemos filtrar las aulas segun el horario especificado por el usuario en el formulario 
+         * form_asignacion. Para ello usamos ajax, en sesion guardamos el periodo seleccionado por el usuario.
+         */
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{
-            //obtenemos la sede a la que pertenece el usuario que se loguea
+            //Obtenemos la sede a la que pertenece el usuario logueado.
             $nombre_usuario=toba::usuario()->get_id();
             $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
             
-            //obtenemos los datos almacenados en la sesion
+            //Obtenemos los datos almacenados en la sesion. Esta informacion se guarda en el metodo
+            //ajax__guardar_estado_sesion.
             $tipo=toba::memoria()->get_dato_instancia(4);
             
-            //con esta instruccion evitamos enviar una clave aleatoria al popup
+            //Con esta instruccion evitamos enviar una clave aleatoria al popup.
             $cuadro->desactivar_modo_clave_segura();
             $id_sede=1;
             
@@ -31,7 +36,7 @@ class ci_buscador_de_aulas extends toba_ci
                 
                                     $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
                                     $asignaciones=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_dia($id_sede, $dia, $id_periodo);
-                                    //obtenemos las aulas que estan siendo utilizadas para el dia $dia
+                                    //Obtenemos las aulas que estan siendo utilizadas para el dia $dia.
                                     $aulas=$this->obtener_aulas($asignaciones);
                 
                                     $horarios_disponibles=new HorariosDisponibles();
@@ -55,7 +60,7 @@ class ci_buscador_de_aulas extends toba_ci
 	}
         
         /*
-         * genera un arreglo con las aulas utilizadas en un dia especifico.
+         * Genera un arreglo con las aulas utilizadas en un dia especifico.
          * @espacios_concedidos contiene todos los espacios concedidos en las aulas de una Unidad Academica.  
          */
         function obtener_aulas ($espacios_concedidos){
@@ -76,7 +81,7 @@ class ci_buscador_de_aulas extends toba_ci
         }
         
         /*
-         * verifica si un aula ya se encuentra presente en la estructura aulas
+         * Verifica si un aula ya se encuentra presente en la estructura aulas.
          * @$aulas : contiene un cjto de aulas
          * @$aula : se verifica que si exista en aulas.
          */

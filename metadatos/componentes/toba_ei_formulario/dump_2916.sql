@@ -21,7 +21,7 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 	NULL, --objeto_categoria_proyecto
 	NULL, --objeto_categoria
 	'Solicitar Aula - CI - form_ingreso', --nombre
-	NULL, --titulo
+	'Formulario para buscar horarios disponibles', --titulo
 	'0', --colapsable
 	NULL, --descripcion
 	'rukaja', --fuente_datos_proyecto
@@ -171,7 +171,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'facultad', --identificador
 	'ef_combo', --elemento_formulario
 	'facultad', --columnas
-	'1', --obligatorio
+	'0', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'1', --orden
 	'Establecimiento', --etiqueta
@@ -201,7 +201,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'0', --carga_cascada_relaj
 	'0', --cascada_mantiene_estado
 	'1', --carga_permite_no_seteado
-	'-- Seleccione una Unidad Académica --', --carga_no_seteado
+	'-- Seleccione un Establecimiento --', --carga_no_seteado
 	'0', --carga_no_seteado_ocultar
 	NULL, --edit_tamano
 	NULL, --edit_maximo
@@ -251,7 +251,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'sede', --identificador
 	'ef_combo', --elemento_formulario
 	'sede', --columnas
-	'1', --obligatorio
+	'0', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'2', --orden
 	'Sede', --etiqueta

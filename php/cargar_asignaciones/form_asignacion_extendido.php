@@ -45,32 +45,70 @@ class form_asignacion_extendido extends toba_ei_formulario
         
                
         {$this->objeto_js}.evt__tipo_asignacion__validar = function (){
-            var tipo_asignacion=this.ef('tipo_asignacion').get_estado();
+            var tipo_asignacion=this.ef('tipo_asignacion').get_estado().toString();
             
-            if((tipo_asignacion == 'EXAMEN FINAL') || (tipo_asignacion == 'EXAMEN PARCIAL')){
-                
-                this.ef('dia_semana').ocultar();
-                this.ef('dia_semana').set_obligatorio(false);
-                this.ef('fecha_fin').ocultar();
-                this.ef('fecha_fin').set_obligatorio(false);
-                this.ef('dias').ocultar();
-                this.ef('dias').set_obligatorio(false);
-                //this.ef('tipo').set_estado('Periodo');
-                
-                
-            }
-            if((tipo_asignacion == 'CURSADA') || (tipo_asignacion == 'EVENTO') || (tipo_asignacion == 'nopar')){
-                
-                this.ef('dia_semana').mostrar();
-                this.ef('dia_semana').set_obligatorio(true);
-                this.ef('fecha_fin').mostrar();
-                this.ef('fecha_fin').set_obligatorio(true);
-                this.ef('dias').mostrar();
-                this.ef('dias').set_obligatorio(true);
-                //this.ef('tipo').set_estado('nopar');
-                
-            }
+            switch(tipo_asignacion){
+            case 'EXAMEN FINAL' :
+            case 'EVENTO' :
+            case 'CONSULTA' :
+            case 'EXAMEN PARCIAL' ://Debemos ocultar el campo dia_semana.
+                                   this.ef('dia_semana').ocultar();
+                                   this.ef('dia_semana').set_obligatorio(false);
+                                   
+                                   //Pero debemos mostrar los campos que se ocultaron con las otras opciones del 
+                                   //combo.
+                                   this.ef('fecha_inicio').mostrar();
+                                   this.ef('fecha_inicio').set_obligatorio(true);
+                                   this.ef('fecha_fin').mostrar();
+                                   this.ef('fecha_fin').set_obligatorio(true);
+                                   this.ef('tipo').set_estado('nopar');
+                                   this.ef('tipo').set_solo_lectura(false);
+                                   this.ef('dias').mostrar();
+                                   this.ef('dias').set_obligatorio(true);
+                                   
+                                   //Habilitamos el boton 'Analizar Periodo'.
+                                   this.activar_boton('agregar_dias');
+                                   
+                                   break;
                         
+            case 'CURSADA' : 
+                            //Debemos mostrar los campos ocultados en las otras opciones del combo.
+                            this.ef('dia_semana').mostrar();
+                            this.ef('dia_semana').set_obligatorio(true);
+                            
+                            //Ocultamos campos innecesaios para esta opcion.
+                            this.ef('fecha_inicio').ocultar();
+                            this.ef('fecha_inicio').set_obligatorio(false);
+                            this.ef('fecha_fin').ocultar();
+                            this.ef('fecha_fin').set_obligatorio(false);
+                            this.ef('tipo').set_estado('Definitiva');
+                            this.ef('tipo').set_solo_lectura(true);
+                            this.ef('dias').ocultar();
+                            this.ef('dias').set_obligatorio(false);
+                            
+                            //Debemos desactivar el boton 'Analizar Periodo'.
+                            this.desactivar_boton('agregar_dias');
+                            
+                            break;
+                            
+            case 'nopar' :
+                          this.ef('dia_semana').mostrar();
+                          this.ef('dia_semana').set_obligatorio(true);
+                          
+                          this.ef('fecha_inicio').mostrar();
+                          this.ef('fecha_inicio').set_obligatorio(true);
+                          this.ef('fecha_fin').mostrar();
+                          this.ef('fecha_fin').set_obligatorio(true);
+                          this.ef('tipo').set_estado('nopar');
+                          this.ef('tipo').set_solo_lectura(false);
+                          this.ef('dias').mostrar();
+                          this.ef('dias').set_obligatorio(true);
+                          
+                          this.activar_boton('agregar_dias');
+                          break;
+                
+            }
+
             return true;
         }
         

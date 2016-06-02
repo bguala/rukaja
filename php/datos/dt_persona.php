@@ -18,6 +18,7 @@ class dt_persona extends toba_datos_tabla
 		return toba::db('rukaja')->consultar($sql);
 	}
 
+
         
         function get_correo_electronico ($id_sede){
             $sql="SELECT t_p.correo_electronico 
@@ -154,5 +155,6 @@ class dt_persona extends toba_datos_tabla
             return toba::db('rukaja')->consultar($sql);
         }
         
+                
 }
 ?>

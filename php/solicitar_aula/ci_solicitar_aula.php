@@ -15,71 +15,139 @@ class ci_solicitar_aula extends toba_ci
         protected $s__datos_cuadro;
         protected $s__solicitud_registrada;
         protected $s__filtro;
+        protected $s__sigla_origen;                     //Guardamos la sigla del establecimiento que realiza un pedido de aula.
+
+
+        //Estas variables se configuran cuando hay que realizar un calculo de horarios disponibles global.
+        protected $s__establecimiento;
+        protected $s__sede;
+        protected $s__hd_global=array();  
+        protected $s__solo_fecha;
         
+        //-------------------------------------------------------------------------------------
         //---- Pant Busqueda ------------------------------------------------------------------
+        //-------------------------------------------------------------------------------------
         
         function conf__pant_reserva (toba_ei_pantalla $pantalla){
             $this->pantalla()->tab('pant_edicion')->desactivar();
         }
-	//---- Form Ingreso -------------------------------------------------------------------
-
-        function conf__form_ingreso (toba_ei_formulario $form){
-            
-        }
         
-        function evt__form_ingreso__aceptar ($datos){
-            $this->s__id_sede=$datos['sede'];
+	//---- Form Ingreso -------------------------------------------------------------------
+               
+        function evt__form_ingreso__aceptar ($datos){           
             $this->s__fecha_consulta=$datos['fecha'];
-            
-            $unidad_academica=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica_mas_sede($datos['facultad'],$this->s__id_sede);
-            
-            //Se utiliza para cargar el formulario form_datos de la pantalla pant_reserva
-            $this->s__datos_form=array(
-                'facultad' => $unidad_academica[0]['facultad'],
-                'sede' => $unidad_academica[0]['sede'],
-                'fecha' => date('d-m-Y', strtotime($this->s__fecha_consulta))
-            );
-            $this->calcular_horarios_disponibles_por_facultad();
-            //se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin.
+            if(isset($datos['fecha']) && isset($datos['sede']) && isset($datos['facultad'])){
+                $this->s__id_sede=$datos['sede'];
+                $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede);
+                //Para implementar cortes de control en 'cuadro' de la pantalla pant_reserva.
+                $this->s__establecimiento=$ua[0]['establecimiento'];
+                $this->s__sede=$ua[0]['sede'];
+                $this->s__solo_fecha=FALSE;
+                $this->calcular_horarios_disponibles_por_facultad();
+            }else{
+                if(isset($datos['fecha']) && !isset($datos['sede']) && !isset($datos['facultad'])){
+                    //Disparamos calculo de horarios disponibles global, para todas la unidades academicas 
+                    //registradas en el sistema.
+                    $this->s__solo_fecha=TRUE;
+                    $this->calcular_horarios_disponibles_global();
+                }else{
+                   $mensaje="Establecimiento y Sede se deben elegir en forma conjunta.";
+                   toba::notificacion()->agregar($mensaje, 'info');
+                }
+            }                        
+            //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
+            //opciones de busqueda modificando la clase Filtro.
             $this->s__filtro=new Filtro($this->s__horarios_disponibles);
         }
         
-        function calcular_horarios_disponibles_por_facultad (){
-                       
-            //obtenemos todas las aulas de un establecimiento
-            $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
+        function calcular_horarios_disponibles_global (){
+            $this->s__hd_global=array();
+            //Obtenemos todas las unidades academicas registradas en el sistema. 
+            $establecimientos=$this->dep('datos')->tabla('unidad_academica')->get_unidades_academicas();
             
-            if(count($aulas_ua)==0){
-                $mensaje=" La Unidad Académica seleccionada no posee aulas registradas en el Sistema ";
-                toba::notificacion()->agregar(utf8_decode($mensaje),'info');
+            //Recorremos el arreglo obtenido en el paso anterior y configuramos el id_sede
+            foreach($establecimientos as $clave=>$valor){
+                //Se usa dentro de calcular_horarios_disponibles_por_facultad.
+                $this->s__id_sede=$valor['id_sede'];
+                //Para implementar los cortes de control en el cuadro de pant_reserva.
+                $this->s__establecimiento=$valor['establecimiento'];
+                $this->s__sede=$valor['sede'];
+                //Iniciamos el calculo de horarios disponibles por cada establecimiento.
+                $this->calcular_horarios_disponibles_por_facultad();
+                //print_r("EST : {$this->s__establecimiento}, SEDE : {$this->s__sede}, ID_SEDE : {$this->s__id_sede} <br>");
+                //Guardamos en hd_global todos los horarios disponibles de los establecimientos registrados 
+                //en el sistema. 
+                $this->unificar_asignaciones(&$this->s__hd_global, $this->s__horarios_disponibles);
+                //Rseteamos s__horarios_disponibles para no repetir horarios disponibles en hd_global. Ademas
+                //es util para colapsar cuadro de pant_reserva.
                 $this->s__horarios_disponibles=array();
-            }
-            else{
-                $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
-                $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo);
-                $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
-                
-                //obtenemos todas las asignaciones para la fecha seleccionada
-                $asignaciones=$this->procesar_periodo($periodo, 'hd');
-            
-                //obtenemos las aulas que poseen asignaciones
-                $aulas=$this->obtener_aulas($asignaciones);
-                toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
-                $horarios_disponibles=new HorariosDisponibles();
-            
-                $this->s__horarios_disponibles=$horarios_disponibles->calcular_horarios_disponibles($aulas, $aulas_ua, $asignaciones);
-                                
-                if(count($this->s__horarios_disponibles)==0){
-                    $mensaje="La Unidad Académica seleccionada no posee horarios disponibles";
-                    toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
-                }
-
             }
             
         }
+        
+        function calcular_horarios_disponibles_por_facultad (){
+             
+            //Obtenemos todas las aulas de un establecimiento.
+            $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
+            
+            //Si el establecimiento no tiene aulas registradas en sistema no hacemos nada. Pero los mensajes
+            //deben quedar si elegimos establecimiento, sede y fecha.
+            if(count($aulas_ua)==0){
+                //Si esta condicion es true, en el formulario form_ingreso se eligio* establecimiento, sede y
+                //fecha.
+                if(!$this->s__solo_fecha){ 
+                    $mensaje=" La Unidad Académica seleccionada no posee aulas registradas en el Sistema ";
+                    toba::notificacion()->agregar(utf8_decode($mensaje),'info');
+                }
+            }
+            else{
+                $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
+                $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
+                print_r($periodo);
+                //Si un establecimiento no registro* periodos en el sistema no realizamos ningun 
+                //procesamiento.
+                if(count($periodo)>0){
+                    $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
+
+                    //Obtenemos todas las asignaciones para la fecha seleccionada.
+                    $asignaciones=$this->procesar_periodo($periodo, 'hd');
+
+                    //Obtenemos las aulas que poseen asignaciones.
+                    $aulas=$this->obtener_aulas($asignaciones);
+                    toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
+                    $horarios_disponibles=new HorariosDisponibles();
+                    //Si un establecimiento tiene registrado en el sistema periodos acade*micos que no tienen
+                    //asociadas asignaciones, la disponibilidad debe ser total para todas las aulas 
+                    //involucradas. Esto se realiza en la clase HorariosDisponibles cuando el cjto. de 
+                    //asignaciones es vacio.
+                    $this->s__horarios_disponibles=$horarios_disponibles->calcular_horarios_disponibles($aulas, $aulas_ua, $asignaciones);
+
+                    if(count($this->s__horarios_disponibles)==0){
+                        //Si esta condicion es true, en el formulario form_ingreso se eligio* establecimiento, sede
+                        //y fecha.
+                        if(!$this->s__solo_fecha){
+                            $mensaje="La Unidad Académica seleccionada no posee horarios disponibles";
+                            toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                        }
+                    }
+                                    
+                    //Agregamos a cada horario disponible el establecimiento y la sede, fundamentales para 
+                    //implementar cortes de control en 'cuadro' de la pantalla pant_reserva.
+                    $i=0;
+                    $n=count($this->s__horarios_disponibles);
+                    while($i < $n){
+                        $this->s__horarios_disponibles[$i]['establecimiento']=$this->s__establecimiento;
+                        $this->s__horarios_disponibles[$i]['sede']=$this->s__sede;
+                        $i++;
+                    }
+                }
+            }
+            
+        }
+        
                 
         /*
-         * genera un arreglo con las aulas utilizadas en un dia especifico.
+         * Genera un arreglo con las aulas utilizadas en un dia especifico.
          * @espacios_concedidos contiene todos los espacios concedidos en las aulas de una Unidad Academica.  
          */
         function obtener_aulas ($espacios_concedidos){
@@ -159,7 +227,7 @@ class ci_solicitar_aula extends toba_ci
         }
         
         /*
-         * A partir de una fecha devolvemos el anio 
+         * A partir de una fecha devolvemos el anio.
          */
         function recuperar_anio ($fecha){
             
@@ -171,10 +239,12 @@ class ci_solicitar_aula extends toba_ci
         //---- Filtro -----------------------------------------------------------------------
         
         function conf__filtro (toba_ei_filtro $filtro){
-            if(count($this->s__horarios_disponibles)==0){
+            //La operacion ** permite iniciar un calculo de horarios disponibles individual o global. 
+            //Segun la opcion elegida podemos guardar los resultados en s__horarios_disponibles o s__hd_glabal.
+            //Debemos colapsar el filtro si ambos arreglos estan vacios. Caso contrario debemos descolapsarlo.
+            if(count($this->s__horarios_disponibles)==0 && count($this->s__hd_global)==0){
                 $filtro->colapsar();
-            }
-            else{
+            }else{
                 $filtro->set_titulo(utf8_decode("Opciones de búsqueda"));
                 $filtro->descolapsar();
             }
@@ -211,32 +281,62 @@ class ci_solicitar_aula extends toba_ci
         //---- Cuadro -----------------------------------------------------------------------
         
         function conf__cuadro (toba_ei_cuadro $cuadro){
+            //Finalizamos la ejecucion en cada caso. Asi evitamos hacer comparaciones sin sentido.
             if(count($this->s__datos_filtrados)>0){
+                $cuadro->set_titulo("Horarios Disponibles");
                 $cuadro->set_datos($this->s__datos_filtrados);
+                return ; 
             }
-            else{
-            if(count($this->s__horarios_disponibles)==0){
+            if(count($this->s__horarios_disponibles)==0 && count($this->s__hd_global)==0){
                 $cuadro->colapsar();
+                return ;
             }
-            else{
+            if(count($this->s__horarios_disponibles)>0 && count($this->s__hd_global)==0){
                 $cuadro->descolapsar();
+                $fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
+                $descripcion=  strtoupper("horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
+                $cuadro->set_titulo(utf8_decode($descripcion));
                 $cuadro->set_datos($this->s__horarios_disponibles);
+                return ;
             }
+            if(count($this->s__horarios_disponibles)==0 && count($this->s__hd_global)>0){
+                $cuadro->descolapsar();
+                $fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
+                $descripcion=  strtoupper("horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
+                $cuadro->set_titulo(utf8_decode($descripcion));
+                $cuadro->set_datos($this->s__hd_global);
+                return ; //Lo dejamos igual.
             }
+            
         }
         
         function evt__cuadro__seleccionar ($datos){
-            //es necesario usar strtotime para no generar conflictos entre fechas
+            
+            //Es necesario usar strtotime para no generar conflictos entre fechas.
             $datos['fecha']=date('d-m-Y', strtotime($this->s__fecha_consulta));
+            //Obtenemos el establecimiento al que pertenece el usuario logueado. Es quien realiza el pedido de 
+            //aula. Estas sentencias se deben cambiar cuando existan perfiles de datos.
+            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $id_sede=5;
+            $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($id_sede);
+            $datos['facultad']=$ua[0]['establecimiento'];
+            $this->s__sigla_origen=$ua[0]['sigla'];
+            
+            //El establecimiento_destino solamente se debe mostrar en el formulario para saber a quien le estamos
+            //haciendo un pedido de aula. En la base de datos debemos registrar quien realiza el pedido, en este 
+            //caso la SIGLA del campo facultad.
             $this->s__datos_cuadro=$datos;
+            
             $this->set_pantalla("pant_edicion");
         }
         
         function evt__volver (){
             $this->set_pantalla("pant_reserva");
         }
-    
+        
+        //-----------------------------------------------------------------------------------
         //---- Pant Edicion -----------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
         
         function conf__pant_edicion (toba_ei_pantalla $pantalla){
             $this->pantalla()->tab('pant_reserva')->desactivar();
@@ -247,24 +347,48 @@ class ci_solicitar_aula extends toba_ci
 	function conf__formulario(toba_ei_formulario $form)
 	{
             
-                $fecha= date('d-m-Y');
-                
-                //$nro_solicitud=  recuperar_secuencia('solicitud_id_solicitud_seq');
-                $form->ef('fecha_actual')->set_estado($fecha);
-                $form->ef('solicitud')->set_estado_defecto(16743);
-                $form->ef('inicio')->set_estado($this->s__datos_cuadro['hora_inicio']);
-                $form->ef('fin')->set_estado($this->s__datos_cuadro['hora_fin']);
-                
-                if(!$this->s__solicitud_registrada){
-                    $form->ef('facultad_destino')->set_estado($this->s__datos_form['facultad']);
-                    $form->set_datos($this->s__datos_cuadro);
-                }
+            $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__fecha_consulta)));
+            $form->ef('dia')->set_estado(utf8_decode($this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))));
+            $form->ef('inicio')->set_estado($this->s__datos_cuadro['hora_inicio']);
+            $form->ef('fin')->set_estado($this->s__datos_cuadro['hora_fin']);
+            
+            //Cargamos informacion por defecto en formulario de la pantalla pant_edicion.
+            if(!$this->s__solicitud_registrada){
+                $form->ef('establecimiento')->set_estado($this->s__datos_form['facultad']);
+                $form->set_datos($this->s__datos_cuadro);
+            }
             
 	}
         
-                
-        function ajax__autocompletar_form ($legajo, toba_ajax_respuesta $respuesta){
+        //-------------------------------------------------------------------------------------
+        //---- Funciones para autocompletar datos relacionados a docentes u organizaciones ----
+        //---- en formulario de la pantalla pant_edcicion -------------------------------------
+        //-------------------------------------------------------------------------------------
+        
+        /*
+         * @id_organizacion o @legajo : es el dato que transferimos desde el cliente.
+         */
+        function ajax__autocompletar_org ($id_organizacion, toba_ajax_respuesta $respuesta){
+            //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
+            $sql="SELECT *
+                  FROM organizacion 
+                  WHERE id_organizacion=$id_organizacion";
+            $datos_org=toba::db('rukaja')->consultar($sql);
+            print_r($datos_org);
+            if(count($datos_org) != 0){
+                $respuesta->agregar_cadena('agente', 'organizacion');
+                $respuesta->agregar_cadena('nombre', $datos_org[0]['nombre']);
+                $respuesta->agregar_cadena('telefono', $datos_org[0]['telefono']);
+                $respuesta->agregar_cadena('email', $datos_org[0]['email']);
+            }else{
+                toba::notificacion()->agregar_mensaje("Sin Respuesta", 'info');
+            }
             
+        }
+        
+        
+        function ajax__autocompletar_form ($legajo, toba_ajax_respuesta $respuesta){
+            //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
             $sql="SELECT t_p.nombre,
                          t_p.apellido
                   FROM persona t_p 
@@ -277,7 +401,7 @@ class ci_solicitar_aula extends toba_ci
             
             if(count($datos_docente) != 0){
                 
-                $respuesta->agregar_cadena('accion', "y");
+                $respuesta->agregar_cadena('agente', 'docente');
                 $respuesta->agregar_cadena('nombre', $datos_docente[0]['nombre']);
                 $respuesta->agregar_cadena('apellido', $datos_docente[0]['apellido']);
             }
@@ -287,58 +411,96 @@ class ci_solicitar_aula extends toba_ci
             
             
         }
+        
+        //------------------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------------------
 
 	function evt__formulario__alta($datos)
 	{
+            //Si el usuario especifica otro tipo de asignacion debemos guardarlo en la base de datos para que este
+            //disponible en otro momento.
             if(strcmp('OTRO', $datos['tipo'])==0){
                 $this->dep('datos')->tabla('tipo_asignacion')->nueva_fila(array('tipo'=>  strtoupper($datos['tipo_nombre'])));
                 $this->dep('datos')->tabla('tipo_asignacion')->sincronizar();
                 $this->dep('datos')->tabla('tipo_asignacion')->resetear();
             }
             
-            //persistimos informacion en la tabla persona, no es lo mejor, pero hay que ahorrarse 
-            //complicaciones.
+            //Registramos una nueva organizacion en el sistema.
             if(strcmp('Organizacion', $datos['tipo'])==0){
-                $organizacion=array(
-                    'nro_doc' => strtoupper($datos['nombre_org']),
-                    'tipo_doc' => 'ORG',
-                    'telefono' => $datos['telefono_org'],
-                    'correo_electronico' => strtolower($datos['email_org']),
-                    'nombre' => strtoupper($datos['nombre_org']),
-                    'apellido' => ' '
-                );
-                $this->dep('datos')->tabla('persona')->nueva_fila($organizacion);
-                $this->dep('datos')->tabla('persona')->sincronizar();
-                $this->dep('datos')->tabla('persona')->resetear();
+                //Verificamos si la organizacion ya existe en el sistema. Para ello usamos la clave del popup
+                //para hacer una consulta en la base de datos.
+                $org=$this->dep('datos')->tabla('organizacion')->get_organizacion($datos['org']);
+                if(count($org)==0){ //Si la organizacion no existe, la registramos en el sistema.
+                    $organizacion=array(
+                        'telefono' => $datos['telefono_org'],
+                        'email' => strtolower($datos['email_org']),
+                        'nombre' => strtoupper($datos['nombre_org']),
+                    );
+                    $this->dep('datos')->tabla('organizacion')->nueva_fila($organizacion);
+                    $this->dep('datos')->tabla('organizacion')->sincronizar();
+                    $this->dep('datos')->tabla('organizacion')->resetear();
+                }
             }
             
-            //anteriormente se hacia un chequeo de horarios, ya no es necesario
+            //Anteriormente se hacia un chequeo de horarios, ya no es necesario, porque se hace en el cliente.
             $this->registrar_solicitud($datos);
                         
 	}
-                
+        
+        /*
+         * Registramos una solicitud de aula. Agregamos la logica necesaria teniendo en cuenta los tipos de 
+         * solicitantes.
+         */
         function registrar_solicitud ($datos){
+            $apellido="";
+            if(strcmp($datos['tipo'], 'Docente')){
+                $nombre=  strtoupper($datos['nombre']);
+                $apellido=strtoupper($datos['apellido']);
+            }else{
+                $nombre=  strtotime($datos['nombre_org']);
+            }
             
-            $nombre=  strtoupper($datos['nombre']);
-            $apellido=  strtoupper($datos['apellido']);
+            //Fecha de solicitud.
             $fecha= date('d-m-Y', strtotime($this->s__fecha_consulta));
             
+            //Las solicitudes pueden estar en dos estados posibles, pendiente o finalizada.
             $datos['estado']='Pendiente';
+            //Especificamos el aula y la sede seleccionada para hacer un pedido de aula.
             $datos['id_sede']=$this->s__id_sede;
             $datos['id_aula']=$this->s__datos_cuadro['id_aula'];
+            //Especificamos la sigla del establecimiento que realiza un pedido de aula. En la tabla solicitud
+            //el campo para este dato es character varying (6).
+            $datos['facultad']=$this->s__sigla_origen;
             
             $descripcion="$nombre $apellido ha registrado una SOLICITUD de aula para el dia $fecha, en su Establecimiento. ";
 
-            $datos['tipo']=TRUE;
             $asunto="SOLICITUD DE AULA";
-                            
+            print_r($datos);exit();
+            //Depuramos el arreglo $datos utilizando lo estrictamente necesario para registrar una solicitud
+            //Ver que sucede con los responsables de aula docente u organizacion.
+            $solicitud=array(
+                'nombre' => '',
+                'apellido' => '',
+                'fecha' => '',
+                'capacidad' => '',
+                'finalidad' => '',
+                'hora_inicio' => '',
+                'hora_fin' => '',
+                'id_sede' => '',
+                'estado' => '',
+                'legajo' => '???',
+                'id_aula' => '',
+                'facultad' => 'sigla'
+            );
             $this->dep('datos')->tabla('solicitud')->nueva_fila($datos);
             $this->dep('datos')->tabla('solicitud')->sincronizar();
             $this->dep('datos')->tabla('solicitud')->resetear();
             
+            //Obtenemos el correo electronico del destinatario del pedido de aula.
             $id_sede=$datos['id_sede'];
             $destinatario=$this->dep('datos')->tabla('persona')->get_correo_electronico($id_sede);
             
+            //Creamos un objeto para enviar un email de notificacion.
             $email=new Email();
             $envio=$email->enviar_email($destinatario[0]['correo_electronico'], $asunto, $descripcion);
             
@@ -349,6 +511,8 @@ class ci_solicitar_aula extends toba_ci
             else{
                 $mensaje=' La solicitud se registró en forma exitosa ';
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                //El pedido de pagina genera que el formulario se pueda cargar  nuevamente con datos por defecto
+                //pero esto no tiene sentido porque cargamos la solicitud y nos vamos a la pantalla pant_reserva.
                 $this->s__solicitud_registrada=TRUE;
             }
             
@@ -407,7 +571,7 @@ class ci_solicitar_aula extends toba_ci
                     case 'Cuatrimestre' : if(strcmp($accion, 'hd')==0){
                                               $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
-                                          else{
+                                          else{//En esta rama obtenemos las asignaciones para el dia seleccionado 
                                               $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_fecha_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
                                               $periodo=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
@@ -502,7 +666,7 @@ class ci_solicitar_aula extends toba_ci
         }
         
         /*
-         * devuelve true si una asignacion por periodo esta incluida en una definitiva.
+         * Devuelve true si una asignacion por periodo esta incluida en una definitiva. Falta ver inclusion parcial
          */
         function existe_inclusion ($periodo, $definitiva){
             //(strcmp($periodo['aula'], $definitiva['aula'])==0)
@@ -519,7 +683,26 @@ class ci_solicitar_aula extends toba_ci
             }            
         }
         
-
+        //---- Para mi estos metodos no se ejecutan, pero hay que especificarlos en el toba_editor ----
+        function get_persona ($legajo){
+            $sql="SELECT nombre, apellido, legajo
+                  FROM docente 
+                  WHERE legajo=$legajo";
+            $docente=toba::db('mocovi')->consultar($sql);
+            
+            $this->dep('formulario')->ef('legajo')->set_estado($docente[0]['legajo']);
+            $this->dep('formulario')->ef('nombre')->set_estado($docente[1]['nombre']);
+            
+            return ($docente[2]['legajo']);
+        }
+        
+        function get_organizacion ($id_organizacion){
+            $sql="SELECT *
+                  FROM organizacion 
+                  WHERE id_organizacion=$id_organizacion";
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
 }
 
 ?>

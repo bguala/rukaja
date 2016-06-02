@@ -5,15 +5,15 @@ include_once(toba_dir().'/proyectos/rukaja/php/api/Filtro.php');
 
 class ci_calendario_comahue extends toba_ci
 {
-        protected $s__fecha_seleccionada;                //guarda la fecha seleccionada del calendario
-        protected $s__tipo_seleccion;                    //guarda la opcion elegida en el combo tipo
-        protected $s__fecha_consulta;                    //para extraer asignaciones
-        protected $s__dia_consulta;                      //para extraer asignaciones
-        protected $s__horarios_disponibles=array();      //guarda todos los horarios disponibles para una fecha especifica
-        protected $s__id_sede;                           //guarda la sede del usuario logueado
-        protected $s__asignaciones=array();              //guarda las asignaciones que hay que mostrar en el cuadro
-        protected $s__asignaciones_periodo;              //guarda las asignaciones por periodo que estan solapadas con asignaciones definitivas
-        protected $s__datos_filtro=array();              //guarda un cjto de registros filtrados
+        protected $s__fecha_seleccionada;                //Guarda la fecha seleccionada del calendario
+        protected $s__tipo_seleccion;                    //Guarda la opcion elegida en el combo tipo
+        protected $s__fecha_consulta;                    //Para extraer asignaciones
+        protected $s__dia_consulta;                      //Para extraer asignaciones
+        protected $s__horarios_disponibles=array();      //Guarda todos los horarios disponibles para una fecha especifica
+        protected $s__id_sede;                           //Guarda la sede del usuario logueado
+        protected $s__asignaciones=array();              //Guarda las asignaciones que hay que mostrar en el cuadro
+        protected $s__asignaciones_periodo;              //Guarda las asignaciones por periodo que estan solapadas con asignaciones definitivas
+        protected $s__datos_filtro=array();              //Guarda un cjto de registros filtrados
         protected $s__asig_solapadas=null;
         
                 
@@ -64,7 +64,7 @@ class ci_calendario_comahue extends toba_ci
         //---- Formulario -------------------------------------------------------------------------------
         
         function conf__formulario (toba_ei_formulario $form){
-            
+            //Obtenemos la sede del usuario logueado en el sistema.
             $nombre_usuario=toba::usuario()->get_id();
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
            
@@ -188,14 +188,15 @@ class ci_calendario_comahue extends toba_ci
         }
         
         function evt__cuadro_horarios_disponibles__seleccionar ($datos){
+            
             $parametros=array(
                 'id_aula' => $datos['id_aula'],
                 'hora_inicio' => $datos['hora_inicio'],
                 'hora_fin' => $datos['hora_fin'],
-                'dia_semana' => utf8_decode($this->s__dia_consulta),
+                'dias' => $this->s__dia_consulta,
                 'fecha_inicio' => $this->s__fecha_consulta,
-                'fecha_fin' => $this->s__fecha_consulta
-                
+                'fecha_fin' => $this->s__fecha_consulta,
+                'tipo' => 'Periodo'
             );
             //Generamos un vinculo a la operacion 'Cargar Asignaciones'.
             toba::vinculador()->navegar_a("rukaja", 3567,$parametros);
@@ -337,7 +338,7 @@ class ci_calendario_comahue extends toba_ci
         
         function obtener_asignaciones (){
             $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
-            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo);            
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);            
             print_r($periodo);
             $this->s__asignaciones=$this->procesar_periodo($periodo, 'hr');
             
@@ -361,7 +362,7 @@ class ci_calendario_comahue extends toba_ci
                         
             $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
             
-            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo);
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
             
             $asignaciones=$this->procesar_periodo($periodo, 'hd');            
                         

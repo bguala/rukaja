@@ -68,40 +68,73 @@ class formulario_extendido extends toba_ei_formulario
             var tipo=this.ef('tipo_agente').get_estado();
             
             switch(tipo){
-                case 'Docente' : this.ef('nombre_org').ocultar();
+                case 'Docente' : //Ocultamos campos pertenecientes a una organizacion
+                                 this.ef('org').ocultar();
+                                 this.ef('org').set_estado('');
+                                 this.ef('nombre_org').ocultar();
                                  this.ef('nombre_org').set_estado('');
                                  this.ef('telefono_org').ocultar();
                                  this.ef('telefono_org').set_estado('');
+                                 //if (!/^([0-9])*[.]?[0-9]*$/.test(numero)) para validar numero decimal
                                  this.ef('email_org').ocultar();
                                  this.ef('email_org').set_estado('');
+                                 
+                                 
+                                 //Mostramos campos pertenecientes a un docente
                                  this.ef('legajo').mostrar();
+                                 this.ef('legajo').set_estado('');
+                                 
+
                                  this.ef('nombre').mostrar();
+                                 this.ef('nombre').set_solo_lectura(true);
                                  this.ef('apellido').mostrar();
+                                 this.ef('apellido').set_solo_lectura(true);
+                                 
                                  break;
                 
-                case 'Organizacion' : this.ef('nombre_org').mostrar();
+                case 'Organizacion' : //Mostramos campos pertenecientes a una organizacion
+                                      this.ef('nombre_org').mostrar();
+                                      this.ef('nombre_org').set_solo_lectura(false);
                                       this.ef('telefono_org').mostrar();
+                                      this.ef('telefono_org').set_solo_lectura(false);
                                       this.ef('email_org').mostrar();
+                                      this.ef('email_org').set_solo_lectura(false);
+                                      this.ef('org').mostrar();
+                                      
+                                      //Ocultamos campos pertenecientes a un docente y borramos informacion 
+                                      //cargada en ellos
                                       this.ef('legajo').ocultar();
                                       this.ef('legajo').set_estado('');
+                                      
                                       this.ef('nombre').ocultar();
                                       this.ef('nombre').set_estado(''),
                                       this.ef('apellido').ocultar();
                                       this.ef('apellido').set_estado('');
+                                      
                                       break;
                 
-                case 'nopar' : this.ef('nombre_org').mostrar();
+                case 'nopar' : //Restauramos el formulario original y borramos informacion cargada en los campos
+                               this.ef('org').mostrar();
+                               this.ef('org').set_estado('');
+                               this.ef('nombre_org').mostrar();
                                this.ef('nombre_org').set_estado('');
+                               this.ef('nombre_org').set_solo_lectura(true);
                                this.ef('telefono_org').mostrar();
                                this.ef('telefono_org').set_estado('');
+                               this.ef('telefono_org').set_solo_lectura(true);
                                this.ef('email_org').mostrar();
                                this.ef('email_org').set_estado('');
+                               this.ef('email_org').set_solo_lectura(true);
+                               
                                this.ef('legajo').mostrar();
                                this.ef('legajo').set_estado('');
+                               
                                this.ef('nombre').mostrar();
                                this.ef('nombre').set_estado('');
+                               this.ef('nombre').set_solo_lectura(true);
                                this.ef('apellido').mostrar();
                                this.ef('apellido').set_estado('');
+                               this.ef('apellido').set_solo_lectura(true);
                                break;
             }
             
@@ -109,15 +142,16 @@ class formulario_extendido extends toba_ei_formulario
         }
         
         {$this->objeto_js}.evt__tipo__validar = function (){
-            var tipo=this.ef('tipo').get_estado();
+            var tipo=this.ef('tipo').get_estado().toString();
             
             if(tipo == 'OTRO'){
+                this.ef('tipo_nombre').mostrar();
                 this.ef('tipo_nombre').set_solo_lectura(false);
                 this.ef('tipo_nombre').set_obligatorio(true);
             }
             else{
-                this.ef('tipo_nombre').set_solo_lectura(true);
-                this.ef('tipo_nombre').set_obligatorio(true);
+                this.ef('tipo_nombre').ocultar();
+                this.ef('tipo_nombre').set_obligatorio(false);
                 this.ef('tipo_nombre').set_estado('');
             }
             
@@ -217,16 +251,18 @@ class formulario_extendido extends toba_ei_formulario
             return true;
         }
             
-        {$this->objeto_js}.evt__legajo__validar = function () {
-                this.controlador.ajax_cadenas('autocompletar_form', this.ef('legajo').get_estado(), this, this.atender_respuesta);
-                return true;
+        {$this->objeto_js}.evt__org__validar = function (){
+            
+            this.controlador.ajax_cadenas('autocompletar_org', this.ef('org').get_estado(), this, this.atender_respuesta);
+            return true;
+            
         }
         
         {$this->objeto_js}.atender_respuesta = function (respuesta) {
                 
-                var accion = respuesta.get_cadena('accion');
-                
-                if(accion == 'y'){
+                var agente = respuesta.get_cadena('agente');
+                                
+                if(agente == 'docente'){
                     var nombre = respuesta.get_cadena('nombre');
                     var apellido = respuesta.get_cadena('apellido');
             
@@ -236,16 +272,19 @@ class formulario_extendido extends toba_ei_formulario
                     return false;
                 }
                 else{
-                    
-                    alert('El legajo ingresado no pertenece a un docente registrado en el sistema');
-                    //this.ef('legajo').set_error('El legajo ingresado no pertenece a un docente registrado en el sistema');
-                    this.ef('legajo').set_estado('');
-                    this.ef('nombre').set_estado('');
-                    this.ef('apellido').set_estado('');
-                    
+                    this.ef('nombre_org').set_estado(respuesta.get_cadena('nombre'));
+                    this.ef('telefono_org').set_estado(respuesta.get_cadena('telefono'));
+                    this.ef('email_org').set_estado(respuesta.get_cadena('email'));                    
                     return false;
                 }
                 
+        }
+        
+        {$this->objeto_js}.evt__legajo__validar = function (){
+            
+            this.controlador.ajax_cadenas('autocompletar_form', this.ef('legajo').get_estado(), this, this.atender_respuesta);
+            return true;
+            
         }
         ";
     }

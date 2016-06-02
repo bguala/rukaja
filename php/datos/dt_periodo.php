@@ -140,15 +140,18 @@ class dt_periodo extends toba_datos_tabla
         
         /*
          * Esta funcion se utiliza en las operaciones que requieren calcular espacios disponibles
-         * (Calendario Comahue, Generar Solicitud, Ver Solicitudes). Nos permite 
+         * (Calendario Comahue, Generar Solicitud, Ver Solicitudes, Seleccionar Aula). Nos permite 
          * obtener periodos para comenzar el calculo de horarios disponibles.
+         * @$id_sede : es necesario incluirlo en la consulta porque cada establecimiento crea su propio
+         * calendario.
          */
-        function get_periodo_calendario ($fecha, $anio_lectivo){
+        function get_periodo_calendario ($fecha, $anio_lectivo, $id_sede){
             $sql="(SELECT t_p.id_periodo, 'Cuatrimestre' as tipo_periodo 
                   FROM periodo t_p 
                   JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
                   WHERE (t_p.anio_lectivo=$anio_lectivo) AND 
-                        ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) 
+                        ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) AND
+                        (t_p.id_sede=$id_sede) ) 
                   
                   UNION 
                   
@@ -156,7 +159,8 @@ class dt_periodo extends toba_datos_tabla
                   FROM periodo t_p 
                   JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo)
                   WHERE (t_p.anio_lectivo=$anio_lectivo) AND 
-                        ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))";
+                        ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) AND
+                        (t_p.id_sede=$id_sede) )";
             
             return (toba::db('rukaja')->consultar($sql));
         }

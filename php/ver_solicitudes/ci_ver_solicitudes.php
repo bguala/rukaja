@@ -2,10 +2,16 @@
 
 require_once(toba_dir().'/php/3ros/phpmailer/class.phpmailer.php');
 require_once(toba_dir().'/php/3ros/ezpdf/class.ezpdf.php');
-require_once(toba_dir().'/proyectos/gestion_aulas/php/api/HorariosDisponibles.php');
-require_once(toba_dir().'/proyectos/gestion_aulas/php/api/Filtro.php');
-require_once(toba_dir().'/proyectos/gestion_aulas/php/api/Email.php');
-
+require_once(toba_dir().'/proyectos/rukaja/php/api/HorariosDisponibles.php');
+require_once(toba_dir().'/proyectos/rukaja/php/api/Filtro.php');
+require_once(toba_dir().'/proyectos/rukaja/php/api/Email.php');
+/*
+ * A esta operacion debemos introducirle los siguientes cambios:
+ * a) El usuario logueado debe poder ver las solicitudes que le hicieron y las solicitudes que realizo*.
+ * A estas ultimas debe poder editarlas, borrarlas y eliminarlas. Esta ultima accion es util porque libera un posible
+ * espacio a ocupar.
+ * b)Se deben listar las solicitudes cuya fecha_solicitud sea mayor a la fecha_actual y con estado pendiente.
+ */
 class ci_ver_solicitudes extends toba_ci
 {
         protected $s__contador=0;
@@ -99,7 +105,9 @@ class ci_ver_solicitudes extends toba_ci
             
             $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
             $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
-            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario(date('Y-m-d', strtotime($this->s__fecha_consulta)), $anio_lectivo);
+            //Debemos usar la fecha seleccionada por el usuario. Necesitamos brindar una respuesta concreta
+            //segun los espacios ocupados en ese dia. DEBEMOS MEJORAR ESO.
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario(date('Y-m-d', strtotime($this->s__fecha_consulta)), $anio_lectivo, $this->s__id_sede);
             print_r($periodo);
             //obtenemos las aulas del establecimiento 
             $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
