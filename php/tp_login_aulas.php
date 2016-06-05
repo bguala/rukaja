@@ -12,10 +12,10 @@ class login extends toba_tp_basico_titulo {
 //		$this->generar_ayuda();		
 //		echo "<div class='item-barra-tit'>".$this->titulo_item()."</div>";
 //		echo "</div>\n\n";
-            echo "<div align='center'><div class='encabezado'>".toba_recurso::imagen_proyecto("rukaja.png", true, 420, 100)."</div></div>"
+            echo "<div align='center'><div class='encabezado'>".toba_recurso::imagen_proyecto("rukaja.png", true, 420, 100)."<div><a href='./manual_de_usuario.php' style='text-decoration:none;' target='_blank'>manual_de_usuario</a></div></div></div>"
             ;
 	}
-	
+        
 	protected function estilos_css()
 	{
 		parent::estilos_css();
@@ -80,12 +80,10 @@ class login extends toba_tp_basico_titulo {
                         }
                         
                         a:hover {
-                            color : white;
+                            color : black;
                         }
                         
-                        a:link {
-                            color : white;
-                        }
+                        
 		</style>			
 		";
 	}	
@@ -156,7 +154,7 @@ class login extends toba_tp_basico_titulo {
 	{
 		echo "</div></center>";	
                 
-		echo "<center><div class='pie'>Desarrollado por <strong><a href='http://euclides.uncoma.edu.ar/' style='text-decoration: none' target='_blank'>EQUIPO SIU UNCOMA</a></strong></div></center>";
+		echo "<center><div class='pie'>Desarrollado por <strong><a href='http://euclides.uncoma.edu.ar/' style='text-decoration: none;color:white;' target='_blank'>EQUIPO SIU UNCOMA</a></strong> 2015-2016</div></center>";
 //		echo "<div>Desarrollado por <strong><a href='http://www.siu.edu.ar' style='text-decoration: none' target='_blank'>SIU</a></strong></div>
 //			<div>2002-".date('Y')."</div>";
 		//echo "</div>";

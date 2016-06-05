@@ -22,15 +22,15 @@ class Email {
         $email->Host='smtp.gmail.com';
         $email->Port=465;
         //Estos son datos asociados a la cuenta del emisor de correo
-        $email->Username='sed.uncoma@gmail.com';
-        $email->Password='n1s.toba15';
+        $email->Username='rukaja.uncoma@gmail.com'; //n1s.toba15
+        $email->Password='rukaja2016';
         $email->Timeout=100;
         //Aqui se debe especificar el correo electronico del emisor
-        $email->SetFrom('sed.uncoma@gmail.com');
+        $email->SetFrom('rukaja.uncoma@gmail.com');
 
             try{
                 //En esta seccion se especifica el destinatario, el asunto y la descripcion
-                $email->AddAddress('sed.uncoma@gmail.com');
+                $email->AddAddress('rukaja.uncoma@gmail.com');
                 //$email->AddAddress($destinatario);
                 
                 $email->Subject=$asunto;

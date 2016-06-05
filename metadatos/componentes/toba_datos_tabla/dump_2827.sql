@@ -91,21 +91,7 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'C', --tipo
 	'0', --pk
 	'', --secuencia
-	'35', --largo
-	NULL, --no_nulo
-	'0', --no_nulo_db
-	'0', --externa
-	'solicitud'  --tabla
-);
-INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
-	'rukaja', --objeto_proyecto
-	'2827', --objeto
-	'1071', --col_id
-	'apellido', --columna
-	'C', --tipo
-	'0', --pk
-	'', --secuencia
-	'35', --largo
+	'70', --largo
 	NULL, --no_nulo
 	'0', --no_nulo_db
 	'0', --externa
@@ -188,7 +174,7 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'id_sede', --columna
 	'E', --tipo
 	'0', --pk
-	'solicitud_id_sede_seq', --secuencia
+	NULL, --secuencia
 	NULL, --largo
 	NULL, --no_nulo
 	'1', --no_nulo_db
@@ -204,20 +190,6 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'0', --pk
 	'', --secuencia
 	'12', --largo
-	NULL, --no_nulo
-	'0', --no_nulo_db
-	'0', --externa
-	'solicitud'  --tabla
-);
-INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
-	'rukaja', --objeto_proyecto
-	'2827', --objeto
-	'1080', --col_id
-	'legajo', --columna
-	'C', --tipo
-	'0', --pk
-	'', --secuencia
-	'20', --largo
 	NULL, --no_nulo
 	'0', --no_nulo_db
 	'0', --externa
@@ -246,6 +218,62 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'0', --pk
 	'', --secuencia
 	'6', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'solicitud'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2827', --objeto
+	'1153', --col_id
+	'tipo_agente', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	'12', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'solicitud'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2827', --objeto
+	'1154', --col_id
+	'id_responsable', --columna
+	'E', --tipo
+	'0', --pk
+	'', --secuencia
+	NULL, --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'solicitud'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2827', --objeto
+	'1155', --col_id
+	'tipo_asignacion', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	'20', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'solicitud'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2827', --objeto
+	'1156', --col_id
+	'id_sede_origen', --columna
+	'E', --tipo
+	'0', --pk
+	'', --secuencia
+	NULL, --largo
 	NULL, --no_nulo
 	'0', --no_nulo_db
 	'0', --externa

@@ -23,7 +23,14 @@ class ci_solicitar_aula extends toba_ci
         protected $s__sede;
         protected $s__hd_global=array();  
         protected $s__solo_fecha;
-        
+        //Guardamos el id del responsable de aula, puede ser docente u organizacion. Esto se hace  porque cuando
+        //pulsamos el boton Registrar Solicitud, se ejecuta una llamada ajax asociado al popup y borra el contenido
+        //de dicho campo. Como consecuencia al servidor no llega el legajo o el id_organizacion. Esta 
+        //informacion es fundamental paea registrar asignaciones.
+        protected $s__id_responsable;
+        protected $s__id_sede_origen;
+
+
         //-------------------------------------------------------------------------------------
         //---- Pant Busqueda ------------------------------------------------------------------
         //-------------------------------------------------------------------------------------
@@ -131,13 +138,14 @@ class ci_solicitar_aula extends toba_ci
                         }
                     }
                                     
-                    //Agregamos a cada horario disponible el establecimiento y la sede, fundamentales para 
-                    //implementar cortes de control en 'cuadro' de la pantalla pant_reserva.
+                    //Agregamos a cada horario disponible el establecimiento, la sede y el id_sede, fundamentales 
+                    //para implementar cortes de control en 'cuadro' de la pantalla pant_reserva.
                     $i=0;
                     $n=count($this->s__horarios_disponibles);
                     while($i < $n){
                         $this->s__horarios_disponibles[$i]['establecimiento']=$this->s__establecimiento;
                         $this->s__horarios_disponibles[$i]['sede']=$this->s__sede;
+                        $this->s__horarios_disponibles[$i]['id_sede']=$this->s__id_sede;
                         $i++;
                     }
                 }
@@ -321,10 +329,18 @@ class ci_solicitar_aula extends toba_ci
             $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($id_sede);
             $datos['facultad']=$ua[0]['establecimiento'];
             $this->s__sigla_origen=$ua[0]['sigla'];
+            //Guardamos el id_sede_origen para poder obtener las solicitudes realizadas por un usuario, esto 
+            //permite editar o eliminar solicitudes. Los pedidos de aula son realizados unicamente por el 
+            //responsable de aulas de cada establecimiento.
+            $this->s__id_sede_origen=$id_sede;
             
             //El establecimiento_destino solamente se debe mostrar en el formulario para saber a quien le estamos
-            //haciendo un pedido de aula. En la base de datos debemos registrar quien realiza el pedido, en este 
+            //haciendo un pedido de aula. En la tabla solicitud debemos registrar quien realiza el pedido, en este 
             //caso la SIGLA del campo facultad.
+            //La informacion que se guarda en datos_cuadro (id_aula, hora_inicio, hora_fin, capacidad, 
+            //establecimiento, id_sede) sirve para:
+            //a) cargar en la solicitud el id_aula e id_sede seleccionados.
+            //b) cargar 'formulario' con datos por defecto.
             $this->s__datos_cuadro=$datos;
             
             $this->set_pantalla("pant_edicion");
@@ -353,10 +369,11 @@ class ci_solicitar_aula extends toba_ci
             $form->ef('fin')->set_estado($this->s__datos_cuadro['hora_fin']);
             
             //Cargamos informacion por defecto en formulario de la pantalla pant_edicion.
-            if(!$this->s__solicitud_registrada){
+            //if(!$this->s__solicitud_registrada){
+                //Guardamos el establecimiento destino.
                 $form->ef('establecimiento')->set_estado($this->s__datos_form['facultad']);
                 $form->set_datos($this->s__datos_cuadro);
-            }
+            //}
             
 	}
         
@@ -369,6 +386,7 @@ class ci_solicitar_aula extends toba_ci
          * @id_organizacion o @legajo : es el dato que transferimos desde el cliente.
          */
         function ajax__autocompletar_org ($id_organizacion, toba_ajax_respuesta $respuesta){
+            $this->s__id_responsable=$id_organizacion;
             //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
             $sql="SELECT *
                   FROM organizacion 
@@ -388,13 +406,13 @@ class ci_solicitar_aula extends toba_ci
         
         
         function ajax__autocompletar_form ($legajo, toba_ajax_respuesta $respuesta){
+            $this->s__id_responsable=$legajo;
             //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
-            $sql="SELECT t_p.nombre,
-                         t_p.apellido
-                  FROM persona t_p 
-                  JOIN docente t_d ON (t_p.nro_doc=t_d.nro_doc)
-                  WHERE t_d.legajo='$legajo'";
-            $datos_docente=toba::db('rukaja')->consultar($sql);
+            $sql="SELECT nombre,
+                         apellido
+                  FROM docente 
+                  WHERE legajo='$legajo'";
+            $datos_docente=toba::db('mocovi')->consultar($sql);
             
             $contenido=$this->dep('formulario')->ef('legajo')->get_estado();
             print_r("Este es el valor de contenido : $contenido");
@@ -405,10 +423,7 @@ class ci_solicitar_aula extends toba_ci
                 $respuesta->agregar_cadena('nombre', $datos_docente[0]['nombre']);
                 $respuesta->agregar_cadena('apellido', $datos_docente[0]['apellido']);
             }
-            else{
-                $respuesta->agregar_cadena('accion', "x");
-            }
-            
+                      
             
         }
         
@@ -426,22 +441,40 @@ class ci_solicitar_aula extends toba_ci
             }
             
             //Registramos una nueva organizacion en el sistema.
-            if(strcmp('Organizacion', $datos['tipo'])==0){
+            if(strcmp('Organizacion', $datos['tipo_agente'])==0){
+                //Si no iniciamos una busqueda por popup de la organizacion en s__id_responsable se guarda una 
+                //cadena vacia, caso contrario se guarda un numero como string. Si tenemos una cadena vacia
+                //y convertimos el string en entero obtenemos un cero como resultado. El id_organizacion es un 
+                //atributo de tipo serial y el rango de valores de este tipo de dato comienza en 1.                
+                $id=  intval($this->s__id_responsable);
+                //$tipo=  gettype($id);
+                //print_r($datos);print_r("Este es el valor : $id y este es el tipo : $tipo");exit();
+                
                 //Verificamos si la organizacion ya existe en el sistema. Para ello usamos la clave del popup
                 //para hacer una consulta en la base de datos.
-                $org=$this->dep('datos')->tabla('organizacion')->get_organizacion($datos['org']);
-                if(count($org)==0){ //Si la organizacion no existe, la registramos en el sistema.
+                if($id == 0){ //Si la organizacion no existe, la registramos en el sistema.
                     $organizacion=array(
                         'telefono' => $datos['telefono_org'],
                         'email' => strtolower($datos['email_org']),
                         'nombre' => strtoupper($datos['nombre_org']),
                     );
+                    
                     $this->dep('datos')->tabla('organizacion')->nueva_fila($organizacion);
                     $this->dep('datos')->tabla('organizacion')->sincronizar();
                     $this->dep('datos')->tabla('organizacion')->resetear();
+                    
+                    //Necesitamos el id_organizacion de la nueva tupla anteriormente insertada, para poder hacer
+                    //la asociacion correcta entre la solicitud y el responsable de la misma. Este atributo se utiliza
+                    //en la funcion registrar_solicitud. Solamente se puede hacer uso de la secuencia cuando
+                    //insertamos una nueva tupla en una relacion, caso contrario ocurre un error.
+                    //Si insertamos tuplas en una relacion a traves de un script sql, con sentencias insert into, 
+                    //la secuencia no se resetea, debemos hacerlo manualmente desde postgres con la siguiente 
+                    //sentencia select setval('tabla_id_seq', nuevo_valor, 't' )
+                    $this->s__id_responsable=  recuperar_secuencia('organizacion_id_organizacion_seq');
+                    
                 }
             }
-            
+            //print_r($datos);
             //Anteriormente se hacia un chequeo de horarios, ya no es necesario, porque se hace en el cliente.
             $this->registrar_solicitud($datos);
                         
@@ -452,52 +485,46 @@ class ci_solicitar_aula extends toba_ci
          * solicitantes.
          */
         function registrar_solicitud ($datos){
-            $apellido="";
-            if(strcmp($datos['tipo'], 'Docente')){
-                $nombre=  strtoupper($datos['nombre']);
-                $apellido=strtoupper($datos['apellido']);
-            }else{
-                $nombre=  strtotime($datos['nombre_org']);
-            }
-            
+            //Guardamos en nombre la cambinacion nombre-apellido para un docente o el nombre completo de una 
+            //organizacion.
+            $nombre=(strcmp($datos['tipo_agente'], 'Docente')==0) ? strtoupper(($datos['nombre'])." ".($datos['apellido'])) : (strtoupper($datos['nombre_org'])) ;
+                        
             //Fecha de solicitud.
-            $fecha= date('d-m-Y', strtotime($this->s__fecha_consulta));
+            $fecha= date('d-m-Y', strtotime($this->s__fecha_consulta));           
             
-            //Las solicitudes pueden estar en dos estados posibles, pendiente o finalizada.
-            $datos['estado']='Pendiente';
-            //Especificamos el aula y la sede seleccionada para hacer un pedido de aula.
-            $datos['id_sede']=$this->s__id_sede;
-            $datos['id_aula']=$this->s__datos_cuadro['id_aula'];
-            //Especificamos la sigla del establecimiento que realiza un pedido de aula. En la tabla solicitud
-            //el campo para este dato es character varying (6).
-            $datos['facultad']=$this->s__sigla_origen;
-            
-            $descripcion="$nombre $apellido ha registrado una SOLICITUD de aula para el dia $fecha, en su Establecimiento. ";
+            //Guardamos el id_sede del establecimiento al que le hacemos un pedido de aula.
+            $id_sede=$this->s__datos_cuadro['id_sede'];
+            //$tipo=  gettype($this->s__id_responsable);
+            //print_r("Este es el id_responsable: {$this->s__id_responsable} y este es el tipo : $tipo");exit();                 
+            $descripcion="$nombre ha registrado una SOLICITUD de aula para el dia $fecha, en su Establecimiento. ";
 
             $asunto="SOLICITUD DE AULA";
-            print_r($datos);exit();
-            //Depuramos el arreglo $datos utilizando lo estrictamente necesario para registrar una solicitud
-            //Ver que sucede con los responsables de aula docente u organizacion.
+            
+            //Depuramos el arreglo $datos utilizando lo estrictamente necesario para registrar una solicitud.
             $solicitud=array(
-                'nombre' => '',
-                'apellido' => '',
-                'fecha' => '',
-                'capacidad' => '',
-                'finalidad' => '',
-                'hora_inicio' => '',
-                'hora_fin' => '',
-                'id_sede' => '',
-                'estado' => '',
-                'legajo' => '???',
-                'id_aula' => '',
-                'facultad' => 'sigla'
+                'nombre' => $nombre,
+                'fecha' => $fecha,
+                'capacidad' => $datos['capacidad'],
+                'finalidad' => $datos['finalidad'],
+                'hora_inicio' => $datos['hora_inicio'],
+                'hora_fin' => $datos['hora_fin'], 
+                'id_sede' => $id_sede,
+                'estado' => 'PENDIENTE', //Las solicitudes pueden estar en dos estados posibles, pendiente o finalizada.
+                'id_responsable' => intval($this->s__id_responsable),
+                'tipo_agente' => $datos['tipo_agente'],
+                'tipo_asignacion' => $datos['tipo'],
+                'id_sede_origen' => $this->s__id_sede_origen,
+                'id_aula' => $this->s__datos_cuadro['id_aula'],
+                'facultad' => $this->s__sigla_origen        //Especificamos la sigla del establecimiento que realiza un pedido de aula. En la tabla solicitud
+                                                            //el campo para este dato es character varying (6).
             );
-            $this->dep('datos')->tabla('solicitud')->nueva_fila($datos);
+            
+            //Registramos la solicitud en la base de datos.
+            $this->dep('datos')->tabla('solicitud')->nueva_fila($solicitud);
             $this->dep('datos')->tabla('solicitud')->sincronizar();
             $this->dep('datos')->tabla('solicitud')->resetear();
             
             //Obtenemos el correo electronico del destinatario del pedido de aula.
-            $id_sede=$datos['id_sede'];
             $destinatario=$this->dep('datos')->tabla('persona')->get_correo_electronico($id_sede);
             
             //Creamos un objeto para enviar un email de notificacion.
@@ -505,16 +532,21 @@ class ci_solicitar_aula extends toba_ci
             $envio=$email->enviar_email($destinatario[0]['correo_electronico'], $asunto, $descripcion);
             
             if(!$envio){
-                toba::notificacion()->agregar(utf8_decode('Se produjo un error al intentar enviar un email de notificación.'), 'error');
-                $this->s__solicitud_registrada=FALSE;
+                toba::notificacion()->agregar(utf8_decode('La solicitud se registró en forma exitosa, pero se produjo un error al intentar enviar un email de notificación.'), 'error');
+                //$this->s__solicitud_registrada=FALSE;
             }
             else{
                 $mensaje=' La solicitud se registró en forma exitosa ';
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
                 //El pedido de pagina genera que el formulario se pueda cargar  nuevamente con datos por defecto
                 //pero esto no tiene sentido porque cargamos la solicitud y nos vamos a la pantalla pant_reserva.
-                $this->s__solicitud_registrada=TRUE;
+                //$this->s__solicitud_registrada=TRUE;
             }
+            
+            //Debemos bajar el horario disponible seleccionado del arreglo hd_global u horarios_disponibles, para
+            //que no vuelva a aparecer en el 'cuadro' de la pantalla pant_reserva. Para ello usamos los datos
+            //id_aula, hora_inicio y hora_fin guardados en el arreglo s__datos_cuadro.
+            (count($this->s__hd_global)>0) ? $this->bajar_horario_seleccionado(&$this->s__hd_global) : $this->bajar_horario_seleccionado(&$this->s__horarios_disponibles);
             
             $this->set_pantalla('pant_reserva');
         }
@@ -703,6 +735,28 @@ class ci_solicitar_aula extends toba_ci
             return toba::db('rukaja')->consultar($sql);
         }
         
+        /*
+         * Esta funcion elimina un horario seleccionado de 'cuadro'. Se utiliza para no volver a mostrar el 
+         * mismo horario reservado.
+         * @$horarios_disponibles : es un parametro pasado por referencia, puede apuntar a hd_global u
+         * horarios_disponibles.
+         */
+        function bajar_horario_seleccionado ($horarios_disponibles){
+            $i=0;
+            $n=count($horarios_disponibles);
+            $fin=FALSE;
+            
+            while($i<$n && !$fin){
+                $elto=$horarios_disponibles[$i];
+                if($elto['id_aula']==$this->s__datos_cuadro['id_aula'] && strcmp($elto['hora_inicio'], $this->s__datos_cuadro['hora_inicio'])==0 && strcmp($elto['hora_fin'], $this->s__datos_cuadro['hora_fin'])==0){
+                    $fin=TRUE;
+                    unset($horarios_disponibles[$i]);
+                }
+                $i++;
+            }
+            
+        }
+                
 }
 
 ?>

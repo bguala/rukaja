@@ -10,7 +10,10 @@ require_once(toba_dir().'/proyectos/rukaja/php/api/Email.php');
  * a) El usuario logueado debe poder ver las solicitudes que le hicieron y las solicitudes que realizo*.
  * A estas ultimas debe poder editarlas, borrarlas y eliminarlas. Esta ultima accion es util porque libera un posible
  * espacio a ocupar.
- * b)Se deben listar las solicitudes cuya fecha_solicitud sea mayor a la fecha_actual y con estado pendiente.
+ * b) Se deben listar las solicitudes cuya fecha_solicitud sea mayor a la fecha_actual y con estado pendiente.
+ * c) El usuario logueado tambien debe poder ver las solicitudes que le hiecieron en su establecimiento.
+ * Que pasa si el usuario real queiere agregar un calendario???. Adaptaremos esta nueva estructura a la operaciuon
+ * y filtraremos las solicitudes usando la fecha seleccionada.
  */
 class ci_ver_solicitudes extends toba_ci
 {
@@ -46,6 +49,12 @@ class ci_ver_solicitudes extends toba_ci
         protected $s__apellido;
         protected $s__finalidad;
         
+        //Guardamos el tipo de solicitud seleccionada por el usuario. Esto sirve para saber a que metodo del 
+        //datos_tabla debemos llamar, puede ser get_listado_solicitudes o get_listado_solicitudes_realizadas.
+        //El primero se usa para obtener todas las solicitudes de aula en un establecimiento, el segundo se 
+        //usa para obtener todas las solicitudes hechas a otras dependencias.
+        protected $s__datos_form;
+        
         //------------------------------------------------------------------------------------
         //---- Pant Edicion ------------------------------------------------------------------
         //------------------------------------------------------------------------------------
@@ -56,40 +65,71 @@ class ci_ver_solicitudes extends toba_ci
             $this->pantalla()->tab('pant_asignacion')->desactivar();
         }
         
+        //---- Form Solicitud ----------------------------------------------------------------
+        function evt__form_solicitud__aceptar ($datos){
+            $this->s__datos_form=$datos;
+        }
+        
+        /*
+         * Esta funcion permite cargar el combo del formulario form_solicitud.
+         */
+        function cargar_combo_solicitud (){
+            $r=array(
+                array('clave' => 1, 'descripcion' => 'Solicitudes de aula realizadas a otras dependencias'),
+                array('clave' => 2, 'descripcion' => 'Solicitudes realizadas en su dependencia')
+            );
+            return $r;
+        }
+        
+        //---- Filtro Solicitudes ------------------------------------------------------------
+        function conf__filtro_solicitudes (toba_ei_filtro $filtro){
+            //(isset($this->s__datos_form)) ? $filtro->descolapsar() : $filtro->colapsar();
+        }
+        
+        function evt__filtro_solicitudes__filtrar (){
+            
+        }
+        
         //---- Cuadros -----------------------------------------------------------------------
         
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{
-            if($this->s__contador == 0){ //VER, quizas se puede sacar si este metodo se ejecuta solo una vez
-                //la sede se necesita para calcular horarios disponibles
-                $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
-                $this->s__id_sede=1;
-                
-                $this->s__emisor=$this->dep('datos')->tabla('persona')->get_correo_electronico($this->s__id_sede);
-                $this->s__emisor='sed.uncoma@gmail.com';
-            }
             
-            $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_listado_solicitudes($this->s__id_sede));
-            $cuadro->set_titulo("Solicitudes de Aula");
+            //Se necesita id_sede para calcular horarios disponibles.
+            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
+            $this->s__id_sede=1;
+
+            $this->s__emisor=$this->dep('datos')->tabla('persona')->get_correo_electronico($this->s__id_sede);
+            $this->s__emisor='rukaja.uncoma@gmail.com';
+            
+            //if(isset($this->s__datos_form)){
+                $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_listado_solicitudes($this->s__id_sede, date('Y-m-d')));
+                $cuadro->set_titulo(strtoupper($this->s__datos_form['descripcion']));
+            //}else{
+              //  $cuadro->colapsar();
+            //}
 		
 	}
 
 	function evt__cuadro__seleccion($datos){
-	    //se necesita para pasar la solicitud a estado finalizada o notificar horarios alternativos
+	    //Se necesita para pasar la solicitud a estado finalizada o notificar horarios alternativos. 
+            //ESTO se puede reemplazar por un unica variable de sesion, s__datos_solicitud.
             $this->s__id_solicitud=$datos['id_solicitud']; 
             $this->s__hora_inicio=$datos['hora_inicio'];
             $this->s__hora_fin=$datos['hora_fin'];
             $this->s__contador += 1;
             $this->s__legajo=$datos['legajo'];
             
-            //guardamos la fecha de solicitud
+            //Guardamos la fecha de solicitud. Se utiliza en la funcion procesar_periodo para obtener todas las
+            //asignaciones, definitivas o periodicas, de la fecha de solicitud.
             $this->s__fecha_consulta=$datos['fecha'];
             $this->s__capacidad=$datos['capacidad'];
-            //se necesita para enviar una notificacion si la solicitud es exitosa
+            //Se necesita para enviar una notificacion si la solicitud es exitosa.
             $this->s__sede_origen=$datos['id_sede'];
             $this->s__sigla=$datos['facultad'];
             $this->s__datos_filtro=array();
-            //se usa para cargar el formulario form_asignacion           
+            //Se usa para cargar el formulario form_asignacion con datos por defecto. En este punto la solicitud 
+            //esta lista para ser concedida.
             $this->s__datos_solicitud=$datos;
             
             

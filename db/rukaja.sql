@@ -152,7 +152,7 @@ CONSTRAINT fk_docente FOREIGN KEY (tipo_doc,nro_doc) REFERENCES persona(tipo_doc
 
 CREATE TABLE IF NOT EXISTS tipo_asignacion (
 
-tipo character varying (15) NOT NULL,
+tipo character varying (20) NOT NULL,
 
 CONSTRAINT pk_tipo_asignacion PRIMARY KEY (tipo)
 
@@ -307,18 +307,20 @@ CREATE TABLE IF NOT EXISTS esta_formada
 CREATE TABLE IF NOT EXISTS solicitud (
 
   id_solicitud serial NOT NULL,
-  nombre character varying(35),
-  apellido character varying(35),
+  nombre character varying(70),  --Contiene nombre-apelido de docente o nombre de una org.
+  --apellido character varying(35), Eliminado, pasa a estar contenido en nombre.
+  tipo_agente character varying (12), --Agregamos el tipo de agente para distinguir entre docente u org.
   fecha date,
   capacidad integer,
   finalidad character varying(100),
   hora_inicio time without time zone,
   hora_fin time without time zone,
-  tipo boolean,
+  tipo_asignacion character varying (20),
   id_sede serial NOT NULL,
   estado character varying(12),
-  legajo character varying(20),
+  id_responsable integer,
   id_aula integer,
+  id_sede_origen integer,         --Guardamos quien hizo el pedido de aula.
   facultad character varying(6),
   CONSTRAINT pk_solicitud PRIMARY KEY (id_solicitud),
   CONSTRAINT fk_solicitud FOREIGN KEY (id_sede)
