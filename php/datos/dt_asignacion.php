@@ -24,11 +24,6 @@ class dt_asignacion extends toba_datos_tabla
 		ORDER BY descripcion";
 		return toba::db('rukaja')->consultar($sql);
 	}
-
-
-
-
-
                 
         /*
          * Esta funcion elimina asignaciones definitivas solapadas con asignaciones por periodo.
@@ -53,7 +48,10 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * Devuelve true si una asignacion por periodo esta incluida en una definitiva.
+         * Devuelve true si una asignacion por periodo esta incluida en una definitiva. Verificamos los siguiente 
+         * casos:
+         * a) Inclusion completa de un horario.
+         * Pero faltan inclusiones parciales, teniendo en cuenta hora_inicio y hora_fin.
          */
         function existe_inclusion ($periodo, $definitiva){
             return ((strcmp($periodo['aula'], $definitiva['aula'])==0) && 
@@ -289,6 +287,8 @@ class dt_asignacion extends toba_datos_tabla
          * Esta funcion se utiliza en la operacion Calendario Comahue, permite obtener un cjto de asignaciones 
          * para empezar el calculo de horarios disponibles para una fecha en particular. 
          * @ id_periodo : absorbe a ( cuatrimestre, anio ) y se corresponde con un cuatrimestre.
+         * Devuelve asignaciones definitivas y periodicas asociadas al cuatrimestre. Se hacen los descartes
+         * necesarios.
          */
         function get_asignaciones_cuatrimestre ($id_sede, $dia, $id_periodo, $fecha){
             $sql_1="SELECT t_a.hora_inicio, t_a.hora_fin, t_au.nombre as aula, t_au.id_aula, t_au.capacidad

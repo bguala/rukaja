@@ -168,11 +168,11 @@ class dt_periodo extends toba_datos_tabla
         /*
          * Esta funcion se utiliza en la operacion Asignaciones por Dia.
          */
-        function get_id_periodo ($cuatrimestre, $anio_lectivo){
+        function get_id_periodo ($cuatrimestre, $anio_lectivo, $id_sede){
             $sql="SELECT t_p.id_periodo
                   FROM periodo t_p 
                   JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
-                  WHERE t_c.numero=$cuatrimestre AND t_p.anio_lectivo=$anio_lectivo ";
+                  WHERE t_c.numero=$cuatrimestre AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede";
             
             $periodo=toba::db('rukaja')->consultar($sql);
             
@@ -185,7 +185,53 @@ class dt_periodo extends toba_datos_tabla
 		return toba::db('rukaja')->consultar($sql);
 	}
 
-
+        /*
+         * Esta funcion se utiliza en la operacion ver solicitudes para obtener el id_periodo y asociarlo
+         * a una nueva asignacion en el sistema.
+         */
+        function get_cuatrimestre ($fecha, $anio_lectivo, $id_sede){
+            $sql="SELECT t_p.id_periodo
+                  FROM periodo t_p
+                  JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
+                  WHERE t_p.anio_lectivo=$anio_lectivo AND ($fecha BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) 
+                        AND t_p.id_sede=$id_sede";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion se utiliza en la operacion ver solicitudes para obtener el id_periodo de un turno de 
+         * examen y asociarlo a una nueva asignacion en el sistema.
+         */
+        function get_examen_final ($fecha, $anio_lectivo,$id_sede){
+            $sql="SELECT t_p.id_periodo
+                  FROM periodo t_p 
+                  JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo)
+                  WHERE t_p.anio_lectivo=$anio_lectivo AND ($fecha BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) 
+                        AND t_p.id_sede=$id_sede";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion se utiliza para implementar combos en cascada. Se usa en las operaciones Cargar 
+         * Asignaciones y Solicitar Aula.
+         */
+        function get_periodo_ ($tipo_asignacion){
+            //Segun el tipo de asignacion armamos la consulta adecuada.
+            $sql="";
+            switch($tipo_asignacion){
+                case 'EXAMEN FINAL'      : break;
+                case 'EVENTO'            : 
+                case 'CURSADA'           :
+                case 'EXAMEN PARCIAL'    :
+                case 'CONSULTA'          : break;
+                //Consideramos un nuevo tipo de asignacion. Por defecto se asocian a un cuatrimestre.
+                default : break;
+            }
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
 
 
 }

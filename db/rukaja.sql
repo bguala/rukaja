@@ -97,9 +97,9 @@ INSERT INTO aula (id_aula,capacidad,nombre,ubicacion,id_tipo,id_sede) VALUES
 
 CREATE TABLE IF NOT EXISTS dia (
 
-  nombre character varying(10) NOT NULL,
-  orden integer,
-  CONSTRAINT pk_dia PRIMARY KEY (nombre)
+nombre character varying(10) NOT NULL,
+orden integer,
+CONSTRAINT pk_dia PRIMARY KEY (nombre)
 
 );
 
@@ -128,13 +128,10 @@ CONSTRAINT pk_persona PRIMARY KEY (tipo_doc,nro_doc)
 
 CREATE TABLE IF NOT EXISTS administrador (
 
-nro_doc character varying (20) NOT NULL,
-tipo_doc character varying (12) NOT NULL,
-legajo character varying (20),
+id_administrador serial NOT NULL,
 nombre_usuario character varying (35),
 id_sede serial,
-CONSTRAINT pk_admin PRIMARY KEY (tipo_doc,nro_doc),
-CONSTRAINT fk_admin FOREIGN KEY (tipo_doc,nro_doc) REFERENCES persona(tipo_doc,nro_doc),
+CONSTRAINT pk_admin PRIMARY KEY (id_administrador),
 CONSTRAINT fk_sede FOREIGN KEY (id_sede) REFERENCES sede(id_sede) 
 
 );

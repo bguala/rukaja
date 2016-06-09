@@ -19,32 +19,30 @@ class ci_ver_solicitudes extends toba_ci
 {
         protected $s__contador=0;
         protected $s__contador_notificacion=0;
-        protected $s__id_sede;
-        protected $s__id_solicitud;                      //contiene el id de la solicitud seleccionada
-        protected $s__hora_inicio;
-        protected $s__hora_fin;
+        protected $s__id_sede; 
         protected $s__horarios;
         protected $s__i=0;
-        protected $s__horarios_disponibles=array();      //contiene todos los horarios disponibles alternativos para el dia solicitado, no coinciden con el horario especificado en la solicitud
-        protected $s__horarios_libres;                   //guarda los horarios disponibles segun el requerimiento de hora de inicio y fin de la solicitud
-        protected $s__legajo;
+        protected $s__horarios_disponibles=array();      //Contiene todos los horarios disponibles alternativos para el dia solicitado, no coinciden con el horario especificado en la solicitud
+        protected $s__horarios_libres;                   //Guarda los horarios disponibles segun el requerimiento de hora de inicio y fin de la solicitud
         protected $s__id_aula;
         protected $s__emisor;
         protected $s__destinatario;      
         protected $s__sigla;
         protected $s__fecha_consulta;
         protected $s__capacidad;
-        protected $s__datos_solicitud;                  //se utiliza para cargar el formulario form_asignacion
         protected $s__nombre_sede;
         protected $s__nombre_facultad;
         protected $s__nombre_aula;
         protected $s__notificar=FALSE;
         protected $s__pantalla_actual;
         protected $s__dia_consulta;
-        protected $s__datos_filtro;                    //contiene un cjto. de datos filtrados.
+        protected $s__datos_filtro;                    //Contiene un cjto. de datos filtrados.
         protected $s__sede_origen;
-                
-        //se cargan si hay que notificar horarios alternativos
+        
+        protected $s__datos_solcitud;                  //Guardamos todos los datos relacionados a una solicitud.
+                      
+        //Se cargan si hay que notificar horarios alternativos
+        //Quizas se pueden eliminar.
         protected $s__nombre;
         protected $s__apellido;
         protected $s__finalidad;
@@ -55,6 +53,14 @@ class ci_ver_solicitudes extends toba_ci
         //usa para obtener todas las solicitudes hechas a otras dependencias.
         protected $s__datos_form;
         
+        //Guardamos un arreglo para cargar el combo tipo_solicitud del formulario FF001. Esto es util porque 
+        //el texto a mostrar es bastante largo, ademas en el conf__cuadro necesitamos esta informacion para
+        //asignarle un nombre al cuadro. No se pudo obtener esta informacion desde el objeto $form.
+        protected $s__cargar_combo=array(
+                array('clave' => 1, 'descripcion' => 'Solicitudes de aula realizadas a otras dependencias'),
+                array('clave' => 2, 'descripcion' => 'Solicitudes realizadas en su dependencia')
+        );
+        
         //------------------------------------------------------------------------------------
         //---- Pant Edicion ------------------------------------------------------------------
         //------------------------------------------------------------------------------------
@@ -63,10 +69,13 @@ class ci_ver_solicitudes extends toba_ci
             $this->s__pantalla_actual="pant_edicion";
             $this->pantalla()->tab('pant_busqueda')->desactivar();
             $this->pantalla()->tab('pant_asignacion')->desactivar();
+            print_r("Este es el perfil de datos del usuario logueado : ");
+            print_r(toba::perfil_de_datos()->get_id());
         }
         
         //---- Form Solicitud ----------------------------------------------------------------
-        function evt__form_solicitud__aceptar ($datos){
+                
+        function evt__FF001__aceptar ($datos){
             $this->s__datos_form=$datos;
         }
         
@@ -74,16 +83,12 @@ class ci_ver_solicitudes extends toba_ci
          * Esta funcion permite cargar el combo del formulario form_solicitud.
          */
         function cargar_combo_solicitud (){
-            $r=array(
-                array('clave' => 1, 'descripcion' => 'Solicitudes de aula realizadas a otras dependencias'),
-                array('clave' => 2, 'descripcion' => 'Solicitudes realizadas en su dependencia')
-            );
-            return $r;
+            return $this->s__cargar_combo;
         }
         
         //---- Filtro Solicitudes ------------------------------------------------------------
         function conf__filtro_solicitudes (toba_ei_filtro $filtro){
-            //(isset($this->s__datos_form)) ? $filtro->descolapsar() : $filtro->colapsar();
+            (isset($this->s__datos_form)) ? $filtro->descolapsar() : $filtro->colapsar();
         }
         
         function evt__filtro_solicitudes__filtrar (){
@@ -94,71 +99,170 @@ class ci_ver_solicitudes extends toba_ci
         
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{
-            
             //Se necesita id_sede para calcular horarios disponibles.
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
-            $this->s__id_sede=1;
-
-            $this->s__emisor=$this->dep('datos')->tabla('persona')->get_correo_electronico($this->s__id_sede);
+            
+            //Obtenemos el correo electronico del responsable de aula que hizo el pedido para motificar 
+            //resultados.
+            $this->s__emisor=$this->dep('datos')->tabla('administrador')->get_correo_electronico($this->s__id_sede);
             $this->s__emisor='rukaja.uncoma@gmail.com';
             
-            //if(isset($this->s__datos_form)){
-                $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_listado_solicitudes($this->s__id_sede, date('Y-m-d')));
-                $cuadro->set_titulo(strtoupper($this->s__datos_form['descripcion']));
-            //}else{
-              //  $cuadro->colapsar();
-            //}
+            print_r($this->s__datos_form);
+            if(isset($this->s__datos_form)){
+                if($this->s__datos_form['tipo_solicitud'] == 1){
+                    //Mostramos las solicitudes de aula realizadas a otros dependencias. En este caso debemos usar
+                    //el id_sede del usuario logueado para comparar con el campo id_sede de la tabla solicitud. 
+                    //id_sede guarda el id_ de la sede destino, que es a quien le hacemos el pedido de aula.
+                    //Esto permite editar o eliminar pedidos de aula a otras dependencias.
+                    $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_solicitudes_realizadas($this->s__id_sede, date('Y-m-d')));
+                    $cuadro->set_titulo(strtoupper($this->s__cargar_combo[0]['descripcion']));
+                    
+                }else{
+                    //Mostramos las solicitudes de aula que estan hechas en el establecimeinto del usuario que se
+                    //loguea. Estas estan registradas en estado pendiente.
+                    $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_solicitudes($this->s__id_sede, date('Y-m-d')));
+                    $cuadro->set_titulo(strtoupper($this->s__cargar_combo[1]['descripcion']));
+                }
+            }else{
+                $cuadro->colapsar();
+            }
 		
 	}
-
+        
+        /*
+         * En esta funcion debemos empezar el calculo de horarios disponibles. Teniendo en cuenta que:
+         * a) Como ya tenemos el aula, debemos empezar el calculo de horarios disponibles con las asignaciones
+         *    de esa aula, verificar que existe espacio y conceder la solicitud.
+         * b) Si no hay espacio disponible en el aula seleccionada debemos iniciar un calculo de horarios 
+         *    disponibles en todas las aulas del establecimeinto destino, sin considerar el aula seleccionada.
+         *    Posteriormente debemos mostrar los horarios disponibles que contengan la hora_inicio y hora_fin 
+         *    de la solicitud. Y permitirle al usuario registrar la solicitud con otra aula.
+         * 
+         * Para filtrar los espacios disponibles debemos tener en cuenta el horario y la capacidad especificada
+         * en la solicitud. Y para calcular los espacios disponibles debemos usar la fecha de solicitud y descartar
+         * asignaciones definitivas que puedan contener periodos.
+         *    
+         */
 	function evt__cuadro__seleccion($datos){
-	    //Se necesita para pasar la solicitud a estado finalizada o notificar horarios alternativos. 
-            //ESTO se puede reemplazar por un unica variable de sesion, s__datos_solicitud.
-            $this->s__id_solicitud=$datos['id_solicitud']; 
-            $this->s__hora_inicio=$datos['hora_inicio'];
-            $this->s__hora_fin=$datos['hora_fin'];
+	    //Necesitamos todos los datos de la solicitud para:
+            //a) pasarla a estado finalizada.
+            //b) registrar la solicitud si existe algun espacio disponible. 
+            //Usamos una misma variable, s__datos_solicitud.
+            $this->s__datos_solcitud=$datos;
             $this->s__contador += 1;
-            $this->s__legajo=$datos['legajo'];
-            
-            //Guardamos la fecha de solicitud. Se utiliza en la funcion procesar_periodo para obtener todas las
-            //asignaciones, definitivas o periodicas, de la fecha de solicitud.
+                        
+            //Guardamos la fecha de solicitud en una variable aparte. Se utiliza en la funcion procesar_periodo 
+            //para obtener todas las asignaciones, definitivas o periodicas, de la fecha de solicitud.
+            //El valor de esta variable es usada dentro de los metodos del datos_tabla para obtener asignaciones.
             $this->s__fecha_consulta=$datos['fecha'];
+            
             $this->s__capacidad=$datos['capacidad'];
-            //Se necesita para enviar una notificacion si la solicitud es exitosa.
-            $this->s__sede_origen=$datos['id_sede'];
-            $this->s__sigla=$datos['facultad'];
-            $this->s__datos_filtro=array();
-            //Se usa para cargar el formulario form_asignacion con datos por defecto. En este punto la solicitud 
-            //esta lista para ser concedida.
-            $this->s__datos_solicitud=$datos;
             
-            
-            if($datos['tipo']){
-                
+            //Empezamos calculando horarios disponibles en el aula seleccionada
+            if($this->calcular_hd_en_aula_seleccionada()){
+                //Si existe espacio disponible en el aula solicitada, debemos mostrar los datos de la solicitud y
+                //permitirle al usuario persistir una nueva asignacion.
+                $this->set_pantalla('pant_asignacion');
+            }else{
                 $this->verificar_existencia_de_espacio();
                 $this->set_pantalla('pant_busqueda');
             }
+            
+//            //Se necesita para enviar una notificacion si la solicitud es exitosa.
+//            $this->s__sede_origen=$datos['id_sede'];
+//            $this->s__sigla=$datos['facultad'];
+//            $this->s__datos_filtro=array();
+//            //Se usa para cargar el formulario form_asignacion con datos por defecto. En este punto la solicitud 
+//            //esta lista para ser concedida.
+//            $this->s__datos_solicitud=$datos;
+            
 	}
         
+        /*
+         * Esta funcion calcula horarios disponibles para el aula especificada en la solcitud.
+         * Si existe espacio en el aula seleccionada devolvemos true. Caso contrario devolvemos false.
+         * Si obtenemos false en el metodo llamador debemos iniciar un calculo de hd teniendo en cuenta casi todas 
+         * las aulas del establecimiento destino. Vamos a hacer uso de la funcion procesar_periodo.
+         */
+        function calcular_hd_en_aula_seleccionada (){
+            $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
+            //Configuramos el dia de consulta para que este disponible en la funcion procesar_periodo.
+            $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
+            //print_r($this->s__datos_solcitud);
+            //Obtenemos los periodos que pueden contener a la fecha de solicitud.
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
+            //Usamos la cadena 'au' para extraer las asignaciones pertenecientes a un aula en particular. 
+            //Es una condicion mas dentro de la funcion procesar_periodo.
+            $asignaciones=$this->procesar_periodo($periodo, 'au');
+            //Creamos una estructura para el aula seleccionada. Esto se debe a que la funcion calcular_horarios_
+            //disponibles de la clase HorariosDisponibes recibe un arreglo de aulas_ua, cuyo formato es
+            //(id_aula, aula). Si no usamos esta estructura array ( array() ), vemos una disponibilidad total
+            //que no esta asociada a ningun aula, esto ultimo npo debe ocurrir.
+            $aulas_ua=array(
+                                array(
+                                     'id_aula' => $this->s__datos_solcitud['id_aula'],
+                                     'aula' => $this->s__datos_solcitud['aula']
+                                )
+            );
+            
+            //Guardamos en sesion el id_sede para agregar la capacidad de cada aula a un horario disponible.
+            toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
+            
+            $hd=new HorariosDisponibles();
+            //El primer parametro se corresponde con las aulas que actualmente estan siendo usadas. Como 
+            //necesitamos hacer un calculo de hd especifico, usamos el aula seleccionada. Estas aulas se obtienen
+            //a partir de las asignaciones y se utilzan para que el sistema pueda inferir disponibilidad total.
+            print_r($aulas_ua);print_r("<br><br><br>");
+            print_r($asignaciones);print_r("<br><br><br>");
+            $this->s__horarios_disponibles=$hd->calcular_horarios_disponibles($aulas_ua, $aulas_ua, $asignaciones);
+            print_r($this->s__horarios_disponibles);
+            return $this->existe_espacio_disponible();
+        }
         
+        /*
+         * Esta funcion devuelve true si existe en el aula seleccionada un horario que incluya al horario 
+         * de la solicitud. 
+         */
+        function existe_espacio_disponible (){
+            $fin=FALSE;
+            $i=0;
+            $n=count($this->s__horarios_disponibles);
+            while($i<$n && !$fin){
+                $elto=$this->s__horarios_disponibles[$i];
+                if($elto['hora_inicio']==$this->s__datos_solcitud['hora_inicio'] && $elto['hora_fin']==$this->s__datos_solcitud['hora_fin']){
+                    //Cortamos el bucle y en el formulario por defecto usamos la informacion de s__datos_solicitud.
+                    $fin=TRUE;
+                }
+                $i++;
+            }
+            
+            return $fin;
+        }
+        
+        /*
+         * Esta funcion permite calcular horarios disponibles alternativos. Se usa cuando no existe el lugar 
+         * especificado en la solicitud. Calculamos hd teniendo en cuenta todas las aulas sin importar que ya
+         * se hizo un calculo especifico para el aula seleccionada.
+         */
         function verificar_existencia_de_espacio (){
             
             $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
             $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
             //Debemos usar la fecha seleccionada por el usuario. Necesitamos brindar una respuesta concreta
-            //segun los espacios ocupados en ese dia. DEBEMOS MEJORAR ESO.
+            //segun los espacios ocupados en ese dia.
             $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario(date('Y-m-d', strtotime($this->s__fecha_consulta)), $anio_lectivo, $this->s__id_sede);
             print_r($periodo);
-            //obtenemos las aulas del establecimiento 
+            //Obtenemos las aulas del establecimiento.
             $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
             
-            //obtenemos las asignaciones para la fecha solicitada           
+            //Obtenemos las asignaciones para la fecha solicitada. En este caso necesitamos traer las 
+            //asignaciones para todas las aulas del establecimiento.
             $asignaciones=$this->procesar_periodo($periodo, 'hd');
             
-            //obtenemos todas las aulas involucradas 
+            //Obtenemos todas las aulas que actualmente estan siendo usadas. 
             $aulas=$this->obtener_aulas($asignaciones);
             
-            //guardamos el id_sede en sesion, para utilizar dentro de la clase HorariosDisponibles en la 
+            //Guardamos el id_sede en sesion, para utilizar dentro de la clase HorariosDisponibles en la 
             //operacion agregar_capacidad.
             toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
             
@@ -166,10 +270,11 @@ class ci_ver_solicitudes extends toba_ci
             
             $this->s__horarios_disponibles=$horarios_disponibles->calcular_horarios_disponibles($aulas, $aulas_ua, $asignaciones);
             
-            //obtenemos los horarios que coinciden con el requerimiento registrado
+            //Obtenemos los horarios que coinciden con el requerimiento registrado.
             $horarios=$this->calcular_horarios_disponibles_segun_req();
             
-            //si existe al menos 1 horario libre que coincide con el requerimiento, lo mostramos en el cuadro_espacio_ocupado :D
+            //Si existe al menos 1 horario libre que coincide con el requerimiento, lo mostramos en el 
+            //cuadro_espacio_ocupado :D
             if(count($horarios) > 0){
                 $this->s__horarios_libres=$horarios; //contiene los horarios que conciden con el requerimiento
             }
@@ -432,7 +537,9 @@ class ci_ver_solicitudes extends toba_ci
             $this->set_pantalla('pant_asignacion');
         }
         
+        //----------------------------------------------------------------------------------------
         //---- Pant Asignacion -------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------
         
         function conf__pant_asignacion () {
             $this->s__pantalla_actual="pant_asignacion";
@@ -453,67 +560,90 @@ class ci_ver_solicitudes extends toba_ci
               $form->descolapsar();             
                 //obtenemos los datos del docente para registrar una asignacion por periodo
                 //y enviar una notificacion
-                $sql="SELECT t_p.nro_doc, t_p.tipo_doc, t_p.correo_electronico
-                        FROM persona t_p
-                        JOIN docente t_d ON (t_p.nro_doc=t_d.nro_doc AND t_p.tipo_doc=t_d.tipo_doc)
-                        WHERE t_d.legajo='{$this->s__legajo}'";
-            $datos_docente=toba::db()->consultar($sql);
-            //$this->s__destinatario=$datos_docente['correo_electronico'];
-            $this->s__destinatario='sed.uncoma@gmail.com';
-            
-            $efs=array( 'hora_inicio',
-                        'hora_fin',
-                        'finalidad',
-                        'fecha',
-                        'nro_doc',
-                        'tipo_doc',
-                        'capacidad',
-                        'aula',
-                        'facultad',
-            );
-            $form->set_solo_lectura($efs);
-            $form->set_titulo("Formulario para registrar Asignaciones por Periodo");            
-            $form->set_datos_defecto($this->dep('datos')->tabla('solicitud')->get_datos_solicitud($this->s__id_solicitud));
-            $form->ef('aula')->set_estado($this->s__nombre_aula);
-            $form->set_datos_defecto($datos_docente[0]);
-            
-            
+
+                //$this->s__destinatario=$datos_docente['correo_electronico'];
+                $this->s__destinatario='sed.uncoma@gmail.com';
+
+                $efs=array( 'hora_inicio',
+                            'hora_fin',
+                            'finalidad',
+                            'fecha',
+                            'capacidad',
+                            'aula',
+                            'establecimiento',
+                );
+                $form->set_solo_lectura($efs);
+                $form->set_titulo("Formulario para registrar Asignaciones por Periodo");
+                $form->set_datos($this->s__datos_solcitud);
+                //$form->set_datos_defecto($this->dep('datos')->tabla('solicitud')->get_datos_solicitud($this->s__id_solicitud));
+                //$form->ef('aula')->set_estado($this->s__nombre_aula);
+                //$form->set_datos_defecto($datos_docente[0]);
            }
            else{
                $form->colapsar();
            }
         }
         
+        /*
+         * En esta funcion debemos guardar la solicitud en las tablas asignacion, asignacion_periodo y 
+         * esta_formada. Ademas debemos pasar la solicitud a estado finalizada.
+         */
         function evt__form_asignacion__aceptar ($datos){
-            //persisteir en asignacion, asig_periodo, esta_formada y pasar la solicitud a estado finalizada
-            print_r("LLegamos a form asignacion aceptar");exit();
+            //print_r("LLegamos a form asignacion aceptar");exit();
             $dia=$this->recuperar_dia($this->s__fecha_consulta);
             
+            //Obtenemos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
+            //la fecha exacta de la solicitud.
+            $id_periodo=array();
+            switch($this->s__datos_solcitud['tipo_asignacion']){
+                //Segun el tipo de asignacion acotamos la busqueda.
+                case 'EXAMEN FINAL'      : $id_periodo=$this->dep('datos')->tabla('periodo')->get_examen_final($this->s__fecha_consulta, date('Y', $this->s__fecha_consulta), $this->s__id_sede);
+                                           break;
+                case 'EXAMEN PARCIAL'    : 
+                case 'CONSULTA'          :
+                case 'CURSADA'           :
+                case 'EVENTO'            : $id_periodo=$this->dep('datos')->tabla('periodo')->get_cuatrimestre($this->s__fecha_consulta, date('Y', $this->s__fecha_consulta), $this->s__id_sede);
+                                           break;
+                //Si existe un nuevo tipo de asignacion sera* asociado a un cuatrimestre.
+                default : $id_periodo=$this->dep('datos')->tabla('periodo')->get_cuatrimestre($this->s__fecha_consulta, date('Y', $this->s__fecha_consulta), $this->s__id_sede);
+                          break;
+                
+            }
+            print_r("Este es el valor del id_periodo");print_r($id_periodo);print_r("<br><br>");
+            //Usamos ambos arreglos, $datos y $s__datos_solcitud.
             $asignacion=array(
                 'finalidad' => $datos['finalidad'],
                 'descripcion' => $datos['descripcion'],
                 'hora_inicio' => $datos['hora_inicio'],
                 'hora_fin' => $datos['hora_fin'],
                 'cantidad_alumnos' => $datos['cantidad'],
-                'facultad' => $this->s__sigla,
-                'nro_doc' => $datos['nro_doc'],
-                'tipo_doc' => $datos['tipo_doc'],
-                'id_aula' => $this->s__id_aula,
-                'dias' => $dia,
-                'fecha_inicio' => $datos['fecha'],
-                'fecha_fin' => $datos['fecha']
+                'facultad' => $this->s__datos_solcitud['establecimiento'],
+                'nro_doc' => '',
+                'tipo_doc' => '',
+                'id_aula' => $this->s__datos_solcitud['id_aula'],
+                'modulo' => 1,
+                'tipo_asignacion' => $this->s__datos_solcitud['tipo_asignacion'],
+                'id_periodo' => $id_periodo[0]['id_periodo'],
+                'id_responsable_aula' => $this->s__datos_solcitud['id_responsable']
             );
-            
+                        
+            //Este grupo de funciones se copia tal cual desde la operacion Cargar Asignaciones. En este caso
+            //intentamos no alterar sus estructuras.
             $this->registrar_asignacion($asignacion);
             
+            //Agregamos a $asignacion datos extra relacionados a un periodo, para no alterar la estructura 
+            //de esta funcion. $dia tiene el mismo formato retornado por ef_multi_seleccion_check.
+            $asignacion['dias']=$dia;
+            $asignacion['fecha_inicio']=$this->s__datos_solcitud['fecha'];
+            $asignacion['fecha_fin']=$this->s__datos_solcitud['fecha'];
+            
             $this->registrar_asignacion_periodo($asignacion);
-           
-//            $this->s__contador_notificacion += 1;
+                       
+            //Pasamos la solicitud a estado finalizada. Para ello solamente necesitamos el id_solicitud guardado
+            //en la variable s__datos_solicitud. Internamente vamos a utilizar datos_tabla.
+            $this->pasar_a_estado_finalizada();
             
-            //pasamos la solicitud a estado finalizada
-            $this->pasar_a_estado_finalizada($this->dep('datos')->tabla('solicitud')->get_datos_solicitud($this->s__id_solicitud));
-            
-            //enviamos una notificacion al interesado
+            //Enviamos una notificacion al interesado.
             $this->notificar();
             
         }
@@ -525,8 +655,9 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         function registrar_asignacion_periodo ($datos){
-            $cuatrimestre=$this->obtener_cuatrimestre();
+            //$cuatrimestre=$this->obtener_cuatrimestre(); ya viene en $datos
             $fecha=  getdate();
+            //Obtenemos el id de la asignacion registrada en el paso anterior.
             $secuencia=recuperar_secuencia('asignacion_id_asignacion_seq');
             $dato=array(
               
@@ -544,7 +675,7 @@ class ci_ver_solicitudes extends toba_ci
             $this->dep('datos')->tabla('asignacion_periodo')->sincronizar();
             $this->dep('datos')->tabla('asignacion_periodo')->resetear();
             
-            //en esta seccion se guarda informacion en la tabla esta_formada
+            //En esta seccion se guarda informacion en la tabla esta_formada.
             $dias=$datos['dias'];
             foreach ($dias as $clave=>$dia){
                 $dato['nombre']=$dia;
@@ -605,61 +736,13 @@ class ci_ver_solicitudes extends toba_ci
         function conf__form_datos (toba_ei_formulario $form){
             if(($this->s__contador_notificacion % 2) == 0){
                 $form->descolapsar();
-                $form->set_titulo("Datos Disponibles");
-                $form->ef('hora_inicio')->set_estado($this->s__hora_inicio);
-                $form->ef('hora_fin')->set_estado($this->s__hora_fin);
-                $form->ef('solicitud')->set_estado($this->s__id_solicitud);
-                $form->ef('legajo')->set_estado($this->s__legajo);
+                $form->set_titulo("Datos del responsable de aula");
             }
             else{
                 $form->colapsar();
             }
         }       
-        
-//        function enviar_email ($datos){
-//            $email=new PHPMailer();
-//            $email->IsSMTP();
-//            $email->SMTPAuth='true';
-//            $email->SMTPSecure='ssl';
-//            $email->Host='smtp.gmail.com';
-//            $email->Port=465;
-//            
-//            $email->Username='sed.uncoma@gmail.com';
-//            
-//            $email->Password='n1s.toba15';
-//            $email->Timeout=100;
-//            
-//            $email->SetFrom('sed.uncoma@gmail.com'); //de
-//            
-//            try{
-//                $email->AddAddress('sed.uncoma@gmail.com'); //para
-//                
-//                $email->Subject=$datos['asunto']; //agregamos el asunto
-//                
-//                $email->Body=$datos['descripcion']; //agregamos la descripcion
-//                
-//                if(isset($datos['adjunto'])){
-//                    $email->AddAttachment($datos['dajunto']['tmp_name'], $datos['adjunto']['name']);
-//                }
-//                
-//                
-//                if($email->Send()){
-//                    $mensaje=  utf8_decode(" La notificación por email a {$this->s__legajo} se envió correctamente ");
-//                    $nivel="info";
-//                }
-//                else{
-//                    $mensaje=utf8_decode(" No se pudo enviar ninguna notificación por email");
-//                    $nivel="error";
-//                }
-//                
-//                toba::notificacion()->agregar($mensaje, $nivel);
-//                
-//            } catch (phpmailerException $ex) {
-//                print_r($ex);
-//            }
-//            
-//        }
-        
+                
         function vista_pdf (toba_vista_pdf $salida){
             $this->generar_pdf($salida);      
             
@@ -768,7 +851,7 @@ class ci_ver_solicitudes extends toba_ci
        }
         
         /*
-         * Agrega las primeras tres lineas al documento
+         * Agrega las primeras tres lineas al documento.
          */
         function armar_precontenido ($origen, $resultado){
             $longitud=  strlen($origen) + 12;
@@ -845,10 +928,10 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         /*
-         * se utiliza para pasar una solicitud a estado finalizada
+         * Se utiliza para pasar una solicitud a estado finalizada.
          */
         function pasar_a_estado_finalizada ($datos){
-            $datos['estado']="Finalizada";
+            $datos['estado']="FINALIZADA";
             $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__id_solicitud));
             $this->dep('datos')->tabla('solicitud')->set($datos);
             $this->dep('datos')->tabla('solicitud')->sincronizar();
@@ -859,8 +942,14 @@ class ci_ver_solicitudes extends toba_ci
         //-----------------------------------------------------------------------------------------
         
         /*
-         * Aqui agregamos toda la interfaz apropiada para devolver las asignaciones para una fecha 
-         * seleccionada
+         * Aqui agregamos toda la interfaz apropiada para devolver las asignaciones para una fecha en particular.
+         * Si recibimos en la variable accion:
+         * au : debemos obtener las asignaciones pertenecientes a un aula.
+         * hd : obtenemos las asignaciones para calcular horarios disponibles en todas las aulas de un 
+         *      establecimiento.
+         * 
+         * Esta funcion se copio desde la operacion Calendario Comahue, por lo tanto hay cosas que se pueden 
+         * sacar definitivamente, como lo que esta comentado.
          */
         function procesar_periodo ($periodo, $accion){
             $cuatrimestre=array();
@@ -869,68 +958,73 @@ class ci_ver_solicitudes extends toba_ci
                 
                 switch ($valor['tipo_periodo']){
                     case 'Cuatrimestre' : if(strcmp($accion, 'hd')==0){
+                                              //Obtenemos asignaciones definitivas y periodicas para empezar calculos de horarios
+                                              //disponibles en todas las aulas de un establecimiento.
                                               $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
                                               
                                           }
-//                                          else{
-//                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_fecha_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
-//                                              $periodo=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
-//                                          }
+                                          else{ //Si accion es 'au'.
+                                              //Esta consulta nos permite obtener asignaciones definitivas o periodicas en un aula y fecha en particular.
+                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_aula_cuatrimestre($this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_aula']);
+                                              //print_r($cuatrimestre);
+                                          }
                                           break;
                                       
                     case 'Examen Final' : if(strcmp($accion, 'hd')==0){
-                                              //obtenemos todas las asignaciones por periodo, que estan inluidas en un cuatrimestre,
+                                              //Obtenemos todas las asignaciones por periodo, que estan inluidas en un cuatrimestre,
                                               //pero que pertenecen a un examen_final
                                               $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
-//                                          else{
-//                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_para_examen($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
-//                                          }
+                                          else{ //Si accion es 'au'.
+                                              //Obtenemos asignaciones periodicas que pertenecen a un turno de examen de un aula especifica.
+                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_aula_examen_final($this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_aula']);
+                                          }
                                           break;
                 }
                 
             }
             
             if((count($cuatrimestre)>0) && (count($examen_final)>0)){
-                if(strcmp($accion, 'hd')==0){
-                    //debemos iniciar descarte y unificacion
-                    //asig_definitivas = cuatrimestre, asig_periodo = examen final.
+                if(strcmp($accion, 'hd')==0 || strcmp($accion, 'au')==0){
+                    //Debemos iniciar descarte y unificacion
+                    //asig_definitivas & periodicas = cuatrimestre, asig_periodo = examen final.
                     $this->descartar_asignaciones_definitivas($examen_final, &$cuatrimestre);
-
+                    
+                    //Las asignaciones periodicas para examen final tienen prioridad.
                     $this->unificar_asignaciones(&$examen_final, $cuatrimestre);
 
                     return $examen_final;
                 }
-                else{
-                    //debemos unificar periodo con examen final
-                    $this->unificar_asignaciones(&$periodo, $examen_final);
-                    $this->s__asignaciones_periodo=$periodo;
-                    return $cuatrimestre;
-                }
+//                else{
+//                    //Debemos unificar periodo con examen final.
+//                    $this->unificar_asignaciones(&$periodo, $examen_final);
+//                    $this->s__asignaciones_periodo=$periodo;
+//                    return $cuatrimestre;
+//                }
             }
             
             if((count($cuatrimestre)>0) && (count($examen_final)==0)){
-                if(strcmp($accion, 'hd')==0){
+                if(strcmp($accion, 'hd')==0 || strcmp($accion, 'au')==0){
                     //devolvemos solo cuatrimestre
                     return $cuatrimestre;
                 }
-                else{
-                    //devolvemos cuatrimestre y guardamos en una variable de sesion el resultado obtenido en 
-                    //periodo
-                    $this->s__asignaciones_periodo=$periodo;
-                    return $cuatrimestre;
-                }
+//                else{
+//                    //devolvemos cuatrimestre y guardamos en una variable de sesion el resultado obtenido en 
+//                    //periodo
+//                    $this->s__asignaciones_periodo=$periodo;
+//                    return $cuatrimestre;
+//                }
             }
             
             if((count($cuatrimestre)==0) && (count($examen_final)>0)){
-                if(strcmp($accion, 'hd')==0){
+                if(strcmp($accion, 'hd')==0 || strcmp($accion, 'au')==0){
                     //devolvemos solo examen final
                     return $examen_final;
                 }
-                else{
-                    $this->s__asignaciones_periodo=$examen_final;
-                    return $cuatrimestre;
-                }
+//                else{
+//                    $this->s__asignaciones_periodo=$examen_final;
+//                    return $cuatrimestre;
+//                }
             }
             
             if((count($cuatrimestre)==0) && (count($examen_final)==0)){

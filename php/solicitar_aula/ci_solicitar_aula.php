@@ -9,7 +9,7 @@ class ci_solicitar_aula extends toba_ci
         protected $s__id_sede;
         protected $s__fecha_consulta;
         protected $s__dia_consulta;
-        protected $s__horarios_disponibles=array();
+        protected $s__horarios_disponibles;
         protected $s__datos_form;
         protected $s__datos_filtrados;
         protected $s__datos_cuadro;
@@ -21,7 +21,7 @@ class ci_solicitar_aula extends toba_ci
         //Estas variables se configuran cuando hay que realizar un calculo de horarios disponibles global.
         protected $s__establecimiento;
         protected $s__sede;
-        protected $s__hd_global=array();  
+        protected $s__hd_global;  
         protected $s__solo_fecha;
         //Guardamos el id del responsable de aula, puede ser docente u organizacion. Esto se hace  porque cuando
         //pulsamos el boton Registrar Solicitud, se ejecuta una llamada ajax asociado al popup y borra el contenido
@@ -36,39 +36,61 @@ class ci_solicitar_aula extends toba_ci
         //-------------------------------------------------------------------------------------
         
         function conf__pant_reserva (toba_ei_pantalla $pantalla){
+            //print_r(toba::usuario()->get_perfil_datos());
+            //$id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            //print_r("Esta es la sede para el usuario logueado :  ");
+            //print_r($id_sede);
             $this->pantalla()->tab('pant_edicion')->desactivar();
         }
         
 	//---- Form Ingreso -------------------------------------------------------------------
                
-        function evt__form_ingreso__aceptar ($datos){           
+        function evt__form_ingreso__aceptar ($datos){               
             $this->s__fecha_consulta=$datos['fecha'];
+            
             if(isset($datos['fecha']) && isset($datos['sede']) && isset($datos['facultad'])){
+                //Para no acumular resultados de busquedas sucesivas.
+                $this->s__horarios_disponibles=array();
+                $this->s__hd_global=array();
                 $this->s__id_sede=$datos['sede'];
                 $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede);
-                //Para implementar cortes de control en 'cuadro' de la pantalla pant_reserva.
+                //Para implementar cortes de control en 'cuadro' de la pantalla pant_reserva. Estos eltos. se
+                //agregan al arreglo horarios_disponibles.
                 $this->s__establecimiento=$ua[0]['establecimiento'];
                 $this->s__sede=$ua[0]['sede'];
+                //Esta variable se utiliza para mostar un mensaje de notificacion cuando el usuario
+                //realiza busquedas acotadas, especificando en el formulario establecimiento, sede y fecha.
                 $this->s__solo_fecha=FALSE;
                 $this->calcular_horarios_disponibles_por_facultad();
+                
+                //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
+                //opciones de busqueda modificando la clase Filtro.
+                $this->s__filtro=new Filtro($this->s__horarios_disponibles);
             }else{
                 if(isset($datos['fecha']) && !isset($datos['sede']) && !isset($datos['facultad'])){
+                    //Para no acumular resultados de busquedas sucesivas.
+                    $this->s__hd_global=array();
+                    //Esta variable se utiliza para mostar un mensaje de notificacion cuando el usuario
+                    //realiza busquedas acotadas, especificando en el formulario establecimiento, sede y fecha.
+                    $this->s__solo_fecha=TRUE;
                     //Disparamos calculo de horarios disponibles global, para todas la unidades academicas 
                     //registradas en el sistema.
-                    $this->s__solo_fecha=TRUE;
                     $this->calcular_horarios_disponibles_global();
+                    
+                    //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
+                    //opciones de busqueda modificando la clase Filtro.
+                    $this->s__filtro=new Filtro($this->s__hd_global);
+                    
                 }else{
                    $mensaje="Establecimiento y Sede se deben elegir en forma conjunta.";
                    toba::notificacion()->agregar($mensaje, 'info');
                 }
             }                        
-            //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
-            //opciones de busqueda modificando la clase Filtro.
-            $this->s__filtro=new Filtro($this->s__horarios_disponibles);
+            
         }
         
         function calcular_horarios_disponibles_global (){
-            $this->s__hd_global=array();
+            
             //Obtenemos todas las unidades academicas registradas en el sistema. 
             $establecimientos=$this->dep('datos')->tabla('unidad_academica')->get_unidades_academicas();
             
@@ -94,7 +116,7 @@ class ci_solicitar_aula extends toba_ci
         
         function calcular_horarios_disponibles_por_facultad (){
              
-            //Obtenemos todas las aulas de un establecimiento.
+            //Obtenemos todas las aulas de un establecimiento. El id_sede se configura en el metodo llamador.
             $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
             
             //Si el establecimiento no tiene aulas registradas en sistema no hacemos nada. Pero los mensajes
@@ -276,15 +298,15 @@ class ci_solicitar_aula extends toba_ci
                 
         //---- Form Datos -------------------------------------------------------------------
         
-        function conf__form_datos (toba_ei_formulario $form){
-            if(count($this->s__horarios_disponibles)==0){
-                $form->colapsar();
-            }
-            else{
-                $form->descolapsar();
-                $form->set_datos($this->s__datos_form);
-            }
-        }
+//        function conf__form_datos (toba_ei_formulario $form){
+//            if(count($this->s__horarios_disponibles)==0){
+//                $form->colapsar();
+//            }
+//            else{
+//                $form->descolapsar();
+//                $form->set_datos($this->s__datos_form);
+//            }
+//        }
         
         //---- Cuadro -----------------------------------------------------------------------
         
@@ -324,15 +346,15 @@ class ci_solicitar_aula extends toba_ci
             $datos['fecha']=date('d-m-Y', strtotime($this->s__fecha_consulta));
             //Obtenemos el establecimiento al que pertenece el usuario logueado. Es quien realiza el pedido de 
             //aula. Estas sentencias se deben cambiar cuando existan perfiles de datos.
-            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
-            $id_sede=5;
-            $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($id_sede);
+            $this->s__id_sede_origen=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            //$id_sede=5;
+            $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede_origen);
             $datos['facultad']=$ua[0]['establecimiento'];
             $this->s__sigla_origen=$ua[0]['sigla'];
             //Guardamos el id_sede_origen para poder obtener las solicitudes realizadas por un usuario, esto 
             //permite editar o eliminar solicitudes. Los pedidos de aula son realizados unicamente por el 
             //responsable de aulas de cada establecimiento.
-            $this->s__id_sede_origen=$id_sede;
+            //$this->s__id_sede_origen=$id_sede;
             
             //El establecimiento_destino solamente se debe mostrar en el formulario para saber a quien le estamos
             //haciendo un pedido de aula. En la tabla solicitud debemos registrar quien realiza el pedido, en este 
@@ -499,7 +521,7 @@ class ci_solicitar_aula extends toba_ci
             $descripcion="$nombre ha registrado una SOLICITUD de aula para el dia $fecha, en su Establecimiento. ";
 
             $asunto="SOLICITUD DE AULA";
-            
+            //print_r("ID SEDE ORIGEN");print_r($this->s__id_sede_origen);exit();
             //Depuramos el arreglo $datos utilizando lo estrictamente necesario para registrar una solicitud.
             $solicitud=array(
                 'nombre' => $nombre,
@@ -508,12 +530,12 @@ class ci_solicitar_aula extends toba_ci
                 'finalidad' => $datos['finalidad'],
                 'hora_inicio' => $datos['hora_inicio'],
                 'hora_fin' => $datos['hora_fin'], 
-                'id_sede' => $id_sede,
+                'id_sede' => $id_sede,   //Guardamos el id_sede del establecimeinto al que le hacemos el pedido de aula.
                 'estado' => 'PENDIENTE', //Las solicitudes pueden estar en dos estados posibles, pendiente o finalizada.
                 'id_responsable' => intval($this->s__id_responsable),
                 'tipo_agente' => $datos['tipo_agente'],
                 'tipo_asignacion' => $datos['tipo'],
-                'id_sede_origen' => $this->s__id_sede_origen,
+                'id_sede_origen' => $this->s__id_sede_origen, //Guardamos el id_sede del establecimeinto que realiza el pedido de aula.
                 'id_aula' => $this->s__datos_cuadro['id_aula'],
                 'facultad' => $this->s__sigla_origen        //Especificamos la sigla del establecimiento que realiza un pedido de aula. En la tabla solicitud
                                                             //el campo para este dato es character varying (6).
@@ -525,7 +547,7 @@ class ci_solicitar_aula extends toba_ci
             $this->dep('datos')->tabla('solicitud')->resetear();
             
             //Obtenemos el correo electronico del destinatario del pedido de aula.
-            $destinatario=$this->dep('datos')->tabla('persona')->get_correo_electronico($id_sede);
+            $destinatario=$this->dep('datos')->tabla('administrador')->get_correo_electronico($id_sede);
             
             //Creamos un objeto para enviar un email de notificacion.
             $email=new Email();
@@ -547,7 +569,7 @@ class ci_solicitar_aula extends toba_ci
             //que no vuelva a aparecer en el 'cuadro' de la pantalla pant_reserva. Para ello usamos los datos
             //id_aula, hora_inicio y hora_fin guardados en el arreglo s__datos_cuadro.
             (count($this->s__hd_global)>0) ? $this->bajar_horario_seleccionado(&$this->s__hd_global) : $this->bajar_horario_seleccionado(&$this->s__horarios_disponibles);
-            
+            print_r("Registramos la solicitud");
             $this->set_pantalla('pant_reserva');
         }
         

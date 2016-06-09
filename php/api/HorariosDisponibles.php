@@ -26,16 +26,16 @@ class HorariosDisponibles {
          * Se utiliza en la operacion Generar Solicitud, Calendario Comahue, Cargar Asignaciones.
          */
         public function calcular_horarios_disponibles ($aulas, $aulas_ua, $asignaciones){
-            //obtenemos las aulas con disponibilidad total, de 8 a 22 hs
+                //Obtenemos las aulas con disponibilidad total, de 8 a 22 hs.
                 $aulas_disponibles=$this->obtener_aulas_con_disponibilidad_total($aulas, $aulas_ua);
 
-                //agrupamos los horarios de clases segun las aulas
+                //Agrupamos los horarios de clases segun las aulas.
                 $espacios_filtrados=$this->filtrar_espacios($aulas, $asignaciones);
-
-                //obtenemos los horarios disponibles en cada aula 
+                
+                //Obtenemos los horarios disponibles en cada aula .
                 $this->obtener_horarios_disponibles($aulas, $espacios_filtrados);           
 
-                //agregamos al arreglo s__horarios_disponibles todas las aulas que tengan disponibilidad total
+                //Agregamos al arreglo s__horarios_disponibles todas las aulas que tengan disponibilidad total.
                 if(count($aulas_disponibles)>0){
                     $total=$this->obtener_horarios_disponibles($aulas_disponibles, array());
                 }
@@ -74,8 +74,8 @@ class HorariosDisponibles {
         }
     
         /*
-         * genera un recordset con todos los horarios ocupados en un aula. Cada Elto del recordset
-         * posee todos los horarios para un aula x
+         * Genera un recordset con todos los horarios ocupados en un aula. Cada Elto del recordset
+         * posee todos los horarios para un aula x.
          */
         private function filtrar_espacios ($aulas, $espacios_concedidos){
             $indice=0;
@@ -108,7 +108,8 @@ class HorariosDisponibles {
         /*
          * Calculamos los horarios disponibles por cada aula. 
          * @aulas contiene todas las aulas involucradas, indice => array (aula, id_aula)
-         * @horarios_ocupados contiene todos los horarios ocupados por aula, segun el dia especificado en la solicitud
+         * @horarios_ocupados contiene todos los horarios ocupados por aula, segun el dia especificado en la 
+         * solicitud. Si debemos calcular disponibilidad total usamos un arreglo vacio.
          */
         private function obtener_horarios_disponibles ($aulas, $horarios_ocupados){
             

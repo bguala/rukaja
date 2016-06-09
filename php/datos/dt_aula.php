@@ -100,7 +100,7 @@ class dt_aula extends toba_datos_tabla
         function get_aulas_mas_capacidad ($id_sede){
             $sql="SELECT id_aula, capacidad
                   FROM aula
-                  WHERE id_sede=$id_sede";
+                  WHERE id_sede=$id_sede AND (NOT eliminada)";
             return toba::db('rukaja')->consultar($sql);
         }
 

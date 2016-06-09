@@ -4,16 +4,18 @@ class dt_solicitud extends toba_datos_tabla
         /*
          * Esta funcion se utiliza en la operacion Ver Solicitudes, para ver los pedidos de aula en un
          * establecimiento en particular.
-         * @$id_sede : sede del usuario logueado.
+         * @$id_sede : sede del usuario logueado. Si utilizamos el atributo id_sede de la tabla solicitud estamos
+         * obteniendo las solicitudes que se hicieron desde otras dependencias.
+         * La sede y el establecimiento obtenidos equivalen a saber quien hizo el pedido de aula.
          */
-	function get_listado_solicitudes($id_sede, $fecha)
+	function get_solicitudes($id_sede, $fecha)
 	{
 		$sql = "SELECT
 			t_s.id_solicitud,
 			t_s.nombre,
 			t_s.id_responsable,
 			t_s.fecha,
-                        t_s.facultad,
+                        t_s.facultad as establecimiento,
 			t_s.capacidad,
 			t_s.finalidad,
 			t_s.hora_inicio,
@@ -21,17 +23,22 @@ class dt_solicitud extends toba_datos_tabla
 			t_s.id_aula,
                         t_s.tipo_agente,
                         t_s.id_sede,
-			t_s1.descripcion as id_sede_nombre,
+                        t_s.tipo_asignacion,
+			t_s1.descripcion as sede,
+                        
                         t_a.id_aula,
                         t_a.nombre as aula
 		FROM
 			solicitud as t_s,
 			sede as t_s1,
                         aula t_a
+                        
 		WHERE
 		        t_s.id_sede=t_s1.id_sede AND t_s.estado='PENDIENTE' AND t_s.id_sede=$id_sede
-                        AND t_s.fecha>='$fecha' AND t_a.id_aula=t_s.id_aula
+                        AND t_s.fecha>='$fecha' AND t_a.id_aula=t_s.id_aula  
 		ORDER BY nombre";
+                
+                print_r(toba::perfil_de_datos()->filtrar($sql));
                 
 		return toba::db('rukaja')->consultar($sql);
 	}
@@ -39,14 +46,15 @@ class dt_solicitud extends toba_datos_tabla
         /*
          * Esta funcion se usa para obtener las solicitudes realizadas por el usuario que se loguea en el
          * sistema. Esto permite obtener solicitudes de aula para editar o eliminar.
+         * Esas solicitudes se hacen a otras dependencias.
          */
-        function get_listado_solicitudes_realizadas ($id_sede_origen, $fecha){
+        function get_solicitudes_realizadas ($id_sede_origen, $fecha){
             $sql = "SELECT
 			t_s.id_solicitud,
 			t_s.nombre,
 			t_s.id_responsable,
 			t_s.fecha,
-                        t_s.facultad,
+                        t_s.facultad as establecimiento,
 			t_s.capacidad,
 			t_s.finalidad,
 			t_s.hora_inicio,
@@ -54,6 +62,7 @@ class dt_solicitud extends toba_datos_tabla
 			t_s.id_aula,
                         t_s.tipo_agente,
                         t_s.id_sede,
+                        t_s.tipo_asignacion,
 			t_s1.descripcion as id_sede_nombre,
                         t_a.id_aula,
                         t_a.nombre as aula
