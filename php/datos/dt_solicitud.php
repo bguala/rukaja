@@ -7,6 +7,7 @@ class dt_solicitud extends toba_datos_tabla
          * @$id_sede : sede del usuario logueado. Si utilizamos el atributo id_sede de la tabla solicitud estamos
          * obteniendo las solicitudes que se hicieron desde otras dependencias.
          * La sede y el establecimiento obtenidos equivalen a saber quien hizo el pedido de aula.
+         * Enviamos todas las solicitudes en estado pendiente o finalizada.
          */
 	function get_solicitudes($id_sede, $fecha)
 	{
@@ -23,6 +24,8 @@ class dt_solicitud extends toba_datos_tabla
 			t_s.id_aula,
                         t_s.tipo_agente,
                         t_s.id_sede,
+                        t_s.estado,
+                        t_s.id_sede_origen,
                         t_s.tipo_asignacion,
 			t_s1.descripcion as sede,
                         
@@ -34,7 +37,7 @@ class dt_solicitud extends toba_datos_tabla
                         aula t_a
                         
 		WHERE
-		        t_s.id_sede=t_s1.id_sede AND t_s.estado='PENDIENTE' AND t_s.id_sede=$id_sede
+		        t_s.id_sede=t_s1.id_sede AND t_s.id_sede=$id_sede
                         AND t_s.fecha>='$fecha' AND t_a.id_aula=t_s.id_aula  
 		ORDER BY nombre";
                 
@@ -62,6 +65,8 @@ class dt_solicitud extends toba_datos_tabla
 			t_s.id_aula,
                         t_s.tipo_agente,
                         t_s.id_sede,
+                        t_s.id_sede_origen,
+                        t_s.estado,
                         t_s.tipo_asignacion,
 			t_s1.descripcion as id_sede_nombre,
                         t_a.id_aula,
@@ -71,7 +76,7 @@ class dt_solicitud extends toba_datos_tabla
 			sede as t_s1,
                         aula t_a
 		WHERE
-		        t_s.id_sede=t_s1.id_sede AND t_s.estado='PENDIENTE' AND t_s.id_sede_origen=$id_sede_origen
+		        t_s.id_sede=t_s1.id_sede AND t_s.id_sede_origen=$id_sede_origen
                         AND t_s.fecha>='$fecha' AND t_a.id_aula=t_s.id_aula
 		ORDER BY nombre";
             

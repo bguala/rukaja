@@ -39,7 +39,7 @@ class ci_ver_solicitudes extends toba_ci
         protected $s__datos_filtro;                    //Contiene un cjto. de datos filtrados.
         protected $s__sede_origen;
         
-        protected $s__datos_solcitud;                  //Guardamos todos los datos relacionados a una solicitud.
+        protected $s__datos_solcitud;                  //Guardamos todos los datos relacionados a una solicitud. Es util para cambiarla de estado.
                       
         //Se cargan si hay que notificar horarios alternativos
         //Quizas se pueden eliminar.
@@ -60,6 +60,8 @@ class ci_ver_solicitudes extends toba_ci
                 array('clave' => 1, 'descripcion' => 'Solicitudes de aula realizadas a otras dependencias'),
                 array('clave' => 2, 'descripcion' => 'Solicitudes realizadas en su dependencia')
         );
+        
+        protected $s__accion;
         
         //------------------------------------------------------------------------------------
         //---- Pant Edicion ------------------------------------------------------------------
@@ -98,14 +100,15 @@ class ci_ver_solicitudes extends toba_ci
         //---- Cuadros -----------------------------------------------------------------------
         
 	function conf__cuadro(toba_ei_cuadro $cuadro)
-	{
-            //Se necesita id_sede para calcular horarios disponibles.
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
-            
-            //Obtenemos el correo electronico del responsable de aula que hizo el pedido para motificar 
+	{           
+            //Obtenemos el correo electronico del responsable de aula que hizo el pedido para notificar 
             //resultados.
-            $this->s__emisor=$this->dep('datos')->tabla('administrador')->get_correo_electronico($this->s__id_sede);
-            $this->s__emisor='rukaja.uncoma@gmail.com';
+            //Se necesita id_sede para obtener las solicitudes.
+            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
+            //Es conveniente hacerlo mas adelante.
+            //$this->s__emisor=$this->dep('datos')->tabla('administrador')->get_correo_electronico($this->s__id_sede);
+            //No es necesario.
+            //$this->s__emisor='rukaja.uncoma@gmail.com';
             
             print_r($this->s__datos_form);
             if(isset($this->s__datos_form)){
@@ -116,12 +119,15 @@ class ci_ver_solicitudes extends toba_ci
                     //Esto permite editar o eliminar pedidos de aula a otras dependencias.
                     $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_solicitudes_realizadas($this->s__id_sede, date('Y-m-d')));
                     $cuadro->set_titulo(strtoupper($this->s__cargar_combo[0]['descripcion']));
+                    $cuadro->eliminar_evento('seleccion');
                     
                 }else{
                     //Mostramos las solicitudes de aula que estan hechas en el establecimeinto del usuario que se
                     //loguea. Estas estan registradas en estado pendiente.
                     $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_solicitudes($this->s__id_sede, date('Y-m-d')));
                     $cuadro->set_titulo(strtoupper($this->s__cargar_combo[1]['descripcion']));
+                    $cuadro->eliminar_evento('editar');
+                    $cuadro->eliminar_evento('borrar');
                 }
             }else{
                 $cuadro->colapsar();
@@ -151,6 +157,9 @@ class ci_ver_solicitudes extends toba_ci
             $this->s__datos_solcitud=$datos;
             $this->s__contador += 1;
                         
+            //Usamos el id_sede especificado en la solicitud.
+            $this->s__id_sede=$datos['id_sede'];
+            
             //Guardamos la fecha de solicitud en una variable aparte. Se utiliza en la funcion procesar_periodo 
             //para obtener todas las asignaciones, definitivas o periodicas, de la fecha de solicitud.
             //El valor de esta variable es usada dentro de los metodos del datos_tabla para obtener asignaciones.
@@ -177,6 +186,27 @@ class ci_ver_solicitudes extends toba_ci
 //            $this->s__datos_solicitud=$datos;
             
 	}
+        
+        /*
+         * Esta funcion permite editar solicitudes en estado pendiente o finalizada. Intentaremos usar la 
+         * operacion Solicitar Aula.
+         */
+        function conf__cuadro_editar ($datos){
+            //Si el estado de la solicitud es pendiente, podemos editar finalidad y docente.
+            if(strcmp($datos['estado'], 'PENDIENTE')==0){
+                
+            }else{ //Si esta en estado finalizada podemos editar hora_inicio, hora_fin, finalidad y docente.
+                
+            }
+        }
+        
+        /*
+         * Esta funcion permite borrar solicitudes de aula, en estado pendiente o finalizada. Si la solicitud 
+         * ya esta concedida liberamos un espacio.
+         */
+        function conf__cuadro__borrar ($datos){
+            
+        }
         
         /*
          * Esta funcion calcula horarios disponibles para el aula especificada en la solcitud.
@@ -592,24 +622,11 @@ class ci_ver_solicitudes extends toba_ci
             //print_r("LLegamos a form asignacion aceptar");exit();
             $dia=$this->recuperar_dia($this->s__fecha_consulta);
             
-            //Obtenemos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
+            //Usamos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
             //la fecha exacta de la solicitud.
-            $id_periodo=array();
-            switch($this->s__datos_solcitud['tipo_asignacion']){
-                //Segun el tipo de asignacion acotamos la busqueda.
-                case 'EXAMEN FINAL'      : $id_periodo=$this->dep('datos')->tabla('periodo')->get_examen_final($this->s__fecha_consulta, date('Y', $this->s__fecha_consulta), $this->s__id_sede);
-                                           break;
-                case 'EXAMEN PARCIAL'    : 
-                case 'CONSULTA'          :
-                case 'CURSADA'           :
-                case 'EVENTO'            : $id_periodo=$this->dep('datos')->tabla('periodo')->get_cuatrimestre($this->s__fecha_consulta, date('Y', $this->s__fecha_consulta), $this->s__id_sede);
-                                           break;
-                //Si existe un nuevo tipo de asignacion sera* asociado a un cuatrimestre.
-                default : $id_periodo=$this->dep('datos')->tabla('periodo')->get_cuatrimestre($this->s__fecha_consulta, date('Y', $this->s__fecha_consulta), $this->s__id_sede);
-                          break;
-                
-            }
-            print_r("Este es el valor del id_periodo");print_r($id_periodo);print_r("<br><br>");
+            $id_periodo=$this->dep('datos')->tabla('periodo')->get_periodo_segun_asignacion($this->s__datos_solcitud['tipo_asignacion'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_sede']);
+            
+            print_r("Este es el valor del id_periodo");print_r($id_periodo);print_r("<br><br>");exit();
             //Usamos ambos arreglos, $datos y $s__datos_solcitud.
             $asignacion=array(
                 'finalidad' => $datos['finalidad'],
@@ -633,7 +650,7 @@ class ci_ver_solicitudes extends toba_ci
             
             //Agregamos a $asignacion datos extra relacionados a un periodo, para no alterar la estructura 
             //de esta funcion. $dia tiene el mismo formato retornado por ef_multi_seleccion_check.
-            $asignacion['dias']=$dia;
+            $asignacion['dias']=array($dia);
             $asignacion['fecha_inicio']=$this->s__datos_solcitud['fecha'];
             $asignacion['fecha_fin']=$this->s__datos_solcitud['fecha'];
             
@@ -655,31 +672,25 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         function registrar_asignacion_periodo ($datos){
-            //$cuatrimestre=$this->obtener_cuatrimestre(); ya viene en $datos
-            $fecha=  getdate();
             //Obtenemos el id de la asignacion registrada en el paso anterior.
             $secuencia=recuperar_secuencia('asignacion_id_asignacion_seq');
-            $dato=array(
-              
-              'cuatrimestre' => $cuatrimestre,
-              'anio' => $fecha['year'],
-              
-            );
             
             $periodo=array(
                     'id_asignacion' => $secuencia,
                     'fecha_inicio' => $datos['fecha_inicio'],
                     'fecha_fin' => $datos['fecha_fin']
             );
+            
             $this->dep('datos')->tabla('asignacion_periodo')->nueva_fila($periodo);
             $this->dep('datos')->tabla('asignacion_periodo')->sincronizar();
             $this->dep('datos')->tabla('asignacion_periodo')->resetear();
             
-            //En esta seccion se guarda informacion en la tabla esta_formada.
+            //En esta seccion se guarda informacion en la tabla esta_formada. Podemos tener varios dias.
             $dias=$datos['dias'];
             foreach ($dias as $clave=>$dia){
                 $dato['nombre']=$dia;
                 $dato['id_asignacion']=$secuencia;
+                $dato['fecha']=$this->s__fecha_consulta;
                 $this->dep('datos')->tabla('esta_formada')->nueva_fila($dato);
                 $this->dep('datos')->tabla('esta_formada')->sincronizar();
                 $this->dep('datos')->tabla('esta_formada')->resetear();
@@ -691,11 +702,11 @@ class ci_ver_solicitudes extends toba_ci
          * A partir de una fecha devolvemos el nombre del dia 
          */
         function recuperar_dia ($fecha){
-            //si usamos w obtenemos 0 para domingo y 6 para sabado
-            //si usamos N obtenemos 1 para lunes y 7 para domingo
+            //Si usamos w obtenemos 0 para domingo y 6 para sabado.
+            //Si usamos N obtenemos 1 para lunes y 7 para domingo.
             $dia_numerico=date('N', strtotime($fecha));
             
-            //devolvemos el dia en un arreglo para no modificar la funcion registrar_asignacion_periodo
+            //Devolvemos el dia en un arreglo para no modificar la funcion registrar_asignacion_periodo.
             return (array($this->obtener_dia($dia_numerico)));
         }
         
@@ -710,23 +721,27 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         function notificar (){
-            //Obtenemos datos personales del responsable de aula que recibio la solicitud.
-            //Esta informacion se utiliza para firmar la notificacion           
-            $emisor=$this->dep('datos')->tabla('persona')->get_datos_emisor(toba::usuario()->get_id());
-            //obtenemos el correo electronico del responsable de aula 
-            $destinatario=$this->dep('datos')->tabla('persona')->get_correo_electronico($this->s__sede_origen);
-            //creamos un asunto por defecto
+            //Obtenemos datos personales del responsable de aula que escribio* la solicitud.
+            //Esta informacion se utiliza para firmar la notificacion. Los emails se envian desde una cuenta
+            //gmail perteneciente a rukaja. Esta cuenta es rukaja.uncoma@gmail.com. No necesitamos obtener datos
+            //asociados a un emisor, esto se configura en la funcion enviar_email de la clase Email.
+            
+            //Si necesitamos el correo electronico del responsable de aula.
+            $destinatario=$this->dep('datos')->tabla('persona')->get_correo_electronico($this->s__datos_solcitud['id_sede_origen']);
+            //Creamos un asunto por defecto.
             $asunto="SOLICITUD CONCEDIDA";
             
-            //creamos una descripcion por defecto
+            //Creamos una descripcion por defecto. Si usamos un aula distinta a la especificada en la solicitud
+            //debemos cambiar la descripcion, indicando la nueva aula.  
+            //*********
             //$descripcion="La SOLICITUD DE AULA en el Establecimiento {$emisor['establecimiento']}, para el dia {$this->s__fecha} en el horario {$this->s__hora_inicio} a {$this->s__hora_fin} hs ha sido registrada exitosamente. \n\n {$emisor['responsable']}";
             $descripcion="La SOLICITUD DE AULA en el Establecimiento Administracion Central, para el dia {$this->s__fecha_consulta} en el horario {$this->s__hora_inicio} - {$this->s__hora_fin} hs ha sido registrada exitosamente. \n\n Santiago Briceño";
             
             $email=new Email();
-            //enviamos un email automaticamente. Su objetivo es notificar el resultado positivo de la solicitud.
+            //Enviamos un email automaticamente. Su objetivo es notificar el resultado positivo de la solicitud.
             $email->enviar_email($destinatario, $asunto, $descripcion);
                                     
-            //volvemos a la pantalla inicial
+            //Volvemos a la pantalla inicial.
             $this->set_pantalla('pant_edicion');
         }
         
@@ -930,10 +945,10 @@ class ci_ver_solicitudes extends toba_ci
         /*
          * Se utiliza para pasar una solicitud a estado finalizada.
          */
-        function pasar_a_estado_finalizada ($datos){
-            $datos['estado']="FINALIZADA";
-            $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__id_solicitud));
-            $this->dep('datos')->tabla('solicitud')->set($datos);
+        function pasar_a_estado_finalizada (){
+            $this->s__datos_solcitud['estado']="FINALIZADA";
+            $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solcitud['id_solicitud']));
+            $this->dep('datos')->tabla('solicitud')->set($this->s__datos_solcitud);
             $this->dep('datos')->tabla('solicitud')->sincronizar();
         }
         

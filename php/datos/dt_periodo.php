@@ -216,20 +216,45 @@ class dt_periodo extends toba_datos_tabla
         /*
          * Esta funcion se utiliza para implementar combos en cascada. Se usa en las operaciones Cargar 
          * Asignaciones y Solicitar Aula.
+         * @$fecha : se utiliza para filtrar periodos. Se supone que esa fecha cae sobre un periodo.
          */
-        function get_periodo_ ($tipo_asignacion){
+        function get_periodo_segun_asignacion ($tipo_asignacion, $fecha, $id_sede){
             //Segun el tipo de asignacion armamos la consulta adecuada.
             $sql="";
+            
             switch($tipo_asignacion){
-                case 'EXAMEN FINAL'      : break;
+                case 'EXAMEN FINAL'      : $sql="SELECT t_p.id_periodo,
+                                                        'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' as descripcion,
+                                                        t_p.id_sede
+                                                 FROM periodo t_p
+                                                 JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo)
+                                                 WHERE t_p.id_sede=$id_sede AND 
+                                                       ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) ";
+                                           break;
                 case 'EVENTO'            : 
                 case 'CURSADA'           :
                 case 'EXAMEN PARCIAL'    :
-                case 'CONSULTA'          : break;
+                case 'CONSULTA'          : $sql="SELECT t_p.id_periodo,
+                                                        t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion,
+                                                        t_p.id_sede
+                                                 FROM periodo t_p
+                                                 JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
+                                                 WHERE t_p.id_sede=$id_sede AND 
+                                                       ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)";
+                                           break;
                 //Consideramos un nuevo tipo de asignacion. Por defecto se asocian a un cuatrimestre.
-                default : break;
+                default : $sql="SELECT id_periodo,
+                                       t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion,
+                                       t_p.id_sede
+                                FROM periodo t_p
+                                JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
+                                WHERE t_p.id_sede=$id_sede AND 
+                                      ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)";
+                          
+                          break;
             }
             
+            //print_r(toba::perfil_de_datos()->filtrar($sql));exit();
             return toba::db('rukaja')->consultar($sql);
         }
 
