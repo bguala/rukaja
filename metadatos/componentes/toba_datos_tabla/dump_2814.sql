@@ -16,8 +16,8 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 	'toba', --clase_proyecto
 	'toba_datos_tabla', --clase
 	'21', --punto_montaje
-	NULL, --subclase
-	NULL, --subclase_archivo
+	'dt_administrador', --subclase
+	'datos/dt_administrador.php', --subclase_archivo
 	NULL, --objeto_categoria_proyecto
 	NULL, --objeto_categoria
 	'DT - administrador', --nombre
@@ -72,48 +72,6 @@ INSERT INTO apex_objeto_db_registros (objeto_proyecto, objeto, max_registros, mi
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
 	'rukaja', --objeto_proyecto
 	'2814', --objeto
-	'1013', --col_id
-	'nro_doc', --columna
-	'C', --tipo
-	'1', --pk
-	'', --secuencia
-	'20', --largo
-	NULL, --no_nulo
-	'1', --no_nulo_db
-	NULL, --externa
-	'administrador'  --tabla
-);
-INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
-	'rukaja', --objeto_proyecto
-	'2814', --objeto
-	'1014', --col_id
-	'tipo_doc', --columna
-	'C', --tipo
-	'1', --pk
-	'', --secuencia
-	'12', --largo
-	NULL, --no_nulo
-	'1', --no_nulo_db
-	NULL, --externa
-	'administrador'  --tabla
-);
-INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
-	'rukaja', --objeto_proyecto
-	'2814', --objeto
-	'1015', --col_id
-	'legajo', --columna
-	'C', --tipo
-	'0', --pk
-	'', --secuencia
-	'20', --largo
-	NULL, --no_nulo
-	'0', --no_nulo_db
-	NULL, --externa
-	'administrador'  --tabla
-);
-INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
-	'rukaja', --objeto_proyecto
-	'2814', --objeto
 	'1016', --col_id
 	'nombre_usuario', --columna
 	'C', --tipo
@@ -122,7 +80,7 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'35', --largo
 	NULL, --no_nulo
 	'0', --no_nulo_db
-	NULL, --externa
+	'0', --externa
 	'administrador'  --tabla
 );
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
@@ -136,7 +94,35 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	NULL, --largo
 	NULL, --no_nulo
 	'1', --no_nulo_db
-	NULL, --externa
+	'0', --externa
+	'administrador'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2814', --objeto
+	'1157', --col_id
+	'id_administrador', --columna
+	'E', --tipo
+	'1', --pk
+	'administrador_id_administrador_seq', --secuencia
+	NULL, --largo
+	NULL, --no_nulo
+	'1', --no_nulo_db
+	'0', --externa
+	'administrador'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2814', --objeto
+	'1158', --col_id
+	'correo_electronico', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	'50', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
 	'administrador'  --tabla
 );
 --- FIN Grupo de desarrollo 0
