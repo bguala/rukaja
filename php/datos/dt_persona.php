@@ -30,7 +30,8 @@ class dt_persona extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion se utiliza para cargar el cuadro_docentes en la operacion Cargar Asignaciones.
+         * Esta funcion se utiliza para cargar el cuadro_docentes en la operacion 'Cargar Asignaciones' y 
+         * 'Solicitar Aula'.
          */
         function get_docentes ($where){
             $sql="SELECT nro_docum as nro_doc,
@@ -44,6 +45,26 @@ class dt_persona extends toba_datos_tabla
             
             return toba::db('mocovi')->consultar($sql);
             
+        }
+        
+        /*
+         * Esta funcion se utiliza en la operacion 'Solicitar Aula' para editar una solicitud.
+         */
+        function get_datos_docente ($legajo){
+            $sql="SELECT *
+                  FROM docente 
+                  WHERE legajo=$legajo";
+            return toba::db('mocovi')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion se utiliza en la operacion 'Solicitar Aula' para editar una solicitud.
+         */
+        function get_datos_organizacion ($id_organizacion){
+            $sql="SELECT *
+                  FROM organizacion 
+                  WHERE id_organizacion=$id_organizacion";
+            return toba::db('rukaja')->consultar($sql);
         }
         
         /*

@@ -51,7 +51,7 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'1819', --evento_id
 	'2906', --objeto
 	'alta', --identificador
-	'Registrar Solicitud', --etiqueta
+	'Aceptar', --etiqueta
 	'1', --maneja_datos
 	'0', --sobre_fila
 	NULL, --confirmacion

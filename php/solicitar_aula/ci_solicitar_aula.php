@@ -29,8 +29,44 @@ class ci_solicitar_aula extends toba_ci
         //informacion es fundamental paea registrar asignaciones.
         protected $s__id_responsable;
         protected $s__id_sede_origen;
+        
+        protected $s__datos_solicitud;
+        protected $s__accion;
 
-
+        //-------------------------------------------------------------------------------------
+        //---- Procesamos un vinculo desde otra operacion -------------------------------------
+        //-------------------------------------------------------------------------------------
+        
+        /*
+         * Se ejecuta una sola vez cuando hacemos click en la operacion.
+         */
+        function ini__operacion() {
+            $datos=toba::memoria()->get_parametros();
+            print_r("INI OPERACION ");print_r($datos);
+            if(count($datos)>0){
+                
+                //Si la solicitud esta en estado finalizada solamente podemos editar docente y finalidad.
+                if(strcmp($datos['estado'], 'FINALIZADA')==0){
+                    //Este atributo se setea en cada rama porque en sesion existe array([tm]=>1), lo que hace
+                    //que se ejecute una rama en el conf__cuadro donde se hace una consulta sql con un atributo
+                    //null. Como consecuencia se genera un error.
+                    $this->s__datos_solicitud=$datos;
+                    $this->set_pantalla('pant_edicion');
+                }else{
+                    //Si la edicion es parcial, debemos navegar hasta la pantalla pant_edicion. En este caso
+                    //editamos finalidad y tipo de responsable.
+                    if(strcmp($datos['tipo_edicion'], 'edicion_parcial')==0){
+                        $this->s__datos_solicitud=$datos;
+                        $this->set_pantalla('pant_edicion');
+                    }
+                    //Si la edicion es total, nos quedamos en la pantalla pant_reserva. En este caso practicamente
+                    //creamos una nueva solicitud reutilizando el id_ de la solicitud que se quiere modificar.
+                    //El proceso de reserva de aula debe continuar de la misma manera. Pero podemos mantener 
+                    //algunos datos como el responsable de aula, la finalidad etc.
+                }
+            }
+        }
+        
         //-------------------------------------------------------------------------------------
         //---- Pant Busqueda ------------------------------------------------------------------
         //-------------------------------------------------------------------------------------
@@ -344,10 +380,11 @@ class ci_solicitar_aula extends toba_ci
             
             //Es necesario usar strtotime para no generar conflictos entre fechas.
             $datos['fecha']=date('d-m-Y', strtotime($this->s__fecha_consulta));
-            //Obtenemos el establecimiento al que pertenece el usuario logueado. Es quien realiza el pedido de 
+            //Obtenemos la sede a la que pertenece el usuario logueado. Es quien realiza el pedido de 
             //aula. Estas sentencias se deben cambiar cuando existan perfiles de datos.
             $this->s__id_sede_origen=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
             //$id_sede=5;
+            //print_r($this->s__id_sede_origen);exit();
             $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede_origen);
             $datos['facultad']=$ua[0]['establecimiento'];
             $this->s__sigla_origen=$ua[0]['sigla'];
@@ -364,7 +401,7 @@ class ci_solicitar_aula extends toba_ci
             //a) cargar en la solicitud el id_aula e id_sede seleccionados.
             //b) cargar 'formulario' con datos por defecto.
             $this->s__datos_cuadro=$datos;
-            
+            print_r("Nos cambiamos de pantalla");
             $this->set_pantalla("pant_edicion");
         }
         
@@ -382,20 +419,86 @@ class ci_solicitar_aula extends toba_ci
         
 	//---- Formulario -------------------------------------------------------------------
 
+        /*
+         * En esta funcion agregamos la logica necesaria para cargar el formulario con datos por defecto.
+         */
 	function conf__formulario(toba_ei_formulario $form)
 	{
+            if(count($this->s__datos_solicitud)==0){
+                //Esta informacion pertenece a la seccion 'datos iniciales'.
+                $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__fecha_consulta)));
+                $form->ef('dia')->set_estado(utf8_decode($this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))));
+                $form->ef('inicio')->set_estado($this->s__datos_cuadro['hora_inicio']);
+                $form->ef('fin')->set_estado($this->s__datos_cuadro['hora_fin']);
             
-            $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__fecha_consulta)));
-            $form->ef('dia')->set_estado(utf8_decode($this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))));
-            $form->ef('inicio')->set_estado($this->s__datos_cuadro['hora_inicio']);
-            $form->ef('fin')->set_estado($this->s__datos_cuadro['hora_fin']);
-            
-            //Cargamos informacion por defecto en formulario de la pantalla pant_edicion.
-            //if(!$this->s__solicitud_registrada){
+                //Cargamos informacion por defecto en formulario de la pantalla pant_edicion.
                 //Guardamos el establecimiento destino.
                 $form->ef('establecimiento')->set_estado($this->s__datos_form['facultad']);
                 $form->set_datos($this->s__datos_cuadro);
-            //}
+                
+                $this->s__accion="registrar";
+            }else{
+                //Cargamos datos por defecto para editar solicitudes.
+                
+                switch($this->s__datos_solicitud['tipo_edicion']){
+                    case 'edicion_parcial' : /** Cargamos informacion en la seccion 'datos iniciales'. **/
+                                             $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__datos_solicitud['fecha'])));
+                                             $form->ef('dia')->set_estado(utf8_decode($this->obtener_dia(date('N', strtotime($this->s__datos_solicitud)))));
+                                             //Usamos la hora que especifico el usuario en la solicitud.
+                                             $form->ef('inicio')->set_estado($this->s__datos_solicitud['hora_inicio']);
+                                             $form->ef('fin')->set_estado($this->s__datos_solicitud['hora_fin']);
+                                             
+                                             /** Configuramos los establecimientos origen y destino. **/
+                                             $establecimiento_destino=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__datos_solicitud['id_sede']);
+                                             $establecimiento_origen=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__datos_solicitud['id_sede_origen']);
+                                             print_r("PRIMERO ORIGEN, DESPUES DESTINO <br><br>");
+                                             print_r($establecimiento_origen);print_r($establecimiento_destino);
+                                             //Guardamos el establecimiento que emite la solicitud.
+                                             $this->s__datos_solicitud['facultad']=$establecimiento_origen[0]['establecimiento'];
+                                             //Guardamos el establecimiento que recibe la solicitud.
+                                             $this->s__datos_solicitud['establecimiento']=$establecimiento_destino[0]['establecimiento'];
+                                             print_r($this->s__datos_solicitud);
+                                             $form->ef('tipo_nombre')->set_estado($this->s__datos_solicitud['tipo_asignacion']);
+                                             //Cargamos la informacion que viene desde la operacion 'ver solicitudes'.
+                                             $form->set_datos($this->s__datos_solicitud);
+                                             /** Configuramos la seccion 'datos del solicitante'. **/
+                                             switch($this->s__datos_solicitud['tipo_agente']){
+                                                 //Aqui vamos a cargar los datos por separado para que no se rompa nada.
+                                                 case 'Docente'      : $docente=$this->dep('datos')->tabla('persona')->get_datos_docente($this->s__datos_solicitud['id_responsable']);
+                                                                       print_r($docente[0]['nombre']);
+                                                                       $form->ef('nombre')->set_estado($docente[0]['nombre']);
+                                                                       $form->ef('apellido')->set_estado($docente[0]['apellido']);
+                                                                       $form->ef('legajo')->set_estado($docente[0]['legajo']);
+                                                                       $form->ef('tipo_agente')->set_estado('Docente');
+                                                                       break;
+                                                                   
+                                                 case 'Organizacion' : $organizacion=$this->dep('datos')->tabla('persona')->get_datos_organizacion($this->s__datos_solicitud['id_responsable']);
+                                                                       $form->ef('tipo_agente')->set_estado('Organizacion');
+                                                                       $form->ef('org')->set_estado($organizacion[0]['id_organizacion']);
+                                                                       $form->ef('nombre_org')->set_estado($organizacion[0]['nombre_org']);
+                                                                       $form->ef('telefono_org')->set_estado($organizacion[0]['telefono_org']);
+                                                                       $form->ef('email_org')->set_estado($organizacion[0]['email_org']);
+                                                                       break;
+                                                 default : print_r("Ocurre un problema con el tipo_agente");
+                                             }
+                                                             
+                                             //Si la solicitud esta en estado pendiente no debemos permitir que se editen hora_inicio y hora_fin.
+                                             //Estos atributos se pueden editar en estado pendiente ejecutando nuevamente la operacion 
+                                             //'solicitar aula'.
+                                             $form->set_solo_lectura(array('hora_inicio', 'hora_fin'));
+                                             $this->s__accion="edicion_parcial";
+                                             break;
+                                         
+                    case 'edicion_total'   : break;
+                }
+                
+                
+                
+                
+                
+                
+                
+            }
             
 	}
         
@@ -498,9 +601,48 @@ class ci_solicitar_aula extends toba_ci
             }
             //print_r($datos);
             //Anteriormente se hacia un chequeo de horarios, ya no es necesario, porque se hace en el cliente.
-            $this->registrar_solicitud($datos);
+            switch($this->s__accion){
+                case 'registrar'        : $this->registrar_solicitud($datos);
+                                          break;
+                case 'edicion_parcial'  : $this->edicion_parcial($datos);
+                                          break;
+                case 'edicion_total'    : $this->edicion_total();
+                                          break;
+            }
+            
                         
 	}
+        
+        /*
+         * Esta funcion permite editar solicitudes.
+         */
+        function edicion_parcial ($datos){
+            try{
+                print_r($datos);exit();
+                $solicitud=array(
+                    'id_solicitud' => $this->s__datos_solicitud['id_solicitud'],
+                    'nombre' => '',
+                    'fecha' => '',
+                    'capacidad' => '',
+                    'finalidad' => '',
+                    'hora_inicio' => '',
+                    'hora_fin' => '',
+                    'id_sede' => '',
+                    'estado' => '',
+                    'id_aula' => '',
+                    'facultad' => '',
+                    'tipo_agente' => '',
+                    'id_responsable' => '',
+                    'tipo_asignacion' => '',
+                    'id_sede_origen' => ''
+                );
+                $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
+                $this->dep('datos')->tabla('solicitud')->set($solicitud);
+                $this->dep('datos')->tabla('solicitud')->sincronizar();
+            }catch (toba_error $ex) {
+
+            }
+        }
         
         /*
          * Registramos una solicitud de aula. Agregamos la logica necesaria teniendo en cuenta los tipos de 

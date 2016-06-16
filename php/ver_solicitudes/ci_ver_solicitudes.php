@@ -103,7 +103,8 @@ class ci_ver_solicitudes extends toba_ci
 	{           
             //Obtenemos el correo electronico del responsable de aula que hizo el pedido para notificar 
             //resultados.
-            //Se necesita id_sede para obtener las solicitudes.
+            //Se necesita id_sede para obtener las solicitudes que pertenecen al establecimiento del usuario
+            //logueado.
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
             //Es conveniente hacerlo mas adelante.
             //$this->s__emisor=$this->dep('datos')->tabla('administrador')->get_correo_electronico($this->s__id_sede);
@@ -117,6 +118,7 @@ class ci_ver_solicitudes extends toba_ci
                     //el id_sede del usuario logueado para comparar con el campo id_sede de la tabla solicitud. 
                     //id_sede guarda el id_ de la sede destino, que es a quien le hacemos el pedido de aula.
                     //Esto permite editar o eliminar pedidos de aula a otras dependencias.
+                    //Si no vemos nada en el cuadro es porque la fecha de solicitud es mayor a la fecha actual.
                     $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_solicitudes_realizadas($this->s__id_sede, date('Y-m-d')));
                     $cuadro->set_titulo(strtoupper($this->s__cargar_combo[0]['descripcion']));
                     $cuadro->eliminar_evento('seleccion');
@@ -126,7 +128,8 @@ class ci_ver_solicitudes extends toba_ci
                     //loguea. Estas estan registradas en estado pendiente.
                     $cuadro->set_datos($this->dep('datos')->tabla('solicitud')->get_solicitudes($this->s__id_sede, date('Y-m-d')));
                     $cuadro->set_titulo(strtoupper($this->s__cargar_combo[1]['descripcion']));
-                    $cuadro->eliminar_evento('editar');
+                    $cuadro->eliminar_evento('edicion_parcial');
+                    $cuadro->eliminar_evento('edicion_total');
                     $cuadro->eliminar_evento('borrar');
                 }
             }else{
@@ -191,12 +194,28 @@ class ci_ver_solicitudes extends toba_ci
          * Esta funcion permite editar solicitudes en estado pendiente o finalizada. Intentaremos usar la 
          * operacion Solicitar Aula.
          */
-        function conf__cuadro_editar ($datos){
-            //Si el estado de la solicitud es pendiente, podemos editar finalidad y docente.
+        function evt__cuadro__edicion_parcial ($datos){
+            //Si el estado de la solicitud es pendiente, podemos editar finalidad y responsable de aula.
+            if(strcmp($datos['estado'], 'PENDIENTE')==0 || strcmp($datos['estado'], 'FINALIZADA')==0){
+                $datos['tipo_edicion']='edicion_parcial';
+                toba::vinculador()->navegar_a('rukaja', 3571, $datos);
+            }
+        }
+        
+        /*
+         * Esta funcion permite hacer una edicion completa de una solicitud. La idea de esta operacion es permitir
+         * editar hi y hf, pero podemos mantener la finalidad, el responsable de aula etc.
+         */
+        function evt__cuadro__edicion_total ($datos){
+            //Si el estado de la solicitud es pendiente, podemos editar finalidad, responsable de aula, hi y hf.
             if(strcmp($datos['estado'], 'PENDIENTE')==0){
-                
-            }else{ //Si esta en estado finalizada podemos editar hora_inicio, hora_fin, finalidad y docente.
-                
+                $datos['tipo_edicion']='edicion_total';
+                toba::vinculador()->navegar_a('rukaja', 3571, $datos);
+            }else{
+                $mensaje="No es posible hacer una edición total de una solicitud en estado finalizada. En este caso"
+                        . " solamente se puede editar el responsable de aula y la finalidad, lo que constituye "
+                        . "una edición parcial.";
+                toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
             }
         }
         
@@ -204,8 +223,20 @@ class ci_ver_solicitudes extends toba_ci
          * Esta funcion permite borrar solicitudes de aula, en estado pendiente o finalizada. Si la solicitud 
          * ya esta concedida liberamos un espacio.
          */
-        function conf__cuadro__borrar ($datos){
-            
+        function evt__cuadro__borrar ($datos){
+            //Ocurre una situacion extrania. Porque se elimina el registro de la tabla solcitud pero se produce 
+            //el siguiente error 'La tabla solicitud requiere al menos 1 registro/s se encontraron solo cero'.
+            //La unica solucion que encontre a este problema consiste en usar un bloque try-catch, que capture 
+            //la excepcion y no haga nada con ella. 
+            try{
+                $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$datos['id_solicitud']));
+                $solicitud=$this->dep('datos')->tabla('solicitud')->get();
+                print_r($solicitud);
+                $this->dep('datos')->tabla('solicitud')->eliminar_todo();
+                $this->dep('datos')->tabla('solicitud')->sincronizar();
+            }catch(toba_error $e){
+                //No procesamos la excepcion porque se produce lo que nos interesa, que es eliminar una solicitud. 
+            }
         }
         
         /*

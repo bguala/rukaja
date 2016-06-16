@@ -83,8 +83,8 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'rukaja', --proyecto
 	'1886', --evento_id
 	'2957', --objeto
-	'editar', --identificador
-	'Editar', --etiqueta
+	'edicion_parcial', --identificador
+	'Edición Parcial', --etiqueta
 	'1', --maneja_datos
 	'1', --sobre_fila
 	NULL, --confirmacion
@@ -94,6 +94,39 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'0', --en_botonera
 	NULL, --ayuda
 	'2', --orden
+	NULL, --ci_predep
+	NULL, --implicito
+	NULL, --defecto
+	NULL, --display_datos_cargados
+	NULL, --grupo
+	NULL, --accion
+	NULL, --accion_imphtml_debug
+	NULL, --accion_vinculo_carpeta
+	NULL, --accion_vinculo_item
+	NULL, --accion_vinculo_objeto
+	NULL, --accion_vinculo_popup
+	NULL, --accion_vinculo_popup_param
+	NULL, --accion_vinculo_target
+	NULL, --accion_vinculo_celda
+	NULL, --accion_vinculo_servicio
+	'0', --es_seleccion_multiple
+	'0'  --es_autovinculo
+);
+INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, etiqueta, maneja_datos, sobre_fila, confirmacion, estilo, imagen_recurso_origen, imagen, en_botonera, ayuda, orden, ci_predep, implicito, defecto, display_datos_cargados, grupo, accion, accion_imphtml_debug, accion_vinculo_carpeta, accion_vinculo_item, accion_vinculo_objeto, accion_vinculo_popup, accion_vinculo_popup_param, accion_vinculo_target, accion_vinculo_celda, accion_vinculo_servicio, es_seleccion_multiple, es_autovinculo) VALUES (
+	'rukaja', --proyecto
+	'1888', --evento_id
+	'2957', --objeto
+	'edicion_total', --identificador
+	'Edición Total', --etiqueta
+	'1', --maneja_datos
+	'1', --sobre_fila
+	NULL, --confirmacion
+	NULL, --estilo
+	'apex', --imagen_recurso_origen
+	'editar.gif', --imagen
+	'0', --en_botonera
+	NULL, --ayuda
+	'3', --orden
 	NULL, --ci_predep
 	NULL, --implicito
 	NULL, --defecto
@@ -126,7 +159,7 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'delete.png', --imagen
 	'0', --en_botonera
 	NULL, --ayuda
-	'3', --orden
+	'4', --orden
 	NULL, --ci_predep
 	NULL, --implicito
 	NULL, --defecto
@@ -156,7 +189,7 @@ INSERT INTO apex_objeto_cuadro (objeto_cuadro_proyecto, objeto_cuadro, titulo, s
 	NULL, --titulo
 	NULL, --subtitulo
 	NULL, --sql
-	'id_solicitud, id_aula, hora_inicio, hora_fin, capacidad, fecha, finalidad, id_responsable, aula, establecimiento, tipo_asignacion, id_sede, id_sede_origen, estado', --columnas_clave
+	'id_solicitud, id_aula, hora_inicio, hora_fin, capacidad, fecha, finalidad, id_responsable, aula, establecimiento, tipo_asignacion, id_sede, id_sede_origen, estado, tipo_agente', --columnas_clave
 	NULL, --columna_descripcion
 	'0', --clave_dbr
 	NULL, --archivos_callbacks
