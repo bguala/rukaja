@@ -61,7 +61,7 @@ class ci_ver_solicitudes extends toba_ci
                 array('clave' => 2, 'descripcion' => 'Solicitudes realizadas en su dependencia')
         );
         
-        protected $s__accion;
+        protected $s__accion;               
         
         //------------------------------------------------------------------------------------
         //---- Pant Edicion ------------------------------------------------------------------

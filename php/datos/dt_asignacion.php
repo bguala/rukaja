@@ -726,5 +726,6 @@ class dt_asignacion extends toba_datos_tabla
             return toba::db('rukaja')->consultar($sql);
         }
         
+        
 }
 ?>
