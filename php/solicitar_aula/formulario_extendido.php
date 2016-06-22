@@ -252,39 +252,55 @@ class formulario_extendido extends toba_ei_formulario
         }
             
         {$this->objeto_js}.evt__org__validar = function (){
-            
+            var tipo_agente=this.ef('tipo_agente').get_estado().toString();
+            if(tipo_agente == 'Organizacion'){
+            alert('Se ejecuta ajax organizacion');
             this.controlador.ajax_cadenas('autocompletar_org', this.ef('org').get_estado(), this, this.atender_respuesta);
-            return true;
             
+            }
+            return true;
         }
         
         {$this->objeto_js}.atender_respuesta = function (respuesta) {
                 
                 var agente = respuesta.get_cadena('agente');
-                                
-                if(agente == 'docente'){
+                
+                //Con esta condicion evitamos eliminar el id del responsable de aula.
+                if(agente == '2'){
+                    //alert('Objetenemos del server un 2');
+                    return false;
+                }
+
+                if(agente == 'Docente'){
+                
                     var nombre = respuesta.get_cadena('nombre');
                     var apellido = respuesta.get_cadena('apellido');
-            
+
                     this.ef('nombre').set_estado(nombre);
                     this.ef('apellido').set_estado(apellido);
-                        
+
                     return false;
-                }
-                else{
+                    
+                }else{
+                
                     this.ef('nombre_org').set_estado(respuesta.get_cadena('nombre'));
                     this.ef('telefono_org').set_estado(respuesta.get_cadena('telefono'));
-                    this.ef('email_org').set_estado(respuesta.get_cadena('email'));                    
+                    this.ef('email_org').set_estado(respuesta.get_cadena('email'));
+                    
                     return false;
-                }
+                    
+                }                
                 
         }
         
         {$this->objeto_js}.evt__legajo__validar = function (){
-            
+            var tipo_agente=this.ef('tipo_agente').get_estado().toString();
+            if(tipo_agente == 'Docente'){
+            alert('Se ejecuta ajax docente');
             this.controlador.ajax_cadenas('autocompletar_form', this.ef('legajo').get_estado(), this, this.atender_respuesta);
+                   
+            }
             return true;
-            
         }
         ";
     }

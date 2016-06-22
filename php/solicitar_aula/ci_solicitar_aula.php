@@ -28,13 +28,13 @@ class ci_solicitar_aula extends toba_ci
         //de dicho campo. Como consecuencia al servidor no llega el legajo o el id_organizacion. Esta 
         //informacion es fundamental paea registrar asignaciones.
         protected $s__id_responsable;
+        
         protected $s__id_sede_origen;
         
         protected $s__datos_solicitud;
         
         protected $s__accion;
-        protected $s__contador=0;
-        
+                
         //-------------------------------------------------------------------------------------
         //---- Procesamos un vinculo desde otra operacion -------------------------------------
         //-------------------------------------------------------------------------------------
@@ -65,6 +65,9 @@ class ci_solicitar_aula extends toba_ci
                     //creamos una nueva solicitud reutilizando el id_ de la solicitud que se quiere modificar.
                     //El proceso de reserva de aula debe continuar de la misma manera. Pero podemos mantener 
                     //algunos datos como el responsable de aula, la finalidad etc.
+                    else{
+                        $this->s__datos_solicitud=$datos;
+                    }
                 }
             }
         }
@@ -491,7 +494,7 @@ class ci_solicitar_aula extends toba_ci
                                              //Si la solicitud esta en estado pendiente y la edicion esparcial no debemos permitir que se editen 
                                              //hora_inicio y hora_fin. Estos atributos se pueden editar en estado pendiente ejecutando nuevamente 
                                              //la operacion 'solicitar aula'.
-                                             if(strcmp($this->s__accion, 'edicion_parcial')==0){
+                                             if(strcmp($this->s__datos_solicitud['tipo_edicion'], 'edicion_parcial')==0){
                                                 $form->set_solo_lectura(array('hora_inicio', 'hora_fin'));
                                                 $this->s__accion="edicion_parcial";
                                              }else{//Por las dudas guardamos edicion_total en accion;
@@ -515,10 +518,14 @@ class ci_solicitar_aula extends toba_ci
         //-------------------------------------------------------------------------------------
         
         /*
-         * @id_organizacion o @legajo : es el dato que transferimos desde el cliente.
+         * @id_organizacion o @legajo : es el dato que transferimos desde el cliente. Como usamos la funcion 
+         * ajax_cadenas los valores viene como string y el legajo o id_organizacion son atributos integer 
+         * por lo tanto el gestor de bd reporta un error de compatibilidad de tipos. Debemos hacer una conversion 
+         * de datos, para ello usamos la funcion intval().
          */
         function ajax__autocompletar_org ($id_organizacion, toba_ajax_respuesta $respuesta){
-            $this->s__id_responsable=$id_organizacion;
+            if(strcmp($id_organizacion, '')!=0){
+            $this->s__id_responsable=  intval($id_organizacion);
             //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
             $sql="SELECT *
                   FROM organizacion 
@@ -533,19 +540,22 @@ class ci_solicitar_aula extends toba_ci
             }else{
                 toba::notificacion()->agregar_mensaje("Sin Respuesta", 'info');
             }
-            
+            }else{
+                //Enviando un valor cualquiera evitamos que la ejecucion de dos llamadas ajax consecutivas
+                //eliminen el id del responsable de aula.
+                $respuesta->agregar_cadena('agente', '2');
+            }
         }
         
         
         function ajax__autocompletar_form ($legajo, toba_ajax_respuesta $respuesta){
-            $this->s__id_responsable=$legajo;
-            toba::memoria()->set_dato_operacion($this->s__contador, $legajo);
-            $this->s__contador++;
+            if(strcmp($legajo, '')!=0){
+            $this->s__id_responsable=  intval($legajo);
             //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
             $sql="SELECT nombre,
                          apellido
                   FROM docente 
-                  WHERE legajo='$legajo'";
+                  WHERE legajo={$this->s__id_responsable}";
             $datos_docente=toba::db('mocovi')->consultar($sql);
             
             $contenido=$this->dep('formulario')->ef('legajo')->get_estado();
@@ -557,7 +567,11 @@ class ci_solicitar_aula extends toba_ci
                 $respuesta->agregar_cadena('nombre', $datos_docente[0]['nombre']);
                 $respuesta->agregar_cadena('apellido', $datos_docente[0]['apellido']);
             }
-                      
+            }else{
+                //Enviando un valor cualquiera evitamos que la ejecucion de dos llamadas ajax consecutivas
+                //eliminen el id del responsable de aula.
+                $respuesta->agregar_cadena('agente', '2');
+            }          
             
         }
         
@@ -634,16 +648,19 @@ class ci_solicitar_aula extends toba_ci
                 //print_r($datos);print_r("<br><br>");print_r($this->s__datos_solicitud);print_r("<br><br>");
                 //print_r(toba::memoria()->get_dato_operacion(0));exit();
                 $nombre=(strcmp($datos['tipo_agente'], 'Docente')==0) ? $datos['nombre'].' '.$datos['apellido'] : $datos['nombre'] ;
-                //Es la unica forma de obtener el ultimo id cargado. No funciona de otra manera.
-                $this->s__contador=$this->s__contador-1;
-                $id=toba::memoria()->get_dato_operacion($this->s__contador);
+                                    
+                print_r("Este es el contenido de la variable datos <br><br>");
+                print_r($datos);print_r("<br><br>");
+//                print_r($this->s__id_responsable);
+//                exit();
                 
-                if(!isset($id)){
-                    $id=$this->s__datos_solicitud['legajo'];
-                }
-                //print_r($id);exit();
                 switch($this->s__accion){
-                    case 'edicion_total'  :  $solicitud=array(
+                    case 'edicion_total'  :  //En este caso podemos editar la fecha, hora_inicio, hora_fin, 
+                                             //establecimiento destino, como datos mas importantes. Por eso debemos
+                                             //usar el contenido de la variable datos.
+                                             print_r("Estos son los datos del cuadro <br><br>");
+                                             print_r($this->s__datos_cuadro);print_r("<br><br>");
+                                             $solicitud=array(
                                                 'id_solicitud' => $this->s__datos_solicitud['id_solicitud'],
                                                 'nombre' => $nombre,
                                                 'fecha' => $datos['fecha'],
@@ -654,12 +671,13 @@ class ci_solicitar_aula extends toba_ci
                                                 'id_sede' => $this->s__datos_solicitud['id_sede'],
                                                 'estado' => $this->s__datos_solicitud['estado'],
                                                 'id_aula' => $this->s__datos_solicitud['id_aula'],
-                                                'facultad' => '',
+                                                'facultad' => $this->s__datos_solicitud['establecimiento'],
                                                 'tipo_agente' => $datos['tipo_agente'],
-                                                'id_responsable' => $id,
+                                                'id_responsable' => $this->s__id_responsable,
                                                 'tipo_asignacion' => $datos['tipo'],
                                                 'id_sede_origen' => $this->s__datos_solicitud['id_sede_origen']
                                               );
+                                              print_r("Edicion total <br><br>");
                                               print_r($solicitud);exit();
                                               $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
                                               $this->dep('datos')->tabla('solicitud')->set($solicitud);
@@ -682,13 +700,14 @@ class ci_solicitar_aula extends toba_ci
                                                 'id_sede' => $this->s__datos_solicitud['id_sede'],
                                                 'estado' => $this->s__datos_solicitud['estado'],
                                                 'id_aula' => $this->s__datos_solicitud['id_aula'],
-                                                'facultad' => '',
+                                                'facultad' => $this->s__datos_solicitud['establecimiento'],
                                                 'tipo_agente' => $datos['tipo_agente'],
-                                                'id_responsable' => $id,
+                                                'id_responsable' => $this->s__id_responsable,
                                                 'tipo_asignacion' => $datos['tipo'],
                                                 'id_sede_origen' => $this->s__datos_solicitud['id_sede_origen']
                                               );
-                        
+                                              print_r("Edicion Parcial <br><br>");
+                                              print_r($solicitud);exit();
                                               $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
                                               $this->dep('datos')->tabla('solicitud')->set($solicitud);
                                               $this->dep('datos')->tabla('solicitud')->sincronizar();
