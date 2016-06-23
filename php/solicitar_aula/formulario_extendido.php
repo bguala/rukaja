@@ -271,11 +271,11 @@ class formulario_extendido extends toba_ei_formulario
                     return false;
                 }
 
-                if(agente == 'Docente'){
+                if(agente == 'docente'){
                 
                     var nombre = respuesta.get_cadena('nombre');
                     var apellido = respuesta.get_cadena('apellido');
-
+                    alert('nombre: '+nombre+' apellido: '+apellido);
                     this.ef('nombre').set_estado(nombre);
                     this.ef('apellido').set_estado(apellido);
 

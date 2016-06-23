@@ -47,28 +47,37 @@ class ci_solicitar_aula extends toba_ci
             print_r("INI OPERACION ");print_r($datos);
             if(count($datos)>0){
                 
+                switch ($datos['estado']){
                 //Si la solicitud esta en estado finalizada solamente podemos editar docente y finalidad.
-                if(strcmp($datos['estado'], 'FINALIZADA')==0){
+                case 'FINALIZADA' :
                     //Este atributo se setea en cada rama porque en sesion existe array([tm]=>1), lo que hace
                     //que se ejecute una rama en el conf__cuadro donde se hace una consulta sql con un atributo
                     //null. Como consecuencia se genera un error.
                     $this->s__datos_solicitud=$datos;
                     $this->set_pantalla('pant_edicion');
-                }else{
+                    break;
+                
+                case 'PENDIENTE' :
                     //Si la edicion es parcial, debemos navegar hasta la pantalla pant_edicion. En este caso
                     //editamos finalidad y tipo de responsable.
-                    if(strcmp($datos['tipo_edicion'], 'edicion_parcial')==0){
-                        $this->s__datos_solicitud=$datos;
-                        $this->set_pantalla('pant_edicion');
+                    switch($datos['tipo_edicion']){
+                        
+                        case 'edicion_parcial' : $this->s__datos_solicitud=$datos;
+                                                 $this->set_pantalla('pant_edicion');
+                                                 break;
+                        //Si la edicion es total, nos quedamos en la pantalla pant_reserva. En este caso practicamente
+                        //creamos una nueva solicitud reutilizando el id_ de la solicitud que se quiere modificar.
+                        //El proceso de reserva de aula debe continuar de la misma manera. Pero podemos mantener 
+                        //algunos datos como el responsable de aula, la finalidad etc.
+                        case 'edicion_total' : $this->s__datos_solicitud=$datos;
+                                               break;
+                                           
+                        default : $this->s__datos_solicitud=array();
+                    
                     }
-                    //Si la edicion es total, nos quedamos en la pantalla pant_reserva. En este caso practicamente
-                    //creamos una nueva solicitud reutilizando el id_ de la solicitud que se quiere modificar.
-                    //El proceso de reserva de aula debe continuar de la misma manera. Pero podemos mantener 
-                    //algunos datos como el responsable de aula, la finalidad etc.
-                    else{
-                        $this->s__datos_solicitud=$datos;
-                    }
-                }
+                    break;
+                
+            }
             }
         }
         
@@ -435,7 +444,8 @@ class ci_solicitar_aula extends toba_ci
                 $form->ef('dia')->set_estado(utf8_decode($this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))));
                 $form->ef('inicio')->set_estado($this->s__datos_cuadro['hora_inicio']);
                 $form->ef('fin')->set_estado($this->s__datos_cuadro['hora_fin']);
-            
+                print_r("Este es el contenido de s__datos_cuadro <br><br>");
+                print_r($this->s__datos_cuadro);
                 //Cargamos informacion por defecto en formulario de la pantalla pant_edicion.
                 $form->ef('establecimiento')->set_estado($this->s__datos_form['facultad']);
                 $form->set_datos($this->s__datos_cuadro);
@@ -446,8 +456,12 @@ class ci_solicitar_aula extends toba_ci
                 
                 switch($this->s__datos_solicitud['tipo_edicion']){
                     
-                    case 'edicion_total'   : 
-                    case 'edicion_parcial' : /** Cargamos informacion en la seccion 'datos iniciales'. **/
+                    case 'edicion_total'   : $this->configurar_datos_solicitud();
+                                             print_r("<br><br> Este es el contenido de s__datos_solicitud para ediciones totales <br><br>");
+                                             print_r($this->s__datos_solicitud);
+                    case 'edicion_parcial' : 
+                                             
+                                             /** Cargamos informacion en la seccion 'datos iniciales'. **/
                                              $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__datos_solicitud['fecha'])));
                                              $form->ef('dia')->set_estado(utf8_decode($this->obtener_dia(date('N', strtotime($this->s__datos_solicitud)))));
                                              //Usamos la hora que especifico el usuario en la solicitud.
@@ -457,7 +471,7 @@ class ci_solicitar_aula extends toba_ci
                                              /** Configuramos los establecimientos origen y destino. **/
                                              $establecimiento_destino=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__datos_solicitud['id_sede']);
                                              $establecimiento_origen=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__datos_solicitud['id_sede_origen']);
-                                             print_r("PRIMERO ORIGEN, DESPUES DESTINO <br><br>");
+                                             print_r("<br><br> PRIMERO ORIGEN, DESPUES DESTINO <br><br>");
                                              print_r($establecimiento_origen);print_r($establecimiento_destino);
                                              //Guardamos el establecimiento que emite la solicitud.
                                              $this->s__datos_solicitud['facultad']=$establecimiento_origen[0]['establecimiento'];
@@ -529,7 +543,7 @@ class ci_solicitar_aula extends toba_ci
             //Nos tomamos una licencia para hacer una consulta sql fuera del datos_tabla correspondiente.
             $sql="SELECT *
                   FROM organizacion 
-                  WHERE id_organizacion=$id_organizacion";
+                  WHERE id_organizacion={$this->s__id_responsable}";
             $datos_org=toba::db('rukaja')->consultar($sql);
             print_r($datos_org);
             if(count($datos_org) != 0){
@@ -560,7 +574,7 @@ class ci_solicitar_aula extends toba_ci
             
             $contenido=$this->dep('formulario')->ef('legajo')->get_estado();
             print_r("Este es el valor de contenido : $contenido");
-            
+            print_r($datos_docente);
             if(count($datos_docente) != 0){
                 
                 $respuesta->agregar_cadena('agente', 'docente');
@@ -573,6 +587,27 @@ class ci_solicitar_aula extends toba_ci
                 $respuesta->agregar_cadena('agente', '2');
             }          
             
+        }
+        
+        /*
+         * Esta funcion permite mezclar el contenido de s__datos_cuadro con s__datos_solicitud. Esto se utiliza
+         * cuando queremos editar solicitudes en forma total. La informacion que debemos pasar es: id_aula, aula,
+         * id_sede, establecimiento destino.
+         */
+        function configurar_datos_solicitud (){
+            print_r("<br><br>Estos son los datos de s__datos_cuadro <br><br>");
+            print_r($this->s__datos_cuadro);
+            print_r("<br><br>Estos son los datos de s__datos_solicitud <br><br>");
+            print_r($this->s__datos_solicitud);
+            
+            $this->s__datos_solicitud['id_aula']=$this->s__datos_cuadro['id_aula'];
+            $this->s__datos_solicitud['aula']=$this->s__datos_cuadro['aula'];
+            $this->s__datos_solicitud['id_sede']=$this->s__datos_cuadro['id_sede'];
+            $this->s__datos_solicitud['facultad']=$this->s__datos_cuadro['facultad'];
+            $this->s__datos_solicitud['hora_inicio']=$this->s__datos_cuadro['hora_inicio'];
+            $this->s__datos_solicitud['hora_fin']=$this->s__datos_cuadro['hora_fin'];
+            $this->s__datos_solicitud['fecha']=$this->s__datos_cuadro['fecha'];
+            $this->s__datos_solicitud['capacidad']=$this->s__datos_cuadro['capacidad'];
         }
         
         //------------------------------------------------------------------------------------------
@@ -640,8 +675,8 @@ class ci_solicitar_aula extends toba_ci
          * Esta funcion guarda en la base de datos una solicitud editada. 
          * @$datos : contiene los datos de 'formulario'. Esta informacion se toma tal cual para hacer la 
          * modificacion correspondiente. Si la edicion es total podemos modificar fecha, hora_inicio, hora_fin
-         * entre otros datos. Si 
-         * la edicion es parcial podemos editar datos relacionados al docente, la finalidad. 
+         * entre otros datos. Si la edicion es parcial podemos editar datos relacionados al responsable de 
+         * aula, la finalidad etc. 
          */
         function edicion ($datos){
             try{ //Capturamos excepciones generadas por los objetos datos_tabla.
@@ -656,35 +691,38 @@ class ci_solicitar_aula extends toba_ci
                 
                 switch($this->s__accion){
                     case 'edicion_total'  :  //En este caso podemos editar la fecha, hora_inicio, hora_fin, 
-                                             //establecimiento destino, como datos mas importantes. Por eso debemos
-                                             //usar el contenido de la variable datos.
-                                             print_r("Estos son los datos del cuadro <br><br>");
-                                             print_r($this->s__datos_cuadro);print_r("<br><br>");
-                                             $solicitud=array(
-                                                'id_solicitud' => $this->s__datos_solicitud['id_solicitud'],
-                                                'nombre' => $nombre,
-                                                'fecha' => $datos['fecha'],
-                                                'capacidad' => $datos['capacidad'],
-                                                'finalidad' => $datos['finalidad'],
-                                                'hora_inicio' => $datos['hora_inicio'],
-                                                'hora_fin' => $datos['hora_fin'],
-                                                'id_sede' => $this->s__datos_solicitud['id_sede'],
-                                                'estado' => $this->s__datos_solicitud['estado'],
-                                                'id_aula' => $this->s__datos_solicitud['id_aula'],
-                                                'facultad' => $this->s__datos_solicitud['establecimiento'],
-                                                'tipo_agente' => $datos['tipo_agente'],
-                                                'id_responsable' => $this->s__id_responsable,
-                                                'tipo_asignacion' => $datos['tipo'],
-                                                'id_sede_origen' => $this->s__datos_solicitud['id_sede_origen']
-                                              );
-                                              print_r("Edicion total <br><br>");
-                                              print_r($solicitud);exit();
-                                              $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
-                                              $this->dep('datos')->tabla('solicitud')->set($solicitud);
-                                              $this->dep('datos')->tabla('solicitud')->sincronizar();
-                                              $this->dep('datos')->tabla('solicitud')->resetear();
-                                                                                            
-                                              break;
+                                             //establecimiento destino, como datos mas importantes. No es 100%
+                                             //confiable usar la variable $datos, ya que la llamada ajax de los 
+                                             //popup se ejecuta dos veces y borra el contenido de los campos 
+                                             //asociados al responsable de aulas.
+                                             
+//                                             print_r("Estos son los datos del cuadro <br><br>");
+//                                             print_r($this->s__datos_cuadro);print_r("<br><br>");
+//                                             $solicitud=array(
+//                                                'id_solicitud' => $this->s__datos_solicitud['id_solicitud'],
+//                                                'nombre' => $nombre,
+//                                                'fecha' => $datos['fecha'],
+//                                                'capacidad' => $datos['capacidad'],
+//                                                'finalidad' => $datos['finalidad'],
+//                                                'hora_inicio' => $datos['hora_inicio'],
+//                                                'hora_fin' => $datos['hora_fin'],
+//                                                'id_sede' => $this->s__datos_solicitud['id_sede'],
+//                                                'estado' => $this->s__datos_solicitud['estado'],
+//                                                'id_aula' => $this->s__datos_solicitud['id_aula'],
+//                                                'facultad' => $this->s__datos_solicitud['establecimiento'],
+//                                                'tipo_agente' => $datos['tipo_agente'],
+//                                                'id_responsable' => $this->s__id_responsable,
+//                                                'tipo_asignacion' => $datos['tipo'],
+//                                                'id_sede_origen' => $this->s__datos_solicitud['id_sede_origen']
+//                                              );
+//                                              print_r("Edicion total <br><br>");
+//                                              print_r($solicitud);exit();
+//                                              $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
+//                                              $this->dep('datos')->tabla('solicitud')->set($solicitud);
+//                                              $this->dep('datos')->tabla('solicitud')->sincronizar();
+//                                              $this->dep('datos')->tabla('solicitud')->resetear();
+//                                                                                            
+//                                              break;
                                           
                     case 'edicion_parcial' :  //En este caso podemos editar datos del responsable de aula y finalidad.
                                               //Por lo tanto es conveniente reutilizar la informacion proporcionada
@@ -706,7 +744,7 @@ class ci_solicitar_aula extends toba_ci
                                                 'tipo_asignacion' => $datos['tipo'],
                                                 'id_sede_origen' => $this->s__datos_solicitud['id_sede_origen']
                                               );
-                                              print_r("Edicion Parcial <br><br>");
+                                              print_r("Estos son los datos editados de la solicitud <br><br>");
                                               print_r($solicitud);exit();
                                               $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
                                               $this->dep('datos')->tabla('solicitud')->set($solicitud);

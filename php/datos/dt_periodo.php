@@ -229,7 +229,7 @@ class dt_periodo extends toba_datos_tabla
                                                  FROM periodo t_p
                                                  JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo)
                                                  WHERE t_p.id_sede=$id_sede AND 
-                                                       ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) ";
+                                                       (('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) OR (t_p.fecha_inicio >= '$fecha') ) ";
                                            break;
                 case 'EVENTO'            : 
                 case 'CURSADA'           :
@@ -240,7 +240,7 @@ class dt_periodo extends toba_datos_tabla
                                                  FROM periodo t_p
                                                  JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
                                                  WHERE t_p.id_sede=$id_sede AND 
-                                                       ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)";
+                                                       (('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) OR (t_p.fecha_inicio >= '$fecha'))";
                                            break;
                 //Consideramos un nuevo tipo de asignacion. Por defecto se asocian a un cuatrimestre.
                 default : $sql="SELECT id_periodo,
@@ -249,7 +249,7 @@ class dt_periodo extends toba_datos_tabla
                                 FROM periodo t_p
                                 JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
                                 WHERE t_p.id_sede=$id_sede AND 
-                                      ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)";
+                                      (('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin) OR (t_p.fecha_inicio >= '$fecha') )";
                           
                           break;
             }
