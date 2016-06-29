@@ -35,7 +35,10 @@ class Email {
     public function enviar_email ($destinatario, $asunto, $descripcion, $adjunto=null){
         
         try{
-            //En esta seccion se especifica el destinatario, el asunto y la descripcion
+            //-------------------------------------------------------------------------------------
+            //-- En esta seccion se especifica el destinatario, el asunto y la descripcion --------
+            //-------------------------------------------------------------------------------------
+            
             $this->s__email->AddAddress('rukaja.uncoma@gmail.com');
             //$email->AddAddress($destinatario);
 

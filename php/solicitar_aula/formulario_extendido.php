@@ -254,7 +254,7 @@ class formulario_extendido extends toba_ei_formulario
         {$this->objeto_js}.evt__org__validar = function (){
             var tipo_agente=this.ef('tipo_agente').get_estado().toString();
             if(tipo_agente == 'Organizacion'){
-            alert('Se ejecuta ajax organizacion');
+            //alert('Se ejecuta ajax organizacion');
             this.controlador.ajax_cadenas('autocompletar_org', this.ef('org').get_estado(), this, this.atender_respuesta);
             
             }
@@ -275,28 +275,30 @@ class formulario_extendido extends toba_ei_formulario
                 
                     var nombre = respuesta.get_cadena('nombre');
                     var apellido = respuesta.get_cadena('apellido');
-                    alert('nombre: '+nombre+' apellido: '+apellido);
+                    //alert('nombre: '+nombre+' apellido: '+apellido);
                     this.ef('nombre').set_estado(nombre);
                     this.ef('apellido').set_estado(apellido);
 
                     return false;
                     
                 }else{
-                
+                    if(agente == 'organizacion'){
+                    
                     this.ef('nombre_org').set_estado(respuesta.get_cadena('nombre'));
                     this.ef('telefono_org').set_estado(respuesta.get_cadena('telefono'));
                     this.ef('email_org').set_estado(respuesta.get_cadena('email'));
                     
-                    return false;
+                    }
                     
-                }                
+                }   
                 
+                return false;
         }
         
         {$this->objeto_js}.evt__legajo__validar = function (){
             var tipo_agente=this.ef('tipo_agente').get_estado().toString();
             if(tipo_agente == 'Docente'){
-            alert('Se ejecuta ajax docente');
+            //alert('Se ejecuta ajax docente');
             this.controlador.ajax_cadenas('autocompletar_form', this.ef('legajo').get_estado(), this, this.atender_respuesta);
                    
             }

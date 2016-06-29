@@ -21,9 +21,10 @@ class dt_persona extends toba_datos_tabla
 
         
         function get_correo_electronico ($id_sede){
-            $sql="SELECT t_p.correo_electronico 
-                  FROM persona t_p 
-                  JOIN administrador t_a ON (t_p.nro_doc=t_a.nro_doc AND t_p.tipo_doc=t_a.tipo_doc AND t_a.id_sede=$id_sede)";
+//            $sql="SELECT t_p.correo_electronico 
+//                  FROM persona t_p 
+//                  JOIN administrador t_a ON (t_p.nro_doc=t_a.nro_doc AND t_p.tipo_doc=t_a.tipo_doc AND t_a.id_sede=$id_sede)";
+            
             $correo=toba::db('rukaja')->consultar($sql);
             
             return ($correo[0]['correo_electronico']);

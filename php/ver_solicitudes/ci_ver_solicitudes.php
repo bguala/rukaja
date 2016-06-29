@@ -654,10 +654,11 @@ class ci_ver_solicitudes extends toba_ci
             $dia=$this->recuperar_dia($this->s__fecha_consulta);
             
             //Usamos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
-            //la fecha exacta de la solicitud.
-            $id_periodo=$this->dep('datos')->tabla('periodo')->get_periodo_segun_asignacion($this->s__datos_solcitud['tipo_asignacion'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_sede']);
+            //la fecha exacta de la solicitud para hacer los calculos de hd. El id_periodo los obtenemos
+            //con el tipo de asignacion y el id_sede.
+            $id_periodo=$this->dep('datos')->tabla('periodo')->get_periodo_segun_asignacion($this->s__datos_solcitud['tipo_asignacion'], $this->s__datos_solcitud['id_sede']);
             
-            print_r("Este es el valor del id_periodo");print_r($id_periodo);print_r("<br><br>");exit();
+            //print_r("Este es el valor del id_periodo");print_r($id_periodo);print_r("<br><br>");exit();
             //Usamos ambos arreglos, $datos y $s__datos_solcitud.
             $asignacion=array(
                 'finalidad' => $datos['finalidad'],
@@ -681,7 +682,7 @@ class ci_ver_solicitudes extends toba_ci
             
             //Agregamos a $asignacion datos extra relacionados a un periodo, para no alterar la estructura 
             //de esta funcion. $dia tiene el mismo formato retornado por ef_multi_seleccion_check.
-            $asignacion['dias']=array($dia);
+            $asignacion['dias']=$dia;
             $asignacion['fecha_inicio']=$this->s__datos_solcitud['fecha'];
             $asignacion['fecha_fin']=$this->s__datos_solcitud['fecha'];
             
@@ -706,6 +707,8 @@ class ci_ver_solicitudes extends toba_ci
             //Obtenemos el id de la asignacion registrada en el paso anterior.
             $secuencia=recuperar_secuencia('asignacion_id_asignacion_seq');
             
+            //La secuencia de la tabla asignacion_periodo es: asignacion_periodo_id_asignacion_seq.
+            print_r("Esta es la secuencia : <br><br>");print_r($secuencia);//exit();
             $periodo=array(
                     'id_asignacion' => $secuencia,
                     'fecha_inicio' => $datos['fecha_inicio'],
@@ -758,15 +761,17 @@ class ci_ver_solicitudes extends toba_ci
             //asociados a un emisor, esto se configura en la funcion enviar_email de la clase Email.
             
             //Si necesitamos el correo electronico del responsable de aula.
-            $destinatario=$this->dep('datos')->tabla('persona')->get_correo_electronico($this->s__datos_solcitud['id_sede_origen']);
+            $destinatario=$this->dep('datos')->tabla('administrador')->get_email(toba::usuario()->get_id());
             //Creamos un asunto por defecto.
             $asunto="SOLICITUD CONCEDIDA";
-            
+            //print_r("Este es el nombre de usuaio");
+            //print_r(toba::usuario()->get_nombre());exit();
+            $firma=toba::usuario()->get_nombre();
             //Creamos una descripcion por defecto. Si usamos un aula distinta a la especificada en la solicitud
             //debemos cambiar la descripcion, indicando la nueva aula.  
             //*********
             //$descripcion="La SOLICITUD DE AULA en el Establecimiento {$emisor['establecimiento']}, para el dia {$this->s__fecha} en el horario {$this->s__hora_inicio} a {$this->s__hora_fin} hs ha sido registrada exitosamente. \n\n {$emisor['responsable']}";
-            $descripcion="La SOLICITUD DE AULA en el Establecimiento Administracion Central, para el dia {$this->s__fecha_consulta} en el horario {$this->s__hora_inicio} - {$this->s__hora_fin} hs ha sido registrada exitosamente. \n\n Santiago Briceño";
+            $descripcion="La SOLICITUD DE AULA en el Establecimiento Administracion Central, para el dia {$this->s__fecha_consulta} en el horario {$this->s__hora_inicio} - {$this->s__hora_fin} hs ha sido registrada exitosamente. \n\n $firma";
             
             $email=new Email();
             //Enviamos un email automaticamente. Su objetivo es notificar el resultado positivo de la solicitud.
@@ -982,6 +987,11 @@ class ci_ver_solicitudes extends toba_ci
             $this->dep('datos')->tabla('solicitud')->set($this->s__datos_solcitud);
             $this->dep('datos')->tabla('solicitud')->sincronizar();
         }
+        
+//        window.addEventListener('load', calculos, false);
+//        function calculos() {
+//            .........................
+//        }
         
         //-----------------------------------------------------------------------------------------
         //---- Interfaz para procesar periodos ----------------------------------------------------

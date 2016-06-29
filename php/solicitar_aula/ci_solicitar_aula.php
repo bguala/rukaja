@@ -437,7 +437,7 @@ class ci_solicitar_aula extends toba_ci
          * En esta funcion agregamos la logica necesaria para cargar el formulario con datos por defecto.
          */
 	function conf__formulario(toba_ei_formulario $form)
-	{
+	{            
             if(count($this->s__datos_solicitud)==0){
                 /** Cargamos informacion en la seccion 'datos iniciales'. **/
                 $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__fecha_consulta)));
@@ -493,7 +493,7 @@ class ci_solicitar_aula extends toba_ci
                                                                        $form->ef('tipo_agente')->set_estado('Docente');
                                                                        break;
                                                                    
-                                                 case 'Organizacion' : $organizacion=$this->dep('datos')->tabla('persona')->get_datos_organizacion($this->s__datos_solicitud['id_responsable']);
+                                                 case 'Organizacion' : $organizacion=$this->dep('datos')->tabla('organizacion')->get_organizacion($this->s__datos_solicitud['id_responsable']);
                                                                        print_r($organizacion);
                                                                        $form->ef('tipo_agente')->set_estado('Organizacion');
                                                                        $form->ef('org')->set_estado($organizacion[0]['id_organizacion']);
@@ -595,10 +595,10 @@ class ci_solicitar_aula extends toba_ci
          * id_sede, establecimiento destino.
          */
         function configurar_datos_solicitud (){
-            print_r("<br><br>Estos son los datos de s__datos_cuadro <br><br>");
-            print_r($this->s__datos_cuadro);
-            print_r("<br><br>Estos son los datos de s__datos_solicitud <br><br>");
-            print_r($this->s__datos_solicitud);
+            //print_r("<br><br>Estos son los datos de s__datos_cuadro <br><br>");
+            //print_r($this->s__datos_cuadro);
+            //print_r("<br><br>Estos son los datos de s__datos_solicitud <br><br>");
+            //print_r($this->s__datos_solicitud);
             
             $this->s__datos_solicitud['id_aula']=$this->s__datos_cuadro['id_aula'];
             $this->s__datos_solicitud['aula']=$this->s__datos_cuadro['aula'];
@@ -632,63 +632,77 @@ class ci_solicitar_aula extends toba_ci
                 $id=  intval($this->s__id_responsable);
                 //$tipo=  gettype($id);
                 //print_r($datos);print_r("Este es el valor : $id y este es el tipo : $tipo");exit();
+                print_r($this->s__datos_solicitud);
+                print_r("<br><br> Este es el contenido de s__id_responsable: <br><br>");print_r($this->s__id_responsable);
+                //print_r("<br><br> Este es el valor de id: <br><br>");print_r($id);exit();
                 
-                //Verificamos si la organizacion ya existe en el sistema. Para ello usamos la clave del popup
-                //para hacer una consulta en la base de datos.
-                if($id == 0){ //Si la organizacion no existe, la registramos en el sistema.
-                    $organizacion=array(
-                        'telefono' => $datos['telefono_org'],
-                        'email' => strtolower($datos['email_org']),
-                        'nombre' => strtoupper($datos['nombre_org']),
-                    );
+                //Verificamos si la organizacion ya existe en el sistema.               
+                if($id != 0){ //Si la organizacion no existe, la registramos en el sistema.
+                    $organizacion=$this->dep('datos')->tabla('organizacion')->get_organizacion($id);
+                    print_r("<br><br> Organizacion: <br><br>");print_r($organizacion);
                     
-                    $this->dep('datos')->tabla('organizacion')->nueva_fila($organizacion);
-                    $this->dep('datos')->tabla('organizacion')->sincronizar();
-                    $this->dep('datos')->tabla('organizacion')->resetear();
+                    if(count($organizacion)==0){
+                        $organizacion=array(
+                            'telefono' => $datos['telefono_org'],
+                            'email' => strtolower($datos['email_org']),
+                            'nombre' => strtoupper($datos['nombre_org']),
+                        );
+
+                        $this->dep('datos')->tabla('organizacion')->nueva_fila($organizacion);
+                        $this->dep('datos')->tabla('organizacion')->sincronizar();
+                        $this->dep('datos')->tabla('organizacion')->resetear();
+
+                        //Necesitamos el id_organizacion de la nueva tupla anteriormente insertada, para poder hacer
+                        //la asociacion correcta entre la solicitud y el responsable de la misma. Este atributo se utiliza
+                        //en la funcion registrar_solicitud. Solamente se puede hacer uso de la secuencia cuando
+                        //insertamos una nueva tupla en una relacion, caso contrario ocurre un error.
+                        //Si insertamos tuplas en una relacion a traves de un script sql, con sentencias insert into, 
+                        //la secuencia no se resetea, debemos hacerlo manualmente desde postgres con la siguiente 
+                        //sentencia select setval('tabla_id_seq', nuevo_valor, 't' )
+                        $this->s__id_responsable=  recuperar_secuencia('organizacion_id_organizacion_seq');
+                    }//Si la organizacion ya existe usamos el contenido de s__id_responsable.
                     
-                    //Necesitamos el id_organizacion de la nueva tupla anteriormente insertada, para poder hacer
-                    //la asociacion correcta entre la solicitud y el responsable de la misma. Este atributo se utiliza
-                    //en la funcion registrar_solicitud. Solamente se puede hacer uso de la secuencia cuando
-                    //insertamos una nueva tupla en una relacion, caso contrario ocurre un error.
-                    //Si insertamos tuplas en una relacion a traves de un script sql, con sentencias insert into, 
-                    //la secuencia no se resetea, debemos hacerlo manualmente desde postgres con la siguiente 
-                    //sentencia select setval('tabla_id_seq', nuevo_valor, 't' )
-                    $this->s__id_responsable=  recuperar_secuencia('organizacion_id_organizacion_seq');
-                    
+                }else{
+                    //Si el usuario edita una solicitud, puede ocurrir que no realice una busqueda por popup, entonces
+                    //el id_responsable queda con una cadena vacia. Pero si hace una busqueda en id_responsable queda
+                    //un valor concreto. Debemos guardar en id_responsable el id de datos_solicitud.
+                    $this->s__id_responsable=$this->s__datos_solicitud['id_responsable'];
                 }
             }
             
             //Anteriormente se hacia un chequeo de horarios, ya no es necesario, porque se hace en el cliente.
+            
             switch($this->s__accion){
                 case 'registrar'        : $this->registrar_solicitud($datos);
                                           break;
                 //En ambos casos hacemos lo mismo.
                 case 'edicion_parcial'  : 
                 case 'edicion_total'    : $this->edicion($datos);
+                                          toba::vinculador()->navegar_a('rukaja', 3573);
                                           break;
-            }
-            
+            }            
                         
 	}
         
         /*
          * Esta funcion guarda en la base de datos una solicitud editada. 
          * @$datos : contiene los datos de 'formulario'. Esta informacion se toma tal cual para hacer la 
-         * modificacion correspondiente. Si la edicion es total podemos modificar fecha, hora_inicio, hora_fin
-         * entre otros datos. Si la edicion es parcial podemos editar datos relacionados al responsable de 
+         * modificacion correspondiente. Si la edicion es total podemos modificar fecha, hora_inicio, hora_fin,
+         * aula entre otros datos. Si la edicion es parcial podemos editar datos relacionados al responsable de 
          * aula, la finalidad etc. 
          */
         function edicion ($datos){
             try{ //Capturamos excepciones generadas por los objetos datos_tabla.
                 //print_r($datos);print_r("<br><br>");print_r($this->s__datos_solicitud);print_r("<br><br>");
                 //print_r(toba::memoria()->get_dato_operacion(0));exit();
-                $nombre=(strcmp($datos['tipo_agente'], 'Docente')==0) ? $datos['nombre'].' '.$datos['apellido'] : $datos['nombre'] ;
+                $nombre=(strcmp($datos['tipo_agente'], 'Docente')==0) ? $datos['nombre'].' '.$datos['apellido'] : $datos['nombre_org'] ;
                                     
-                print_r("Este es el contenido de la variable datos <br><br>");
-                print_r($datos);print_r("<br><br>");
-//                print_r($this->s__id_responsable);
-//                exit();
-                
+                //print_r("Este es el contenido de la variable datos <br><br>");
+                //print_r($datos);print_r("<br><br>");
+                //print_r("Este es el contenido de la variable nombre: <br><br>");
+                //print_r($nombre);
+                //exit();
+                $establecimiento=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__datos_solicitud['id_sede_origen']);
                 switch($this->s__accion){
                     case 'edicion_total'  :  //En este caso podemos editar la fecha, hora_inicio, hora_fin, 
                                              //establecimiento destino, como datos mas importantes. No es 100%
@@ -738,24 +752,27 @@ class ci_solicitar_aula extends toba_ci
                                                 'id_sede' => $this->s__datos_solicitud['id_sede'],
                                                 'estado' => $this->s__datos_solicitud['estado'],
                                                 'id_aula' => $this->s__datos_solicitud['id_aula'],
-                                                'facultad' => $this->s__datos_solicitud['establecimiento'],
+                                                'facultad' => $establecimiento[0]['sigla'],
                                                 'tipo_agente' => $datos['tipo_agente'],
                                                 'id_responsable' => $this->s__id_responsable,
                                                 'tipo_asignacion' => $datos['tipo'],
                                                 'id_sede_origen' => $this->s__datos_solicitud['id_sede_origen']
                                               );
-                                              print_r("Estos son los datos editados de la solicitud <br><br>");
-                                              print_r($solicitud);exit();
+                                              //print_r("Estos son los datos editados de la solicitud <br><br>");
+                                              //print_r($solicitud);exit();
                                               $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solicitud['id_solicitud']));
                                               $this->dep('datos')->tabla('solicitud')->set($solicitud);
                                               $this->dep('datos')->tabla('solicitud')->sincronizar();
                                               $this->dep('datos')->tabla('solicitud')->resetear();
                                               
+                                              toba::notificacion()->agregar(utf8_decode('Edición exitosa'));
+                                              
                                               break;
                 }
                                 
             }catch (toba_error $ex) {
-
+                //print_r($ex);
+                toba::notificacion()->agregar('Se produjo un error al intentar editar la solicitud');
             }
         }
         
