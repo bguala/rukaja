@@ -61,8 +61,9 @@ class form_asignacion_extendido extends toba_ei_formulario
                                    this.ef('fecha_inicio').set_obligatorio(true);
                                    this.ef('fecha_fin').mostrar();
                                    this.ef('fecha_fin').set_obligatorio(true);
-                                   this.ef('tipo').set_estado('nopar');
-                                   this.ef('tipo').set_solo_lectura(false);
+                                   //this.ef('tipo').set_estado('nopar');
+                                   this.ef('tipo').set_estado('Periodo');
+                                   this.ef('tipo').set_solo_lectura(true);
                                    this.ef('dias').mostrar();
                                    this.ef('dias').set_obligatorio(true);
                                    

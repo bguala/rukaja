@@ -61,7 +61,9 @@ class ci_ver_solicitudes extends toba_ci
                 array('clave' => 2, 'descripcion' => 'Solicitudes realizadas en su dependencia')
         );
         
-        protected $s__accion;               
+        protected $s__accion;           
+        
+        protected $s__filtro;
         
         //------------------------------------------------------------------------------------
         //---- Pant Edicion ------------------------------------------------------------------
@@ -106,11 +108,7 @@ class ci_ver_solicitudes extends toba_ci
             //Se necesita id_sede para obtener las solicitudes que pertenecen al establecimiento del usuario
             //logueado.
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado((toba::usuario()->get_id()));
-            //Es conveniente hacerlo mas adelante.
-            //$this->s__emisor=$this->dep('datos')->tabla('administrador')->get_correo_electronico($this->s__id_sede);
-            //No es necesario.
-            //$this->s__emisor='rukaja.uncoma@gmail.com';
-            
+                        
             print_r($this->s__datos_form);
             if(isset($this->s__datos_form)){
                 if($this->s__datos_form['tipo_solicitud'] == 1){
@@ -170,12 +168,15 @@ class ci_ver_solicitudes extends toba_ci
             
             $this->s__capacidad=$datos['capacidad'];
             
-            //Empezamos calculando horarios disponibles en el aula seleccionada
+            //Empezamos calculando horarios disponibles en el aula seleccionada. El resultado de calcular_hd_en_aula_seleccionada
+            //es booleando. True si exsite el horario especificado en la solicitud.
             if($this->calcular_hd_en_aula_seleccionada()){
                 //Si existe espacio disponible en el aula solicitada, debemos mostrar los datos de la solicitud y
                 //permitirle al usuario persistir una nueva asignacion.
                 $this->set_pantalla('pant_asignacion');
             }else{
+                //Si no existe el horario especificado en la solicitud iniciamos la busqueda de un horario 
+                //alternativo.
                 $this->verificar_existencia_de_espacio();
                 $this->set_pantalla('pant_busqueda');
             }
@@ -509,12 +510,19 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         function conf__filtro (toba_ei_filtro $filtro){
-            
+            //No pueden estar ambos arreglos al mismo tiempo con informacion.
+            if(count($this->s__horarios_libres)>0){
+                $this->s__filtro=new Filtro($this->s__horarios_libres);
+                return ;
+            }
+            if(count($this->s__horarios_disponibles)>0){
+                $this->s__filtro=new Filtro($this->s__horarios_disponibles);
+                return ;
+            }
         }
         
         function evt__filtro__filtrar ($datos){
-            $filtro=new Filtro();
-            $this->s__datos_filtro=$filtro->filtrar($datos);
+            $this->s__datos_filtro=$this->s__filtro->filtrar($datos);
         }
         
         /*
@@ -529,11 +537,11 @@ class ci_ver_solicitudes extends toba_ci
                 if(count($this->s__horarios_libres) > 0){
                     $cuadro->descolapsar();  
                     $cuadro->set_datos($this->s__horarios_disponibles);
-                    $cuadro->set_titulo("Horarios Disponibles Alternativos");
+                    $cuadro->set_titulo("HORARIOS DISPONIBLES ALTERNATIVOS");
                     //$cuadro->colapsar();
                 }
                 else{
-                    $cuadro->set_titulo("Horarios Disponibles Alternativos : ");
+                    $cuadro->set_titulo("HORARIOS DISPONIBLES ALTERNATIVOS");
                     $cuadro->set_datos($this->s__horarios_disponibles);
                 }
             }
@@ -542,7 +550,7 @@ class ci_ver_solicitudes extends toba_ci
         
         function evt__cuadro_aulas__enviar (){
             if($this->s__notificar){
-                toba::vinculador()->navegar_a("gestion_aulas", 3525);
+                toba::vinculador()->navegar_a("", 3525);
             }
             else{
                 $mensaje=" Para realizar notificaciones debe descargar previemente un archivo PDF. "
@@ -555,7 +563,7 @@ class ci_ver_solicitudes extends toba_ci
             switch($this->s__pantalla_actual){
                 case "pant_busqueda"   : $this->set_pantalla('pant_edicion'); 
                                          break;
-                case "pant_asignacion" : $this->set_pantalla('pant_busqueda'); 
+                case "pant_asignacion" : $this->set_pantalla('pant_edicion'); 
                                          break;
             }
         }
@@ -574,9 +582,9 @@ class ci_ver_solicitudes extends toba_ci
          */
         function conf__cuadro_espacio_ocupado (toba_ei_cuadro $cuadro){
 
-            $this->pantalla()->tab('pant_edicion')->desactivar();
-            $this->pantalla()->tab('pant_asignacion')->desactivar();
-            $this->pantalla();
+            //$this->pantalla()->tab('pant_edicion')->desactivar();
+            //$this->pantalla()->tab('pant_asignacion')->desactivar();
+            //$this->pantalla();
             if(count($this->s__horarios_libres) > 0){
                 $cuadro->set_titulo("Horarios Disponibles ");
                 $cuadro->set_datos($this->s__horarios_libres);
@@ -593,7 +601,6 @@ class ci_ver_solicitudes extends toba_ci
             $this->s__hora_fin=$datos['hora_fin'];
             $this->s__id_aula=$datos['id_aula'];
             $this->s__nombre_aula=$datos['aula'];
-//            $link=toba::vinculador()->navegar_a(null, 3532, array( 0=>'Formulario' ));
             
             $this->set_pantalla('pant_asignacion');
         }
@@ -623,7 +630,7 @@ class ci_ver_solicitudes extends toba_ci
                 //y enviar una notificacion
 
                 //$this->s__destinatario=$datos_docente['correo_electronico'];
-                $this->s__destinatario='sed.uncoma@gmail.com';
+                //$this->s__destinatario='sed.uncoma@gmail.com';
 
                 $efs=array( 'hora_inicio',
                             'hora_fin',

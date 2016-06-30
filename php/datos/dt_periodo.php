@@ -112,21 +112,21 @@ class dt_periodo extends toba_datos_tabla
             $sql_1="SELECT t_p.id_periodo,
                            t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
                     FROM periodo t_p 
-                    JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede 
+                    JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
                          AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)))";
             $cuatrimestre=toba::db('rukaja')->consultar($sql_1);
             
             $sql_2="SELECT t_p.id_periodo,
                            'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' as descripcion
                     FROM periodo t_p 
-                    JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede 
+                    JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
                          AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)))";
             $examen_final=toba::db('rukaja')->consultar($sql_2);
             
             $sql_3="SELECT t_p.id_periodo,
                            'CURSO DE INGRESO' || ' ' || t_ci.facultad || ' ' || t_ci.nombre as descripcion
                     FROM periodo t_p 
-                    JOIN curso_ingreso t_ci ON (t_p.id_periodo=t_ci.id_periodo AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede 
+                    JOIN curso_ingreso t_ci ON (t_p.id_periodo=t_ci.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
                          AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) )";
             $curso_ingreso=toba::db('rukaja')->consultar($sql_3);
             

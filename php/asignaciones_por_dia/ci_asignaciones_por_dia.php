@@ -29,13 +29,15 @@ class ci_asignaciones_por_dia extends toba_ci
         protected $s__hoja_activa;                         //contiene el indice de la hoja activa
         protected $s__dia;                                 
 
+        protected $s__id_sede;
+
 
         //---- Pant Edicion -----------------------------------------------------------------
 	//---- Formulario -------------------------------------------------------------------
 
 	function conf__formulario(toba_ei_formulario $form)
 	{
-            
+            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
         }
 
 	function evt__formulario__alta($datos)
@@ -74,7 +76,7 @@ class ci_asignaciones_por_dia extends toba_ci
             $dias=$this->s__datos['dia'];
             $anio_lectivo=$this->s__datos['anio_lectivo'];
             $cuatrimestre=(strcmp('Primer Cuatrimestre', $this->s__datos['cuatrimestre'])==0) ? 1 : 2;
-            $id_periodo=$this->dep('datos')->tabla('periodo')->get_id_periodo($cuatrimestre, $anio_lectivo);
+            $id_periodo=$this->dep('datos')->tabla('periodo')->get_id_periodo($cuatrimestre, $anio_lectivo, $this->s__id_sede);
             if(!isset($id_periodo)){
                 $mensaje="No existe un período académico registrado en el sistema para {$this->s__datos['cuatrimestre']} $anio_lectivo ";
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');

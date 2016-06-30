@@ -1034,7 +1034,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'ef_combo', --elemento_formulario
 	'tipo', --columnas
 	'1', --obligatorio
-	'0', --oculto_relaja_obligatorio
+	'1', --oculto_relaja_obligatorio
 	'6', --orden
 	'Tipo de Asignación', --etiqueta
 	NULL, --etiqueta_estilo

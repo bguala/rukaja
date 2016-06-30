@@ -17,7 +17,7 @@ class ci_memorando_por_fecha extends toba_ci
             $nombre_usuario=toba::usuario()->get_id();
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
             
-            $this->s__id_sede=1;
+            //$this->s__id_sede=1;
             
             $this->pantalla()->tab('pant_memorando')->desactivar();
             $calendario->set_seleccionar_solo_dias_pasados(FALSE);
@@ -34,7 +34,7 @@ class ci_memorando_por_fecha extends toba_ci
             $this->s__dia_consulta=$this->obtener_dia($dia_numerico);
             
             $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
-            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo);
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
             
             if(count($periodo)==0){
                 $mensaje=" No existen períodos académicos registrados en el sistema para el año actual ";

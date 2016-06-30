@@ -64,6 +64,39 @@ class formulario_extendido extends toba_ei_formulario
         
         echo "
         
+        //La funcion setTimeout se ejecuta solamente una vez. En este caso cuando se carga el documento html
+        //transcurren 2 segundos y se ejecuta la operacion ocultar_campos. Considero que 2 segundos es el tiempo
+        //adecuado para realizar el chequeo correspondiente. El tiempo se debe especificar en milisegundos.
+        //setInterval(funcion, tiempo) se ejecuta periodicamente.
+        
+        var id= setTimeout('ocultar_campos()', 2000);
+        
+        function ocultar_campos (){
+            var form={$this->objeto_js};
+            var tipo_agente=form.ef('tipo_agente').get_estado().toString();
+            
+            switch(tipo_agente){
+                case 'Docente'      : //Ocultamos los campos pertenecientes a organizacion.
+                                      //alert('El campo actualmente cargado es Docente');
+                                      form.ef('org').ocultar();
+                                      form.ef('nombre_org').ocultar();
+                                      form.ef('telefono_org').ocultar();
+                                      form.ef('email_org').ocultar();
+                                      break;
+                                 
+                case 'Organizacion' : //Ocultamos los campos pertenecientes a docente.
+                                      //alert('El campo actualmente cargado es Organizacion');
+                                      form.ef('legajo').ocultar();
+                                      form.ef('nombre').ocultar();
+                                      form.ef('apellido').ocultar();
+                                      break;
+                                      
+                default : //alert('No existe una opcion elegida en el combo tipo_agente');
+                          break;
+            }
+            
+        }
+        
         {$this->objeto_js}.evt__tipo_agente__validar = function () {
             var tipo=this.ef('tipo_agente').get_estado();
             
