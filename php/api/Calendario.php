@@ -13,9 +13,9 @@ class calendario_aulas_comahue extends toba_ei_calendario {
 //        $this->_calendario=new cal();
 //    }
 //    
-//    function get_ (){
-//        return $this->_calendario;
-//    }
+    function get_ (){
+        return $this->_calendario;
+    }
     
 }
 
@@ -208,7 +208,7 @@ class cal extends calendario {
             
             return $out;
     }
-    
+        
     /*
      * Esta funcion devuelve los dias que pertenecen a un periodo, formado por fecha_inicio y fecha_fin.
      */

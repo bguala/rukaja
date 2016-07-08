@@ -34,6 +34,10 @@ class ci_solicitar_aula extends toba_ci
         protected $s__datos_solicitud;
         
         protected $s__accion;
+        
+        protected $s__tipo;
+        
+        protected $s__datos_multi;
                 
         //-------------------------------------------------------------------------------------
         //---- Procesamos un vinculo desde otra operacion -------------------------------------
@@ -95,48 +99,146 @@ class ci_solicitar_aula extends toba_ci
         
 	//---- Form Ingreso -------------------------------------------------------------------
                
-        function evt__form_ingreso__aceptar ($datos){               
+        function evt__form_ingreso__aceptar ($datos){
+            $mensaje="";
             $this->s__fecha_consulta=$datos['fecha'];
-            
-            if(isset($datos['fecha']) && isset($datos['sede']) && isset($datos['facultad'])){
-                //Para no acumular resultados de busquedas sucesivas.
-                $this->s__horarios_disponibles=array();
-                $this->s__hd_global=array();
-                $this->s__id_sede=$datos['sede'];
-                $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede);
-                //Para implementar cortes de control en 'cuadro' de la pantalla pant_reserva. Estos eltos. se
-                //agregan al arreglo horarios_disponibles.
-                $this->s__establecimiento=$ua[0]['establecimiento'];
-                $this->s__sede=$ua[0]['sede'];
-                //Esta variable se utiliza para mostar un mensaje de notificacion cuando el usuario
-                //realiza busquedas acotadas, especificando en el formulario establecimiento, sede y fecha.
-                $this->s__solo_fecha=FALSE;
-                $this->calcular_horarios_disponibles_por_facultad();
+            switch($this->analizar_seleccion($datos, &$mensaje)){
+                /* Mas alla del tipo de solicitud siempre calculamos los horarios disponibles a partir
+                   del campo fecha. */
                 
-                //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
-                //opciones de busqueda modificando la clase Filtro.
-                $this->s__filtro=new Filtro($this->s__horarios_disponibles);
-            }else{
-                if(isset($datos['fecha']) && !isset($datos['sede']) && !isset($datos['facultad'])){
-                    //Para no acumular resultados de busquedas sucesivas.
-                    $this->s__hd_global=array();
-                    //Esta variable se utiliza para mostar un mensaje de notificacion cuando el usuario
-                    //realiza busquedas acotadas, especificando en el formulario establecimiento, sede y fecha.
-                    $this->s__solo_fecha=TRUE;
-                    //Disparamos calculo de horarios disponibles global, para todas la unidades academicas 
-                    //registradas en el sistema.
-                    $this->calcular_horarios_disponibles_global();
+                case 1  :  //La solicitud se etiqueta como multi.
+                case 2  :  //La solicitud se etiqueta como unico.
+                           
+                           //Para no acumular resultados de busquedas sucesivas.
+                           $this->s__horarios_disponibles=array();
+                           $this->s__hd_global=array();
+                           $this->s__id_sede=$datos['sede'];
+                           $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede);
+                           //Para implementar cortes de control en 'cuadro' de la pantalla pant_reserva. Estos eltos. se
+                           //agregan al arreglo horarios_disponibles.
+                           $this->s__establecimiento=$ua[0]['establecimiento'];
+                           $this->s__sede=$ua[0]['sede'];
+                           //Esta variable se utiliza para mostar un mensaje de notificacion cuando el usuario
+                           //realiza busquedas acotadas, especificando en el formulario establecimiento, sede y fecha.
+                           $this->s__solo_fecha=FALSE;
+                           $this->calcular_horarios_disponibles_por_facultad();
+
+                           //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
+                           //opciones de busqueda modificando la clase Filtro.
+                           $this->s__filtro=new Filtro($this->s__horarios_disponibles);
+                           break;
+                case 3  : 
+                case 4  :
+                case 5  :
+                case 6  :
+                case 7  :
+                case 8  :
+                case 9  :
+                case 10 :
+                case 11 :
+                case 12 :
+                case 14 :
+                case 15 : toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                          break;
                     
-                    //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
-                    //opciones de busqueda modificando la clase Filtro.
-                    $this->s__filtro=new Filtro($this->s__hd_global);
-                    
-                }else{
-                   $mensaje="Establecimiento y Sede se deben elegir en forma conjunta.";
-                   toba::notificacion()->agregar($mensaje, 'info');
-                }
-            }                        
+                case 13 : //La solicitud se etiqueta como multi.
+                case 16 : //La solicitud se etiqueta como unico.
+                          //Para no acumular resultados de busquedas sucesivas.
+                          $this->s__hd_global=array();
+                          //Esta variable se utiliza para mostar un mensaje de notificacion cuando el usuario
+                          //realiza busquedas acotadas, especificando en el formulario establecimiento, sede y fecha.
+                          $this->s__solo_fecha=TRUE;
+                          //Disparamos calculo de horarios disponibles global, para todas la unidades academicas 
+                          //registradas en el sistema.
+                          $this->calcular_horarios_disponibles_global();
+
+                          //Se utiliza para realizar busquedas por capacidad, hora_inicio y hora_fin. Se pueden agregar nuevas
+                          //opciones de busqueda modificando la clase Filtro.
+                          $this->s__filtro=new Filtro($this->s__hd_global);
+                          
+                          break;
+            }                      
             
+        }
+        
+        /*
+         * Esta funcion analiza los datos que puede seleccionar el usuario, teniendo en cuenta que pueden haber
+         * 2^4 combinaciones. La idea de la funcion es poder mostrar un mensaje significativo al usuario en el 
+         * caso de elegir mal los datos. Esta operacion se penso en base a una tabla de verdad.
+         * @$mensaje: es una variable vacia que se pasa por referencia. Se configura dentro de cada rama.
+         */
+        function analizar_seleccion ($datos, $mensaje){
+            //Analizamos el caso de ediciones totales de solicitudes multi evento.
+            if(strcmp($this->s__datos_solicitud['tipo'], "multi")==0){
+                if(!isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                    $mensaje="Para realizar una edición total de una solicitud multi evento debe elegir "
+                            . "fecha_fin y una lista de días. ";
+                }
+            }
+            
+            if(isset($datos['sede']) && isset($datos['facultad']) && isset($datos['fecha_fin']) && count($datos['dias'])!=0){
+                //Multi.
+                $this->s__tipo="multi";
+                $this->s__datos_multi=array($datos['fecha_fin'], $datos['dias']);
+                return 1;
+            }
+            if(isset($datos['sede']) && isset($datos['facultad']) && !isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                //Unico.
+                $this->s__tipo="unico";
+                return 2;
+            }
+            if(isset($datos['sede']) && isset($datos['facultad']) && isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                $mensaje="Si elige sede, establecimiento y fecha_fin, también debe elegir dias.";
+                return 3;
+            }
+            if(isset($datos['sede']) && isset($datos['facultad']) && !isset($datos['fecha_fin']) && count($datos['dias'])!=0){
+                $mensaje="Si elige sede, establecimiento y días, también debe elegir fecha fin";
+                return 4;
+            }
+
+            //Los casos de 5 a 8 no tiene sentido analizarlos. Esta conclusion se infiere a partie de una tabla 
+            //de verdad.
+            
+            if(!isset($datos['sede']) && isset($datos['facultad']) && isset($datos['fecha_fin']) && count($datos['dias'])!=0){
+                $mensaje="Si elige establecimiento, fecha_fin y días, también debe elegir sede, "
+                        . "es útil para acotar la búsqueda que desea realizar en el sistema";
+                return 9;
+            }
+            if(!isset($datos['sede']) && isset($datos['facultad']) && isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                $mensaje="Si elige establecimiento y fecha fin, también debe elegir sede y días.";
+                return 10;
+            }
+            if(!isset($datos['sede']) && isset($datos['facultad']) && !isset($datos['fecha_fin']) && count($datos['dias'])!=0){
+                $mensaje="Si elige establecimiento y una lista de días, también debe elegir sede y fecha fin. "
+                        . "El sistema considera que desea acotar la búsqueda paea una solicitud multi-evento.";
+                return 11;
+            }
+            if(!isset($datos['sede']) && isset($datos['facultad']) && !isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                $mensaje="Si elige facultad, también debe elegir sede, para acotar la búsqueda en un "
+                        . "establecimiento específico.";
+                return 12;
+            }
+            if(!isset($datos['sede']) && !isset($datos['facultad']) && isset($datos['fecha_fin']) && count($datos['dias'])!=0){
+                //Multi.
+                $this->s__tipo="multi";
+                $this->s__datos_multi=array($datos['fecha_fin'], $datos['dias']);
+                return 13;
+            }
+            if(!isset($datos['sede']) && !isset($datos['facultad']) && isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                $mensaje="Si eleige solamente fecha fin, el sistema no puede realizar una búsqueda exhaustiva de"
+                        . " horarios disponibles. ";
+                return 14;
+            }
+            if(!isset($datos['sede']) && !isset($datos['facultad']) && !isset($datos['fecha_fin']) && count($datos['dias'])!=0){
+                $mensaje="El sistema no puede calcular horarios disponibles a partir de una lista de días, debe "
+                        . "elegir un periodo comprendido por una fecha de inicio y fin. ";
+                return 15;
+            }
+            if(!isset($datos['sede']) && !isset($datos['facultad']) && !isset($datos['fecha_fin']) && count($datos['dias'])==0){
+                //Unico.
+                $this->s__tipo="unico";
+                return 16;
+            }
         }
         
         function calcular_horarios_disponibles_global (){
@@ -331,6 +433,14 @@ class ci_solicitar_aula extends toba_ci
         }
         
         /*
+         * Devuelve todos los dias de la semana para cargar el combo tipo 
+         */
+        function dias_semana (){            
+            $sql="SELECT nombre FROM dia ORDER BY orden";
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
          * Las opciones de busqueda se agrupan a traves de un || logico. De esta manera se eliminan resultados
          * repetidos.
          */
@@ -450,10 +560,16 @@ class ci_solicitar_aula extends toba_ci
                 $form->ef('establecimiento')->set_estado($this->s__datos_form['facultad']);
                 $form->set_datos($this->s__datos_cuadro);
                 
+                if(strcmp($this->s__tipo, "multi")==0){
+                    $form->ef('fecha_fin')->set_estado(date('d-m-Y', strtotime($this->s__datos_multi[0])));
+                    $form->ef('dias')->set_estado($this->s__datos_multi[1]);
+                    $form->ef('dias')->set_solo_lectura();
+                }
+                
                 $this->s__accion="registrar";
             }else{
+                $form->ef('dias')->set_solo_lectura();
                 //Cargamos datos por defecto para editar solicitudes.
-                
                 switch($this->s__datos_solicitud['tipo_edicion']){
                     
                     case 'edicion_total'   : $this->configurar_datos_solicitud();
@@ -511,6 +627,7 @@ class ci_solicitar_aula extends toba_ci
                                              if(strcmp($this->s__datos_solicitud['tipo_edicion'], 'edicion_parcial')==0){
                                                 $form->set_solo_lectura(array('hora_inicio', 'hora_fin'));
                                                 $this->s__accion="edicion_parcial";
+                                                
                                              }else{//Por las dudas guardamos edicion_total en accion;
                                                  $this->s__accion="edicion_total";
                                              }
@@ -819,6 +936,28 @@ class ci_solicitar_aula extends toba_ci
             $this->dep('datos')->tabla('solicitud')->nueva_fila($solicitud);
             $this->dep('datos')->tabla('solicitud')->sincronizar();
             $this->dep('datos')->tabla('solicitud')->resetear();
+            
+            //Si el tipo de solicitud es multi, debemos guardar informacion en la tabla solicitud_multi_evento y
+            //multi_evento.
+            if(strcmp($this->s__tipo, "multi")==0){
+                $secuencia=  recuperar_secuencia('solicitud_id_solicitud_seq');
+                $solicitud_multi_evento=array($secuencia, $this->s__datos_multi['fecha_fin']);
+                
+                $this->dep('datos')->tabla('solicitud_multi_evento')->nueva_fila($solicitud_multi_evento);
+                $this->dep('datos')->tabla('solicitud_multi_evento')->sincronizar();
+                $this->dep('datos')->tabla('solicitud_multi_evento')->resetear();
+                
+                $hd=new HorariosDisponibles();
+                $lista_fechas=$hd->get_dias($fecha, $this->s__datos_multi['fecha_fin'], $this->s__datos_multi['dias']);
+                
+                foreach($lista_fechas as $clave=>$fecha){
+                    $multi_evento=array($secuencia, strtotime($fecha), $this->recuperar_dia(strtotime($fecha)));
+                    
+                    $this->dep('datos')->tabla('multi_evento')->nueva_fila($multi_evento);
+                    $this->dep('datos')->tabla('multi_evento')->sincronizar();
+                    $this->dep('datos')->tabla('multi_evento')->resetear();
+                }
+            }
             
             //Obtenemos el correo electronico del destinatario del pedido de aula.
             $destinatario=$this->dep('datos')->tabla('administrador')->get_correo_electronico($id_sede);

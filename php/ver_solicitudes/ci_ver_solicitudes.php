@@ -144,6 +144,9 @@ class ci_ver_solicitudes extends toba_ci
          *    disponibles en todas las aulas del establecimeinto destino, sin considerar el aula seleccionada.
          *    Posteriormente debemos mostrar los horarios disponibles que contengan la hora_inicio y hora_fin 
          *    de la solicitud. Y permitirle al usuario registrar la solicitud con otra aula.
+         * c) Debemos tratar solicitudes para una fecha y multi_eventos. Estos ultimos consisten de una 
+         *    fecha_inicio, fecha_fin y una lista de dias. Esta distincion se debe verificar en en evt y 
+         *    disparar las funciones adecuadas para cada caso.
          * 
          * Para filtrar los espacios disponibles debemos tener en cuenta el horario y la capacidad especificada
          * en la solicitud. Y para calcular los espacios disponibles debemos usar la fecha de solicitud y descartar
@@ -168,17 +171,23 @@ class ci_ver_solicitudes extends toba_ci
             
             $this->s__capacidad=$datos['capacidad'];
             
-            //Empezamos calculando horarios disponibles en el aula seleccionada. El resultado de calcular_hd_en_aula_seleccionada
-            //es booleando. True si exsite el horario especificado en la solicitud.
-            if($this->calcular_hd_en_aula_seleccionada()){
-                //Si existe espacio disponible en el aula solicitada, debemos mostrar los datos de la solicitud y
-                //permitirle al usuario persistir una nueva asignacion.
-                $this->set_pantalla('pant_asignacion');
+            //Verificamos si la solicitud es unica o multi_evento.
+            if(strcmp($datos['tipo'], "UNICO")==0){
+                //Empezamos calculando horarios disponibles en el aula seleccionada. El resultado de 
+                //calcular_hd_en_aula_seleccionada es booleando. True si exsite el horario especificado en la 
+                //solicitud.
+                if($this->calcular_hd_en_aula_seleccionada()){
+                    //Si existe espacio disponible en el aula solicitada, debemos mostrar los datos de la 
+                    //solicitud y permitirle al usuario persistir una nueva asignacion.
+                    $this->set_pantalla('pant_asignacion');
+                }else{
+                    //Si no existe el horario especificado en la solicitud iniciamos la busqueda de un horario 
+                    //alternativo.
+                    $this->verificar_existencia_de_espacio();
+                    $this->set_pantalla('pant_busqueda');
+                }
             }else{
-                //Si no existe el horario especificado en la solicitud iniciamos la busqueda de un horario 
-                //alternativo.
-                $this->verificar_existencia_de_espacio();
-                $this->set_pantalla('pant_busqueda');
+                $this->conceder_multi_evento();
             }
             
 //            //Se necesita para enviar una notificacion si la solicitud es exitosa.
@@ -190,6 +199,94 @@ class ci_ver_solicitudes extends toba_ci
 //            $this->s__datos_solicitud=$datos;
             
 	}
+        
+        function conceder_multi_evento ($datos){
+            $hd=new HorariosDisponibles();
+            $this->s__id_sede=$datos['id_sede'];
+            //Esto se va a sacar de la base de datos se debe llamar cuando se cargue la solicitud en el sistema.
+            $lista_fechas=$hd->get_dias($datos['fecha'], $datos['fecha_fin'], $datos['dias']);
+            
+            $this->horarios_disponibles_por_fecha($lista_fechas);
+        }
+        
+        function horarios_disponibles_por_fecha ($lista_fechas, $datos_aula){
+            //Obtenemos las aulas una unica vez.
+            $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
+            $hd_fecha=array();
+            foreach($lista_fechas as $clave=>$fecha){
+                $this->s__fecha_consulta=$fecha;
+                
+                $this->hd_multi_evento($aulas_ua);
+                
+                $hd_fecha[]=array($fecha => $this->s__horarios_disponibles);
+                //Limpiamos el arreglo para no acumular resultados.
+                $this->s__horarios_disponibles=array();
+            }
+            
+            $repeticiones=$this->extraer_repeticiones($hd_fecha, $datos_aula['id_aula'], "{$datos_aula['hora_inicio']}:00", "{$datos_aula['hora_fin']}:00");
+            
+            $cantidad=count($lista_fechas);
+            
+            while($cantidad>0){
+                $dato=$this->seleccionar_mayor($repeticiones);
+                $fechas_restantes=$cantidad;
+                $cantidad = $cantidad - $dato[0];
+            }
+            
+        }
+        
+        function hd_multi_evento ($aulas_ua){
+            $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
+            //Configuramos el dia de consulta para que este disponible en la funcion procesar_periodo.
+            $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
+            //print_r($this->s__datos_solcitud);
+            //Obtenemos los periodos que pueden contener a la fecha de solicitud.
+            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
+            //Usamos la cadena 'au' para extraer las asignaciones pertenecientes a un aula en particular. 
+            //Es una condicion mas dentro de la funcion procesar_periodo.
+            $asignaciones=$this->procesar_periodo($periodo, 'au');
+            
+            $aulas=$this->obtener_aulas($asignaciones);
+            //Guardamos en sesion el id_sede para agregar la capacidad de cada aula a un horario disponible.
+            toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
+            
+            $this->s__horarios_disponibles=new HorariosDisponibles($aulas, $aulas_ua, $asignaciones);
+            
+            
+            
+        }
+        
+        function extraer_repeticiones ($hd_fecha, $aula, $hora_inicio, $hora_fin){
+            $repeticiones=array();
+            $fechas=array();
+            foreach($hd_fecha as $fecha=>$hd){
+                foreach($hd as $aula=>$horario_disponible){
+                    $hora_inicio_d=$horario_disponible['hora_inicio'];
+                    $hora_fin_d=$horario_disponible['hora_fin'];
+                    if(($hora_inicio>=$hora_inicio_d && $hora_inicio<=$hora_fin_d) && ($hora_fin<=$hora_fin_d)){
+                        //Listamos la fecha.
+                        $fechas[]=$fecha;
+                    }
+                }
+                $repeticiones[]=array($aula['id_aula'] => $fechas);
+                $fechas=array();
+            }
+        }
+        
+        //repeticiones debe ser != de vacio
+        function seleccionar_mayor ($repeticiones){
+            $mayor=0;
+            $resultado=array();
+            foreach($repeticiones as $aula=>$fechas){
+                $cantidad=count($fechas);
+                if($cantidad > $mayor){
+                    $mayor=$cantidad;
+                    $resultado=$fechas;
+                }
+            }
+            
+            return array($cantidad, $fechas);
+        }
         
         /*
          * Esta funcion permite editar solicitudes en estado pendiente o finalizada. Intentaremos usar la 

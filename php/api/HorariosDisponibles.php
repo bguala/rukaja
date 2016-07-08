@@ -13,6 +13,16 @@ class HorariosDisponibles {
     
         private $s__horarios_disponibles;
         
+        //Guardamos la cantidad de dias que forman a un mes. Se configura teniendo en cuenta anios bisiestos.
+        private $_meses=array(
+            1 => 31, 2 => 0, 3 => 31, 4 => 30, 5 => 31, 6 => 30, 7 => 31, 8 => 31, 9 => 30, 10 => 31, 11 => 30, 12 => 31
+        );
+    
+        //Guardamos los dias de la semana, esto es util para listar los dias correctos de un periodo.
+        private $_dias=array(
+            1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'
+        );
+        
         public function __construct() {
             $this->s__horarios_disponibles=array();
         }
@@ -348,6 +358,157 @@ class HorariosDisponibles {
             }
             
             toba::memoria()->limpiar_datos_instancia();
+        }
+        
+        //-------------------------------------------------------------------------------------------------
+        //---- Funciones para obtener fechas de un periodo ------------------------------------------------
+        //-------------------------------------------------------------------------------------------------
+        
+        /*
+         * Lo ideal seria agregar estas funciones en la clase calendario, que para eso está, pero la operación donde
+         * se utiliza se cuelga.
+         */
+        
+        /*
+         * Esta funcion devuelve los dias que pertenecen a un periodo, formado por fecha_inicio y fecha_fin.
+         */
+        public function get_dias ($fecha_inicio, $fecha_fin, $dias_seleccionados){
+            //aca debemos tratar el caso del mes de febrero, que puede tener 29 dias si el anio es bisiesto
+            $anio=date('Y');
+            $febrero=(($anio%400==0) || (($anio%4==0)&&($anio%100 != 0))) ? 29 : 28;
+            $this->_meses[2]=$febrero;
+
+            //obtenemos dia (01 a 31) y mes (01 a 12) con representacion numerica
+            $dia_inicio=date('d', strtotime($fecha_inicio));
+            $mes_inicio=date('m', strtotime($fecha_inicio));
+
+            $dia_fin=date('d', strtotime($fecha_fin));
+            $mes_fin=date('m', strtotime($fecha_fin));
+
+            if($mes_inicio == $mes_fin){
+                //con mes_inicio y mes_fin obtenemos la cantidad de dias que forman a dichos meses
+                return $this->generar_dias($dia_inicio, $dia_fin, $mes_inicio, $mes_fin, 'mm', $dias_seleccionados, NULL);
+            }
+            else{
+                $diff=$mes_fin - $mes_inicio;
+                if($diff >= 2){ //tenemos meses intermedios entre el periodo seleccionado
+                    //debemos decrementar una unidad de diff, para no repetir meses
+                    return $this->generar_dias($dia_inicio, $dia_fin, $mes_inicio, $mes_fin, 'mnc', $dias_seleccionados, $this->obtener_meses_intermedios($mes_inicio, ($diff - 1)));
+                }
+                else{ //en esta rama diff posee el valor 1, lo que implica que existen meses contiguos
+                    return $this->generar_dias($dia_inicio, $dia_fin, $mes_inicio, $mes_fin, 'mc', $dias_seleccionados, NULL);
+                }
+            }
+
+        }
+
+        /*
+         * Esta funcion determina los meses intermedios entre un periodo. Se utiliza para representar a los meses
+         * valores numericos de 1 a 12.
+         */
+        private function obtener_meses_intermedios ($mes_inicio, $diff){
+            $meses_intermedios=array();
+
+            for($i=1; $i<=$diff; $i++){
+                $mes_inicio += 1;
+                $meses_intermedios[]=$mes_inicio;
+            }
+
+            return $meses_intermedios;
+        }
+
+        /*
+         * La variable i puede contener :
+         * mm = mismo mes. @meses_intermedios es NULL.
+         * mc = meses contiguos. @meses_intermedios es NULL.
+         * mnc = meses no contiguos.
+         */
+        private function generar_dias ($dia_inicio, $dia_fin, $mes_inicio, $mes_fin, $i, $dias_seleccionados, $meses_intermedios){
+            //guardamos los dias del periodo
+            $dias=array();
+            $anio=date('Y');
+            switch($i){
+                case 'mm' : while($dia_inicio <= $dia_fin){
+                                $fecha=  date('d-m-Y', strtotime("$dia_inicio-$mes_inicio-$anio"));
+                                //print_r("<br>");
+                                //print_r($fecha);
+                                //print_r("<br>");
+                                if($this->es_dia_valido(date('N', strtotime($fecha)), $dias_seleccionados)){
+                                    $dias[]=$fecha;
+                                }
+
+                                $dia_inicio += 1;
+                            }
+
+                            break;
+
+                case 'mc' : $this->obtener_dias($dia_inicio, $mes_inicio, $this->_meses[intval($mes_inicio)], $dias_seleccionados, &$dias);
+                            $this->obtener_dias(1, $mes_fin, $dia_fin, $dias_seleccionados, &$dias);
+
+                            break;
+
+                case 'mnc': //obtenemos los dias para dia_inicio y mes_inicio
+                            $this->obtener_dias($dia_inicio, $mes_inicio, $this->_meses[intval($mes_inicio)], $dias_seleccionados, &$dias);
+                            
+                            //para los meses intermedios podemos obtener los dias sin problemas, avanzamos desde 1 
+                            //hasta el ultimo dia del mes y realizamos el descarte adecuado.
+                            foreach ($meses_intermedios as $clave=>$mes_i){ //mes_i contiene un valor entero
+                                $this->obtener_dias(1, $mes_i, $this->_meses[$mes_i], $dias_seleccionados, &$dias);
+                            }
+
+                            //obtenemos los dias para dia_fin y mes_fin
+                            $this->obtener_dias(1, $mes_fin, $dia_fin, $dias_seleccionados, &$dias);
+
+                            break;
+            }
+
+            return $dias;
+        }
+
+        /*
+         * @mes_inicial : contiene el numero de mes.
+         * @mes : contiene la cantidad de dias de un mes.
+         * 
+         */
+        private function obtener_dias ($dia_inicial, $mes_inicial, $mes, $dias_seleccionados, $dias){
+            //$dias=array();
+            $anio=date('Y');
+            //print_r("Mes Inicial : $mes_inicial <br>");
+            //$tipo=  gettype($mes_inicial);
+            //print_r("Tipo de dato : $tipo <br>");
+            //print_r("Dias del mes : $mes <br>");
+            for($i=$dia_inicial; $i<=$mes; $i++){
+                //print_r("Dia inicial : $i <br>");
+                $fecha=  date('d-m-Y', strtotime("$i-$mes_inicial-$anio"));
+                //print_r("<br>");
+                //print_r($fecha);
+                if($this->es_dia_valido(date('N', strtotime($fecha)), $dias_seleccionados)){
+                    $dias[]=$fecha;
+                }
+            }
+
+            //return $dias;
+        }
+
+        /*
+         * @dia_inicio : contiene una representacion numerica de un dia de la semana, puede ser 1,....,7. Se obtiene
+         * con date('N', fecha).
+         */
+        private function es_dia_valido ($dia_inicio, $dias_seleccionados){
+            $i=0;
+            $n=count($dias_seleccionados);
+            $fin=FALSE;
+            while($i<$n && !$fin){
+                //podemos obtener Lunes, Martes, .....
+                $dia=$dias_seleccionados[$i];
+                //print_r("Este es el dia inicio : $dia_inicio <br>");
+                //print_r(utf8_decode($this->_dias[$dia_inicio]));
+                if(strcmp(utf8_decode($this->_dias[$dia_inicio]), $dia)==0){
+                    $fin=TRUE;
+                }
+                $i++;
+            }
+            return $fin;
         }
     
 }

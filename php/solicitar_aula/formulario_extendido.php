@@ -67,7 +67,7 @@ class formulario_extendido extends toba_ei_formulario
         //La funcion setTimeout se ejecuta solamente una vez. En este caso cuando se carga el documento html
         //transcurren 2 segundos y se ejecuta la operacion ocultar_campos. Considero que 2 segundos es el tiempo
         //adecuado para realizar el chequeo correspondiente. El tiempo se debe especificar en milisegundos.
-        //setInterval(funcion, tiempo) se ejecuta periodicamente.
+        //setInterval(funcion, tiempo) se ejecuta periodicamente, su funcionamiento es similar a un timer por SW.
         
         var id= setTimeout('ocultar_campos()', 2000);
         
@@ -75,6 +75,8 @@ class formulario_extendido extends toba_ei_formulario
             var form={$this->objeto_js};
             var tipo_agente=form.ef('tipo_agente').get_estado().toString();
             
+            //Falta desactivar el campo tipo nombre. Lo hacemos dentro de docente u organizacion.
+
             switch(tipo_agente){
                 case 'Docente'      : //Ocultamos los campos pertenecientes a organizacion.
                                       //alert('El campo actualmente cargado es Docente');

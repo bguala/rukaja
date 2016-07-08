@@ -36,12 +36,12 @@ class ci_cargar_asignaciones extends toba_ci
         protected $s__periodo_analizado=false;
         protected $s__id_docente;
         
-        //guardamos la cantidad de dias que forman a un mes. Se configura teniendo en cuenta anios bisiestos
+        //Guardamos la cantidad de dias que forman a un mes. Se configura teniendo en cuenta anios bisiestos.
         protected $_meses=array(
             1 => 31, 2 => 0, 3 => 31, 4 => 30, 5 => 31, 6 => 30, 7 => 31, 8 => 31, 9 => 30, 10 => 31, 11 => 30, 12 => 31
         );
     
-        //guardamos los dias de la semana, esto es util para listar los dias correctos de un periodo
+        //Guardamos los dias de la semana, esto es util para listar los dias correctos de un periodo.
         protected $_dias=array(
             1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'
         );
