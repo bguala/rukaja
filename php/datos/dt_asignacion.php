@@ -385,13 +385,14 @@ class dt_asignacion extends toba_datos_tabla
          * "horarios registrados" en el combo tipo.
          */
         function get_asignaciones_definitivas_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo){
+            //JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc AND t_a.tipo_doc=t_pe.tipo_doc)
             $sql="SELECT t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.facultad, 
                          t_au.nombre as aula, t_au.capacidad, t_au.id_aula, t_au.capacidad, 
-                         t_pe.nro_doc, t_pe.tipo_doc, t_pe.nombre || ' ' || t_pe.apellido as responsable,
+                         t_a.nro_doc, t_a.tipo_doc, ' ' || ' ' || ' ' as responsable,
                          'Definitiva' as tipo, t_a.cantidad_alumnos as cant_alumnos
                   FROM asignacion t_a 
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                  JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc AND t_a.tipo_doc=t_pe.tipo_doc)
+                  
                   JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                   JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion)
                   WHERE t_au.id_sede=$id_sede AND t_d.nombre='$dia' AND t_a.id_periodo=$id_periodo 

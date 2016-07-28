@@ -68,7 +68,7 @@ class ci_calendario_comahue extends toba_ci
             $nombre_usuario=toba::usuario()->get_id();
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
            
-            $this->s__id_sede=1;
+            //$this->s__id_sede=1;
             
             $fecha="{$this->s__fecha_seleccionada['dia']}-{$this->s__fecha_seleccionada['mes']}-{$this->s__fecha_seleccionada['anio']}";
             $dia_numerico=date('N', strtotime($fecha));
@@ -395,11 +395,11 @@ class ci_calendario_comahue extends toba_ci
                 
                 switch ($valor['tipo_periodo']){
                     case 'Cuatrimestre' : if(strcmp($accion, 'hd')==0){
-                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
+                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
-                                          else{
-                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_fecha_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
-                                              $periodos=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
+                                          else{print_r($this->s__fecha_consulta);
+                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_fecha_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo']);
+                                              $periodos=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                               //print_r($periodos);
                                           }
                                           break;
@@ -407,10 +407,10 @@ class ci_calendario_comahue extends toba_ci
                     case 'Examen Final' : if(strcmp($accion, 'hd')==0){
                                               //obtenemos todas las asignaciones por periodo, que estan inluidas en un cuatrimestre,
                                               //pero que pertenecen a un examen_final
-                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
+                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
                                           else{ //la operacion se cuelga porque esta mal el nombre de la funcion
-                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_examen($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
+                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_examen($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
                                           break;
                 }

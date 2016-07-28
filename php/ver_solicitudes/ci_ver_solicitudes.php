@@ -182,7 +182,7 @@ class ci_ver_solicitudes extends toba_ci
                     $this->set_pantalla('pant_asignacion');
                 }else{
                     //Si no existe el horario especificado en la solicitud iniciamos la busqueda de un horario 
-                    //alternativo.
+                    //alternativo en otra aula.
                     $this->verificar_existencia_de_espacio();
                     $this->set_pantalla('pant_busqueda');
                 }
@@ -203,39 +203,59 @@ class ci_ver_solicitudes extends toba_ci
         function conceder_multi_evento ($datos){
             $hd=new HorariosDisponibles();
             $this->s__id_sede=$datos['id_sede'];
-            //Esto se va a sacar de la base de datos se debe llamar cuando se cargue la solicitud en el sistema.
+            //No conviene guardar todas estas fechas en la base de datos, porque vamos a usar espacio de gusto.
+            //Debemos guardar estas fechas cuando el pedido de aula sea concedido.
             $lista_fechas=$hd->get_dias($datos['fecha'], $datos['fecha_fin'], $datos['dias']);
             
-            $this->horarios_disponibles_por_fecha($lista_fechas);
+            $hd_fechas=$this->horarios_disponibles_por_fecha($lista_fechas);
+            
+            if($this->existe_hd_para_periodo($hd_fechas, $datos['id_aula'], $datos['hora_inicio'], $datos['hora_fin'])){
+                //Si existe el mismo horario en cada fecha del periodo, podemos conceder el multi-evento. Para
+                //ello reutilizamos la funcion registrar_solicitud.
+                print_r("<br><br> Este es el contenido de datos: <br><br>");
+                print_r($datos);
+                print_r("<br><br> Este es el contenido de datos_solicitud: <br><br>");
+                print_r($this->s__datos_solcitud);exit();
+                $this->registrar_solicitud($datos, $datos['dias'], $this->s__datos_solcitud['fecha_inicio'], $this->s__datos_solcitud['fecha_fin']);
+                
+            }else{
+                //$aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
+                $repeticion=$this->establecer_repeticion($hd_fechas, $datos['hora_inicio'], $datos['hora_fin']);
+                
+                $this->ordenar_repeticion(&$repeticion, count($repeticion));
+                
+                $this->establecer_asignacion($repeticion);
+            }
+                        
         }
-        
-        function horarios_disponibles_por_fecha ($lista_fechas, $datos_aula){
+                
+        function horarios_disponibles_por_fecha ($lista_fechas){
             //Obtenemos las aulas una unica vez.
             $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
             $hd_fecha=array();
+            
             foreach($lista_fechas as $clave=>$fecha){
                 $this->s__fecha_consulta=$fecha;
                 
                 $this->hd_multi_evento($aulas_ua);
                 
-                $hd_fecha[]=array($fecha => $this->s__horarios_disponibles);
+                //0 => fecha, 1 => s__horarios_disponibles.
+                $hd_fecha[]=array($fecha , $this->s__horarios_disponibles);
+                
                 //Limpiamos el arreglo para no acumular resultados.
                 $this->s__horarios_disponibles=array();
             }
             
-            $repeticiones=$this->extraer_repeticiones($hd_fecha, $datos_aula['id_aula'], "{$datos_aula['hora_inicio']}:00", "{$datos_aula['hora_fin']}:00");
-            
-            $cantidad=count($lista_fechas);
-            
-            while($cantidad>0){
-                $dato=$this->seleccionar_mayor($repeticiones);
-                $fechas_restantes=$cantidad;
-                $cantidad = $cantidad - $dato[0];
-            }
-            
+            return $hd_fecha;
+                      
         }
         
+        /*
+         * Esta funcion calcula horarios disponibles para cada fecha del periodo. Agrupa la funciones que 
+         * empiezan el calculo de hd desde el controlador.
+         */
         function hd_multi_evento ($aulas_ua){
+            
             $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
             //Configuramos el dia de consulta para que este disponible en la funcion procesar_periodo.
             $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
@@ -244,49 +264,206 @@ class ci_ver_solicitudes extends toba_ci
             $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
             //Usamos la cadena 'au' para extraer las asignaciones pertenecientes a un aula en particular. 
             //Es una condicion mas dentro de la funcion procesar_periodo.
-            $asignaciones=$this->procesar_periodo($periodo, 'au');
+            $asignaciones=$this->procesar_periodo($periodo, 'hd');
             
             $aulas=$this->obtener_aulas($asignaciones);
             //Guardamos en sesion el id_sede para agregar la capacidad de cada aula a un horario disponible.
             toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
             
             $this->s__horarios_disponibles=new HorariosDisponibles($aulas, $aulas_ua, $asignaciones);
-            
-            
-            
+                      
         }
         
-        function extraer_repeticiones ($hd_fecha, $aula, $hora_inicio, $hora_fin){
-            $repeticiones=array();
+        /*
+         * Esta funcion verifica si el multi-evento se puede conceder, esto es ver si en cada fecha existe el 
+         * horario disponible especificado en la solicitud.
+         */
+        function existe_hd_para_periodo ($hd_fechas, $id_aula, $hora_inicio, $hora_fin){
+            $i=0;
+            $j=0;
+            $n=count($hd_fechas);
+            $fin=TRUE;
+            $fin_hd=FALSE;
+            while($i<$n && $fin){
+                $hd=$hd_fechas[$i];
+                //Guardamos la longitud del arreglo que contiene todos los hd para una fecha.
+                $m=count($hd[1]);
+                $horarios=$hd[1];
+                while($j<$m && !$fin_hd){
+                    $aula=$horarios[$j];
+                    if($aula['id_aula']==$id_aula && ($hora_inicio>=$aula['hora_inicio'] && $hora_inicio<=$aula['hora_fin'] && $hora_fin<=$aula['hora_fin'])){
+                        $fin_hd=TRUE;
+                    }
+                    $j++;
+                }
+                
+                $fin=($fin_hd) ? TRUE : FALSE ;
+                $j=0;
+                $i++;
+            }
+            
+            return $fin;
+        }
+        
+        /*
+         * Esta funcion crea una estructura, llamada repeticion, con el siguiente formato: 
+         * (0 => array( 0 => aula, 1 => array(f1, f2, f3, ...., fn))).
+         * Las fechas se filtran teniendo en cuenta la hora de inicio y fin especificadas en la solicitud.
+         */
+        function establecer_repeticion($hd_fechas, $hora_inicio, $hora_fin){
+            $repeticion=array();
+            foreach($hd_fechas as $clave=>$valor){
+                $fecha=$valor[0];
+                $hd=$valor[1];
+                $i=0;
+                $n=count($hd);
+                $elto=array();
+                $elto[]=$fecha;
+                $horarios=array();
+                while($i < $n){
+                    $horario=$hd[$i];
+                    
+                    if($hora_inicio>=$horario['hora_inicio'] && $hora_inicio<=$horario['hora_fin'] && $hora_fin<=$horario['hora_fin']){
+                        $horarios[]=$horario;
+                    }
+                    
+                    $i++;
+                }
+                $elto[]=$horarios;
+                $repeticion[]=$elto;
+            }
+        }
+        
+        /*
+         * Esta funcion ordena un arreglo a partir del algoritmo de insercion.
+         */
+        function ordenar_repeticion ($repeticion, $n){
+            for($p=1; $p<$n; $p++){
+                
+                $tmp=$repeticion[$p][1];
+                $j=$p-1;
+                
+                while($j>=0 && count($tmp)<count($repeticion[$j][1])){
+                    $repeticion[$j + 1]=$repeticion[$j];
+                    $j--;
+                }
+                
+                $repeticion[$j + 1]=$tmp;
+            }
+        }
+        
+        /*
+         * Esta funcion determina una asignacion de aulas para el periodo seleccionado.
+         */
+        function establecer_asignacion ($repeticion){
             $fechas=array();
-            foreach($hd_fecha as $fecha=>$hd){
-                foreach($hd as $aula=>$horario_disponible){
-                    $hora_inicio_d=$horario_disponible['hora_inicio'];
-                    $hora_fin_d=$horario_disponible['hora_fin'];
-                    if(($hora_inicio>=$hora_inicio_d && $hora_inicio<=$hora_fin_d) && ($hora_fin<=$hora_fin_d)){
-                        //Listamos la fecha.
-                        $fechas[]=$fecha;
+            $n=count($repeticion);
+            //Obtenemos el ultimo elto con la mayor repeticion.
+            $mayor_repeticion=$repeticion[$n];
+            
+            //Eliminamos este elto. de la estructura repeticion.
+            unset($repeticion[$n]);
+            
+            //Recorremos $repeticion con un foreach. No hay problemas con los huecos que puede generar la 
+            //funcion unset.
+            $this->eliminar_fechas_repetidas($mayor_repeticion, &$repeticion);
+            $this->ordenar_repeticion($repeticion, count($repeticion));
+            
+            $fechas[]=$mayor_repeticion;
+            while($n>0){
+                $tmp=$repeticion[$n];
+                //Si existen fechas de tmp repetidas en fechas, las eliminamos. Ahora debemos ver si el 
+                //conjunto resultante es el mayor.
+                $this->existe_fechas_repetidas($fechas, &$tmp);
+                $n--;
+            }
+        }
+        
+        /*
+         * En ppio esta funcion elimina las fechas que se encuentran repetidas.
+         * @$mayor_repeticion : contiene la fechas disponibles.
+         * @$resto_tmp : contiene el resto de fechas que posiblemente sean eliminadas. Su formato es:
+         * (0 => array( 0 => aula, 1 => array(f1, f2, f3, ...., fn))). Se pasa por referencia.
+         * Y la eficiencia???? => O(n^3).
+         */
+        function eliminar_fechas_repetidas ($mayor_repeticion, $resto_tmp){
+            foreach($mayor_repeticion as $clave=>$valor){
+                foreach ($resto_tmp as $key=>$tmp){
+                    
+                    $n=count($tmp[1]);
+                    $arreglo=$tmp[1];
+                    //Este indice lo usamos para recorrer las fechas que posiblemente sean eliminadas.
+                    $j=0;
+                    while($j<$n){
+                        if(strcmp($valor, $arreglo[$i])==0){
+                            unset($arreglo[$i]);
+                        }
+                        $j++;
                     }
                 }
-                $repeticiones[]=array($aula['id_aula'] => $fechas);
-                $fechas=array();
+                
+                
             }
         }
         
-        //repeticiones debe ser != de vacio
-        function seleccionar_mayor ($repeticiones){
-            $mayor=0;
-            $resultado=array();
-            foreach($repeticiones as $aula=>$fechas){
-                $cantidad=count($fechas);
-                if($cantidad > $mayor){
-                    $mayor=$cantidad;
-                    $resultado=$fechas;
+        /*
+         * Esta funcion devuelve true si existe fechas repetidas. Tambien las elimina.
+         * (0 => array( 0 => aula, 1 => array(f1, f2, f3, ...., fn))).
+         * @$tmp : se pasa por referencia.
+         */
+        function existe_fechas_repetidas ($fechas, $tmp){
+            $i=0;
+            $n=count($fechas);
+            $fechas_tmp=$tmp[0][1];
+            $j=0;
+            $m=count($fechas_tmp);
+            while($i<$n){
+                $fechas_disponibles=$fechas[$i][1];
+                foreach ($fechas_disponibles as $clave=>$fecha){
+                    while($j<$m){
+                        if(strcmp($fecha, $fechas_tmp[$j])==0){
+                            unset($fechas_tmp[$j]);
+                        }
+                        $j++;
+                    }
                 }
+                
+                $i++;
             }
             
-            return array($cantidad, $fechas);
         }
+        
+//        function extraer_repeticiones ($hd_fecha, $aula, $hora_inicio, $hora_fin){
+//            $repeticiones=array();
+//            $fechas=array();
+//            foreach($hd_fecha as $fecha=>$hd){
+//                foreach($hd as $aula=>$horario_disponible){
+//                    $hora_inicio_d=$horario_disponible['hora_inicio'];
+//                    $hora_fin_d=$horario_disponible['hora_fin'];
+//                    if(($hora_inicio>=$hora_inicio_d && $hora_inicio<=$hora_fin_d) && ($hora_fin<=$hora_fin_d)){
+//                        //Listamos la fecha.
+//                        $fechas[]=$fecha;
+//                    }
+//                }
+//                $repeticiones[]=array($aula['id_aula'] => $fechas);
+//                $fechas=array();
+//            }
+//        }
+        
+        //repeticiones debe ser != de vacio
+//        function seleccionar_mayor ($repeticiones){
+//            $mayor=0;
+//            $resultado=array();
+//            foreach($repeticiones as $aula=>$fechas){
+//                $cantidad=count($fechas);
+//                if($cantidad > $mayor){
+//                    $mayor=$cantidad;
+//                    $resultado=$fechas;
+//                }
+//            }
+//            
+//            return array($cantidad, $fechas);
+//        }
         
         /*
          * Esta funcion permite editar solicitudes en estado pendiente o finalizada. Intentaremos usar la 
@@ -757,6 +934,15 @@ class ci_ver_solicitudes extends toba_ci
             //print_r("LLegamos a form asignacion aceptar");exit();
             $dia=$this->recuperar_dia($this->s__fecha_consulta);
             
+            $this->registrar_solicitud($datos, $dia, $this->s__datos_solcitud['fecha'], $this->s__datos_solcitud['fecha']);
+            
+        }
+        
+        /*
+         * Esta funcion permite registrar una solicitud unica o multi-evento.
+         * @dia : si la solicitud es unica dia contiene un unico dia, caso contrario contiene una lista de dias. 
+         */
+        function registrar_solicitud ($datos, $dia, $fecha_inicio, $fecha_fin){
             //Usamos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
             //la fecha exacta de la solicitud para hacer los calculos de hd. El id_periodo los obtenemos
             //con el tipo de asignacion y el id_sede.
@@ -787,8 +973,8 @@ class ci_ver_solicitudes extends toba_ci
             //Agregamos a $asignacion datos extra relacionados a un periodo, para no alterar la estructura 
             //de esta funcion. $dia tiene el mismo formato retornado por ef_multi_seleccion_check.
             $asignacion['dias']=$dia;
-            $asignacion['fecha_inicio']=$this->s__datos_solcitud['fecha'];
-            $asignacion['fecha_fin']=$this->s__datos_solcitud['fecha'];
+            $asignacion['fecha_inicio']=$fecha_inicio;//$this->s__datos_solcitud['fecha'];
+            $asignacion['fecha_fin']=$fecha_fin;//$this->s__datos_solcitud['fecha'];
             
             $this->registrar_asignacion_periodo($asignacion);
                        
@@ -798,7 +984,6 @@ class ci_ver_solicitudes extends toba_ci
             
             //Enviamos una notificacion al interesado.
             $this->notificar();
-            
         }
         
         function registrar_asignacion ($datos){
