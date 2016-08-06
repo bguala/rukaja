@@ -77,9 +77,12 @@ class ci_cargar_asignaciones extends toba_ci
                 print_r("Ejecutamos sin problemas ini operacion");
             
         }
-
+                
 	//---- Filtro -----------------------------------------------------------------------
         
+        /*
+         * Filtro para realizar busquedas de asignaciones en el sistema para el periodo actual.
+         */
         function conf__filtro (toba_ei_filtro $filtro){
             print_r("Se ejecuta conf filtro <br>");
             $this->pantalla()->tab('pant_edicion')->activar();
@@ -108,7 +111,7 @@ class ci_cargar_asignaciones extends toba_ci
                 $cuadro->descolapsar();
                 //Obtenemos la sede para el usuario logueado.
                 $this->s__id_sede=$this->dep('datos')->tabla('periodo')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
-                $this->s__id_sede=1;
+                
                 //Usamos la fecha actual para buscar periodo en el sistema.
                 $fecha=date('Y-m-d');
                 $anio_lectivo=date('Y');
@@ -182,6 +185,59 @@ class ci_cargar_asignaciones extends toba_ci
             return ($dias[$dia_numerico]);
         }
         
+        /*
+         * Metodo de consulta para cargar el combo periodo. Necesitamos usar el id_sede.
+         */
+        function get_periodos_activos (){
+            //La fecha actual nos ayuda a pensar esto: podemos cargar asignaciones en esta misma fecha o mas 
+            //adelante, entonces necesitamos los periodos registrados en el sistema posteriores a esta fecha 
+            //o los que contiene a la misma.
+            $fecha=date('Y-m-d');
+            $anio_lectivo=date('Y');
+            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $sql_1="SELECT t_p.id_periodo,
+                           t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
+                    FROM periodo t_p 
+                    JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
+                         AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                    . "AND t_p.id_sede=$id_sede)";
+            $cuatrimestre=toba::db('rukaja')->consultar($sql_1);
+            
+            $sql_2="SELECT t_p.id_periodo,
+                           'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' as descripcion
+                    FROM periodo t_p 
+                    JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
+                         AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))"
+                    . "AND t_p.id_sede=$id_sede)";
+            $examen_final=toba::db('rukaja')->consultar($sql_2);
+            
+            $sql_3="SELECT t_p.id_periodo,
+                           'CURSO DE INGRESO' || ' ' || t_ci.facultad || ' ' || t_ci.nombre as descripcion
+                    FROM periodo t_p 
+                    JOIN curso_ingreso t_ci ON (t_p.id_periodo=t_ci.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
+                         AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                    . "AND t_p.id_sede=$id_sede)";
+            $curso_ingreso=toba::db('rukaja')->consultar($sql_3);
+            
+            $this->unificar_periodos(&$cuatrimestre, $examen_final);
+            
+            $this->unificar_periodos(&$cuatrimestre, $curso_ingreso);
+                       
+            return $cuatrimestre;            
+            
+        }
+        
+         /*
+         * Esta funcion realiza una union de conjuntos.
+         */
+        function unificar_periodos ($periodo, $conjunto){
+            foreach ($conjunto as $clave=>$valor){
+                if(isset($valor)){
+                   $periodo[]=$valor; //agrega al final
+                }
+            }            
+        }
+        
         function evt__volver (){
             switch($this->s__pantalla_actual){
                 case "pant_asignacion" : $this->set_pantalla('pant_edicion'); break;
@@ -226,19 +282,28 @@ class ci_cargar_asignaciones extends toba_ci
             $filtro->get_sql_clausulas();
             print_r("Se ejecuta conf filtro busqueda <br>");
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
-            $this->s__id_sede=1;
+            
         }
         
         function evt__filtro_busqueda__filtrar (){
-            //verificamos si el usuario ingreso datos de busqueda
+            //Verificamos si existen aulas administradas por el usuario actual.
+            $aulas=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
+            if(count($aulas)==0){
+                $mensaje="No existen aulas registradas en el sistema.";
+                toba::notificacion()->agregar($mensaje, 'info');
+                return ;
+            }
+            
+            //verificamos si el usuario ingreso datos de busqueda.
             if(count($this->dep('filtro_busqueda')->get_sql_clausulas())==0){
                 $mensaje="No se admiten valores nulos para realizar busquedas en el sistema de personas u organizaciones";
                 toba::notificacion()->agregar($mensaje, 'info');
                 return; //finalizamos la ejecucion del programa.
             }
             
-            //Es necesario que existan periodos academicos registrados en el sistema para cargar asignaciones
-            $periodos=$this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede);
+            //Es necesario que existan periodos academicos registrados en el sistema para cargar asignaciones.
+            //$periodos=$this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede);
+            $periodos=$this->get_periodos_activos();
             
             if(count($periodos)>0){
                 if(!isset($this->s__aula_disponible)){

@@ -507,7 +507,7 @@ class ci_solicitar_aula extends toba_ci
             //Obtenemos la sede a la que pertenece el usuario logueado. Es quien realiza el pedido de 
             //aula. Estas sentencias se deben cambiar cuando existan perfiles de datos.
             $this->s__id_sede_origen=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
-            //$id_sede=5;
+            
             //print_r($this->s__id_sede_origen);exit();
             $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede_origen);
             $datos['facultad']=$ua[0]['establecimiento'];
@@ -925,6 +925,7 @@ class ci_solicitar_aula extends toba_ci
                 'estado' => 'PENDIENTE', //Las solicitudes pueden estar en dos estados posibles, pendiente o finalizada.
                 'id_responsable' => intval($this->s__id_responsable),
                 'tipo_agente' => $datos['tipo_agente'],
+                'tipo' => strtoupper($this->s__tipo),
                 'tipo_asignacion' => $datos['tipo'],
                 'id_sede_origen' => $this->s__id_sede_origen, //Guardamos el id_sede del establecimeinto que realiza el pedido de aula.
                 'id_aula' => $this->s__datos_cuadro['id_aula'],
@@ -941,17 +942,24 @@ class ci_solicitar_aula extends toba_ci
             //multi_evento.
             if(strcmp($this->s__tipo, "multi")==0){
                 $secuencia=  recuperar_secuencia('solicitud_id_solicitud_seq');
-                $solicitud_multi_evento=array($secuencia, $this->s__datos_multi['fecha_fin']);
+                $solicitud_multi_evento=array(
+                    'id_solicitud' => $secuencia, 
+                    'fecha_fin' => $this->s__datos_multi[0]
+                );
                 
                 $this->dep('datos')->tabla('solicitud_multi_evento')->nueva_fila($solicitud_multi_evento);
                 $this->dep('datos')->tabla('solicitud_multi_evento')->sincronizar();
                 $this->dep('datos')->tabla('solicitud_multi_evento')->resetear();
                 
                 $hd=new HorariosDisponibles();
-                $lista_fechas=$hd->get_dias($fecha, $this->s__datos_multi['fecha_fin'], $this->s__datos_multi['dias']);
-                
+                $lista_fechas=$hd->get_dias($fecha, $this->s__datos_multi[0], $this->s__datos_multi[1]);
+                //print_r($lista_fechas);exit();
                 foreach($lista_fechas as $clave=>$fecha){
-                    $multi_evento=array($secuencia, strtotime($fecha), $this->recuperar_dia(strtotime($fecha)));
+                    $multi_evento=array(
+                        'id_solicitud' => $secuencia,
+                        'fecha' => date('Y-m-d', strtotime($fecha)),
+                        'nombre' => utf8_decode($this->obtener_dia(date('N', strtotime($fecha))))
+                    );
                     
                     $this->dep('datos')->tabla('multi_evento')->nueva_fila($multi_evento);
                     $this->dep('datos')->tabla('multi_evento')->sincronizar();

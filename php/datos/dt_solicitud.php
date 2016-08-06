@@ -28,7 +28,7 @@ class dt_solicitud extends toba_datos_tabla
                         t_s.id_sede_origen,
                         t_s.tipo_asignacion,
 			t_s1.descripcion as sede,
-                        
+                        t_s.tipo,
                         t_a.id_aula,
                         t_a.nombre as aula
 		FROM
@@ -68,6 +68,7 @@ class dt_solicitud extends toba_datos_tabla
                         t_s.id_sede_origen,
                         t_s.estado,
                         t_s.tipo_asignacion,
+                        t_s.tipo,
 			t_s1.descripcion as id_sede_nombre,
                         t_a.id_aula,
                         t_a.nombre as aula
@@ -147,6 +148,28 @@ class dt_solicitud extends toba_datos_tabla
 		ORDER BY nombre";
 		return toba::db('rukaja')->consultar($sql);
 	}
+        
+        /*
+         * Esta funcion permite obtener la lista de fechas pertenecientes a un periodo. Se utiliza en la
+         * operacion Ver Solicitudes.
+         */
+        function get_lista_fechas ($id_solicitud){
+            $sql="SELECT * 
+                  FROM multi_evento 
+                  WHERE id_solicitud=$id_solicitud";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        function get_datos_multi ($id_solicitud){
+            $sql="SELECT fecha_fin
+                  FROM solicitud_multi_evento 
+                  WHERE id_solicitud=$id_solicitud";
+            
+            $fecha=toba::db('rukaja')->consultar($sql);
+            
+            return ($fecha[0]['fecha_fin']);
+        }
 
 }
 ?>

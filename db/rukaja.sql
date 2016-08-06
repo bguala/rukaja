@@ -1,5 +1,5 @@
 --hay que agregar el id_sede porque cada ua elabora su propio calendario.
---debemos quitar la tabla administrador, ahora hay que usar perfiles de datos.
+
 --hay que arreglar el problema de las dos fuentes de datos. Esto genera cambios en las consultas donde
 --estan involucrados los docentes.
 
@@ -131,6 +131,8 @@ CREATE TABLE IF NOT EXISTS administrador (
 id_administrador serial NOT NULL,
 nombre_usuario character varying (35),
 id_sede serial,
+nombre character varying(35),
+apellido character varying(35),
 CONSTRAINT pk_admin PRIMARY KEY (id_administrador),
 CONSTRAINT fk_sede FOREIGN KEY (id_sede) REFERENCES sede(id_sede) 
 
@@ -323,6 +325,29 @@ CREATE TABLE IF NOT EXISTS solicitud (
   CONSTRAINT fk_solicitud FOREIGN KEY (id_sede)
       REFERENCES sede (id_sede) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS solicitud_multi_evento (
+
+id_solicitud serial NOT NULL,
+fecha_fin date,
+
+CONSTRAINT pk_solicitud_multi_evento PRIMARY KEY (id_solicitud),
+CONSTRAINT fk_solicitud_multi_evento FOREIGN KEY (id_solicitud)	REFERENCES solicitud(id_solicitud) ON DELETE CASCADE ON UPDATE CASCADE
+
+);
+
+CREATE TABLE IF NOT EXISTS multi_evento (
+
+id_solicitud serial,
+fecha date,
+nombre character varying (10),
+
+CONSTRAINT pk_multi_evento PRIMARY KEY (id_solicitud, fecha, nombre)
+CONSTRAINT fk_multi_evento FOREIGN KEY (id_solicitud)
+      REFERENCES solicitud_multi_evento (id_solicitud) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+
 );
 
 CREATE TABLE IF NOT EXISTS catedra (

@@ -187,7 +187,7 @@ class ci_ver_solicitudes extends toba_ci
                     $this->set_pantalla('pant_busqueda');
                 }
             }else{
-                $this->conceder_multi_evento();
+                $this->conceder_multi_evento($datos);
             }
             
 //            //Se necesita para enviar una notificacion si la solicitud es exitosa.
@@ -201,41 +201,50 @@ class ci_ver_solicitudes extends toba_ci
 	}
         
         function conceder_multi_evento ($datos){
-            $hd=new HorariosDisponibles();
+            print_r($datos);
             $this->s__id_sede=$datos['id_sede'];
-            //No conviene guardar todas estas fechas en la base de datos, porque vamos a usar espacio de gusto.
-            //Debemos guardar estas fechas cuando el pedido de aula sea concedido.
-            $lista_fechas=$hd->get_dias($datos['fecha'], $datos['fecha_fin'], $datos['dias']);
-            
+            //Obtenemos las lista de fechas pertenecientes al periodo.
+            $lista_fechas=$this->dep('datos')->tabla('solicitud')->get_lista_fechas($datos['id_solicitud']);
+            //print_r("Estas son las hd fechas: ");print_r($lista_fechas);exit();
             $hd_fechas=$this->horarios_disponibles_por_fecha($lista_fechas);
-            
-            if($this->existe_hd_para_periodo($hd_fechas, $datos['id_aula'], $datos['hora_inicio'], $datos['hora_fin'])){
+            //print_r("Estas son las hd fechas: <br><br>");print_r($hd_fechas);exit();
+            if($this->existe_hd_para_periodo($hd_fechas, $datos['id_aula'], "{$datos['hora_inicio']}:00", "{$datos['hora_fin']}:00")){
                 //Si existe el mismo horario en cada fecha del periodo, podemos conceder el multi-evento. Para
                 //ello reutilizamos la funcion registrar_solicitud.
                 print_r("<br><br> Este es el contenido de datos: <br><br>");
                 print_r($datos);
                 print_r("<br><br> Este es el contenido de datos_solicitud: <br><br>");
-                print_r($this->s__datos_solcitud);exit();
-                $this->registrar_solicitud($datos, $datos['dias'], $this->s__datos_solcitud['fecha_inicio'], $this->s__datos_solcitud['fecha_fin']);
+                //print_r($this->s__datos_solcitud);exit();
+                $this->set_pantalla('pant_asignacion');
+                //$this->registrar_solicitud($datos, $datos['dias'], $this->s__datos_solcitud['fecha_inicio'], $this->s__datos_solcitud['fecha_fin']);
                 
             }else{
+                $mensaje=" No es posible conceder el período actual. ";
+                toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                //Esta funcionalidad se puede implemetar mas adelante.
+                
                 //$aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
-                $repeticion=$this->establecer_repeticion($hd_fechas, $datos['hora_inicio'], $datos['hora_fin']);
+                //$repeticion=$this->establecer_repeticion($hd_fechas, $datos['hora_inicio'], $datos['hora_fin']);
                 
-                $this->ordenar_repeticion(&$repeticion, count($repeticion));
+                //Ordenamos las repeticiones de menor a mayor, usando el metodo de insercion.
+                //$this->ordenar_repeticion(&$repeticion, count($repeticion));
                 
-                $this->establecer_asignacion($repeticion);
+                //$this->establecer_asignacion($repeticion);
             }
                         
         }
-                
+        
+        /*
+         * @$lista_fechas : el formato de esta estructura es : 
+         * array( 0 => array(id_solicitud, fecha, nombre) ).
+         */
         function horarios_disponibles_por_fecha ($lista_fechas){
             //Obtenemos las aulas una unica vez.
             $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
             $hd_fecha=array();
             
             foreach($lista_fechas as $clave=>$fecha){
-                $this->s__fecha_consulta=$fecha;
+                $this->s__fecha_consulta=$fecha['fecha'];
                 
                 $this->hd_multi_evento($aulas_ua);
                 
@@ -270,7 +279,9 @@ class ci_ver_solicitudes extends toba_ci
             //Guardamos en sesion el id_sede para agregar la capacidad de cada aula a un horario disponible.
             toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
             
-            $this->s__horarios_disponibles=new HorariosDisponibles($aulas, $aulas_ua, $asignaciones);
+            $hd=new HorariosDisponibles();
+            
+            $this->s__horarios_disponibles=$hd->calcular_horarios_disponibles($aulas, $aulas_ua, $asignaciones);
                       
         }
         
@@ -353,30 +364,23 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         /*
-         * Esta funcion determina una asignacion de aulas para el periodo seleccionado.
+         * Esta funcion determina una asignacion de aulas para el periodo seleccionado. El formato de repeticion:
+         * array(0 => array( 0=>aula, 1=>array(f1, f2, ..., fn)) ).
          */
         function establecer_asignacion ($repeticion){
             $fechas=array();
             $n=count($repeticion);
-            //Obtenemos el ultimo elto con la mayor repeticion.
-            $mayor_repeticion=$repeticion[$n];
             
-            //Eliminamos este elto. de la estructura repeticion.
-            unset($repeticion[$n]);
-            
-            //Recorremos $repeticion con un foreach. No hay problemas con los huecos que puede generar la 
-            //funcion unset.
-            $this->eliminar_fechas_repetidas($mayor_repeticion, &$repeticion);
-            $this->ordenar_repeticion($repeticion, count($repeticion));
-            
-            $fechas[]=$mayor_repeticion;
-            while($n>0){
+            while($n>=0){
                 $tmp=$repeticion[$n];
-                //Si existen fechas de tmp repetidas en fechas, las eliminamos. Ahora debemos ver si el 
-                //conjunto resultante es el mayor.
-                $this->existe_fechas_repetidas($fechas, &$tmp);
+                //$this->existe_fechas_repetidas($fechas, &$tmp);
+                unset($repeticion[$n]);
+                $this->eliminar_fechas_repetidas($tmp, &$repeticion);
+                $fechas[]=$tmp;
                 $n--;
             }
+            
+            return $fechas;
         }
         
         /*
@@ -387,23 +391,25 @@ class ci_ver_solicitudes extends toba_ci
          * Y la eficiencia???? => O(n^3).
          */
         function eliminar_fechas_repetidas ($mayor_repeticion, $resto_tmp){
-            foreach($mayor_repeticion as $clave=>$valor){
-                foreach ($resto_tmp as $key=>$tmp){
+                       
+            foreach ($resto_tmp as $key=>$tmp){
+                $n=count($tmp[1]);
+                $arreglo=$tmp[1];
+                //Este indice lo usamos para recorrer las fechas que posiblemente sean eliminadas.
+                $j=0;
+                
+                foreach($mayor_repeticion as $clave=>$valor){
                     
-                    $n=count($tmp[1]);
-                    $arreglo=$tmp[1];
-                    //Este indice lo usamos para recorrer las fechas que posiblemente sean eliminadas.
-                    $j=0;
                     while($j<$n){
                         if(strcmp($valor, $arreglo[$i])==0){
                             unset($arreglo[$i]);
                         }
                         $j++;
                     }
+                    
                 }
-                
-                
             }
+                
         }
         
         /*
@@ -411,27 +417,27 @@ class ci_ver_solicitudes extends toba_ci
          * (0 => array( 0 => aula, 1 => array(f1, f2, f3, ...., fn))).
          * @$tmp : se pasa por referencia.
          */
-        function existe_fechas_repetidas ($fechas, $tmp){
-            $i=0;
-            $n=count($fechas);
-            $fechas_tmp=$tmp[0][1];
-            $j=0;
-            $m=count($fechas_tmp);
-            while($i<$n){
-                $fechas_disponibles=$fechas[$i][1];
-                foreach ($fechas_disponibles as $clave=>$fecha){
-                    while($j<$m){
-                        if(strcmp($fecha, $fechas_tmp[$j])==0){
-                            unset($fechas_tmp[$j]);
-                        }
-                        $j++;
-                    }
-                }
-                
-                $i++;
-            }
-            
-        }
+//        function existe_fechas_repetidas ($fechas, $tmp){
+//            $i=0;
+//            $n=count($fechas);
+//            $fechas_tmp=$tmp[0][1];
+//            $j=0;
+//            $m=count($fechas_tmp);
+//            while($i<$n){
+//                $fechas_disponibles=$fechas[$i][1];
+//                foreach ($fechas_disponibles as $clave=>$fecha){
+//                    while($j<$m){
+//                        if(strcmp($fecha, $fechas_tmp[$j])==0){
+//                            unset($fechas_tmp[$j]);
+//                        }
+//                        $j++;
+//                    }
+//                }
+//                
+//                $i++;
+//            }
+//            
+//        }
         
 //        function extraer_repeticiones ($hd_fecha, $aula, $hora_inicio, $hora_fin){
 //            $repeticiones=array();
@@ -565,7 +571,11 @@ class ci_ver_solicitudes extends toba_ci
             $n=count($this->s__horarios_disponibles);
             while($i<$n && !$fin){
                 $elto=$this->s__horarios_disponibles[$i];
-                if($elto['hora_inicio']==$this->s__datos_solcitud['hora_inicio'] && $elto['hora_fin']==$this->s__datos_solcitud['hora_fin']){
+                $hi=$this->s__datos_solcitud['hora_inicio'];
+                $hf=$this->s__datos_solcitud['hora_fin'];
+                
+                //Verificamos inclusion.
+                if($hi>=$elto['hora_inicio'] && $hi<=$elto['hora_fin'] && $hf<=$elto['hora_fin']){
                     //Cortamos el bucle y en el formulario por defecto usamos la informacion de s__datos_solicitud.
                     $fin=TRUE;
                 }
@@ -893,7 +903,7 @@ class ci_ver_solicitudes extends toba_ci
         
         /*
          * Este formulario se carga con informacion que esta lista para ser registrada en las tablas
-         * asignacion y asignacion_periodo
+         * asignacion y asignacion_periodo.
          */
         function conf__form_asignacion (toba_ei_formulario $form){
             
@@ -931,23 +941,39 @@ class ci_ver_solicitudes extends toba_ci
          * esta_formada. Ademas debemos pasar la solicitud a estado finalizada.
          */
         function evt__form_asignacion__aceptar ($datos){
-            //print_r("LLegamos a form asignacion aceptar");exit();
-            $dia=$this->recuperar_dia($this->s__fecha_consulta);
+            //Falta asociar datos del responsable de aula.
             
-            $this->registrar_solicitud($datos, $dia, $this->s__datos_solcitud['fecha'], $this->s__datos_solcitud['fecha']);
+            if(strcmp($this->s__datos_solcitud['tipo'], "UNICO")==0){
+                $fecha_fin=$datos['fecha'];
+                //Creamos esta estructura para no alterar el comportamiento de la funcion registrar_solicitud.
+                //Debe permitir registrar solicitudes unicas o multi.
+                $dia=array( array(
+                           'id_solicitud' => $this->s__datos_solcitud['id_solicitud'], 
+                           'fecha' => $this->s__datos_solcitud['fecha'],
+                           'nombre' => utf8_decode($this->obtener_dia(date('N', $this->s__datos_solcitud['fecha'])))
+                    ));
+            }else{
+                //Obtenemos la fecha de fin que esta almacenada en la tabla solicitud_multi_evento.
+                $fecha_fin=$this->dep('datos')->tabla('solicitud')->get_datos_multi($this->s__datos_solcitud['id_solicitud']);
+                $dia=$this->dep('datos')->tabla('solicitud')->get_lista_fechas($this->s__datos_solcitud['id_solicitud']);
+                print_r($dia);print_r("<br><br> Esta es la fecha fin : $fecha_fin <br><br>");
+            }
+            //print_r("EVT ACEPTAR: ");print_r($this->s__datos_solcitud);exit();
+            $this->registrar_solicitud($datos, $dia, $this->s__datos_solcitud['fecha'], $fecha_fin);
             
         }
         
         /*
-         * Esta funcion permite registrar una solicitud unica o multi-evento.
+         * Esta funcion permite registrar una solicitud unica o multi-evento. Se emplean as tablas asignacion,
+         * asignacion_periodo y esta_formada.
          * @dia : si la solicitud es unica dia contiene un unico dia, caso contrario contiene una lista de dias. 
          */
         function registrar_solicitud ($datos, $dia, $fecha_inicio, $fecha_fin){
             //Usamos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
             //la fecha exacta de la solicitud para hacer los calculos de hd. El id_periodo los obtenemos
             //con el tipo de asignacion y el id_sede.
-            $id_periodo=$this->dep('datos')->tabla('periodo')->get_periodo_segun_asignacion($this->s__datos_solcitud['tipo_asignacion'], $this->s__datos_solcitud['id_sede']);
-            
+            $id_periodo=$this->dep('datos')->tabla('periodo')->get_periodo_segun_asignacion($fecha_inicio, $this->s__datos_solcitud['tipo_asignacion'], $this->s__datos_solcitud['id_sede']);
+            //print_r("Este es el periodo obtenido: ");print_r($id_periodo);exit();
             //print_r("Este es el valor del id_periodo");print_r($id_periodo);print_r("<br><br>");exit();
             //Usamos ambos arreglos, $datos y $s__datos_solcitud.
             $asignacion=array(
@@ -1008,12 +1034,14 @@ class ci_ver_solicitudes extends toba_ci
             $this->dep('datos')->tabla('asignacion_periodo')->sincronizar();
             $this->dep('datos')->tabla('asignacion_periodo')->resetear();
             
-            //En esta seccion se guarda informacion en la tabla esta_formada. Podemos tener varios dias.
+            //En esta seccion se guarda informacion en la tabla esta_formada. Podemos tener varios dias. Su formato es:
+            //array( 0 => array(id_solictud, nombre, fecha), ..., )
             $dias=$datos['dias'];
             foreach ($dias as $clave=>$dia){
-                $dato['nombre']=$dia;
+                print_r($dia['nombre']);
+                $dato['nombre']= $dia['nombre'];
                 $dato['id_asignacion']=$secuencia;
-                $dato['fecha']=$this->s__fecha_consulta;
+                $dato['fecha']=$dia['fecha'];
                 $this->dep('datos')->tabla('esta_formada')->nueva_fila($dato);
                 $this->dep('datos')->tabla('esta_formada')->sincronizar();
                 $this->dep('datos')->tabla('esta_formada')->resetear();
@@ -1305,12 +1333,12 @@ class ci_ver_solicitudes extends toba_ci
                     case 'Cuatrimestre' : if(strcmp($accion, 'hd')==0){
                                               //Obtenemos asignaciones definitivas y periodicas para empezar calculos de horarios
                                               //disponibles en todas las aulas de un establecimiento.
-                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
+                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                               
                                           }
                                           else{ //Si accion es 'au'.
                                               //Esta consulta nos permite obtener asignaciones definitivas o periodicas en un aula y fecha en particular.
-                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_aula_cuatrimestre($this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_aula']);
+                                              $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_aula_cuatrimestre(utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_aula']);
                                               //print_r($cuatrimestre);
                                           }
                                           break;
@@ -1318,11 +1346,11 @@ class ci_ver_solicitudes extends toba_ci
                     case 'Examen Final' : if(strcmp($accion, 'hd')==0){
                                               //Obtenemos todas las asignaciones por periodo, que estan inluidas en un cuatrimestre,
                                               //pero que pertenecen a un examen_final
-                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final($this->s__id_sede, $this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta);
+                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
                                           else{ //Si accion es 'au'.
                                               //Obtenemos asignaciones periodicas que pertenecen a un turno de examen de un aula especifica.
-                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_aula_examen_final($this->s__dia_consulta, $valor['id_periodo'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_aula']);
+                                              $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_aula_examen_final(utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta, $this->s__datos_solcitud['id_aula']);
                                           }
                                           break;
                 }
