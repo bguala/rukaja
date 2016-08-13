@@ -232,7 +232,7 @@ class dt_asignacion extends toba_datos_tabla
         
         /*
          * Esta funcion se utiliza en la operacion Registrar Periodos, para verificar si un periodo posee
-         * asignaciones. 
+         * asignaciones. Si el periodo posee asinaciones, no lo podemos eliminar del sistema.
          */
         function get_asignaciones_por_periodo ($id_periodo){
             $sql="SELECT id_asignacion
@@ -252,10 +252,10 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion se utiliza en la operacion Generar Solicitud, para llenar el combo tipo de la seccion 
-         * Datos de la Solicitud. La diferencia con get_tipo_asignacion es que se devuelve los tipos de asignacion
-         * excepto cursada,ademas agrega un campo otro para hacer una ext javascript en el formulario, de esta 
-         * manera permitimos que el usuario registre un nuevo tipo en el sistema. 
+         * Esta funcion se utiliza en la operacion Generar Solicitud, para llenar el combo 'tipo' de la seccion 
+         * Datos de la Solicitud. La diferencia con get_tipo_asignacion es que se devuelven todos los tipos de 
+         * asignacion excepto cursada,ademas agrega un campo 'otro' para hacer una ext javascript en el formulario,
+         * de esta manera permitimos que el usuario registre un nuevo tipo en el sistema. 
          */
         function get_tipos (){
             $sql="SELECT tipo
@@ -268,8 +268,8 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion se utiliza en la operacion Generar Solicitud para cargar un combo llamado organizaciones
-         * existentes. 
+         * Esta funcion se utiliza en la operacion Generar Solicitud para cargar un combo llamado 'organizaciones
+         * existentes'. 
          */
         function get_organizaciones ($tipo){
             if(strcmp('Organizacion', $tipo)==0){
@@ -350,6 +350,7 @@ class dt_asignacion extends toba_datos_tabla
          * horarios disponibles.
          */
         function get_asignaciones_definitivas_por_dia ($id_sede, $dia, $id_periodo){
+            //Vamos a hacer una prueba usando un join con periodo, para hacer busquedas generales.
             $sql="SELECT t_a.hora_inicio,
                          t_a.hora_fin,
                          t_au.nombre as aula,
@@ -403,7 +404,7 @@ class dt_asignacion extends toba_datos_tabla
         
         /*
          * Esta funcion se utiliza en la operacion Calendario Comahue, para implementar la opcion 
-         * "horasrios registrados" en el combo tipo.
+         * "horarios registrados" en el combo tipo.
          * En esta funcion se incluyen asig_periodo correspondientes a eventos o examenes parciales.
          */
         function get_asignaciones_periodo_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo, $fecha){
@@ -727,6 +728,66 @@ class dt_asignacion extends toba_datos_tabla
             return toba::db('rukaja')->consultar($sql);
         }
         
+        /*
+         * En ppio esta operacion se utilizaria en Buscador de Aulas o Seleccionar Aula. Ayuda a verificar que 
+         * no se produzca solapamiento de asignaciones. Se puede unificar en asig_por_dia !!!!!. 
+         * Ambas consultas poseen el mismo esquema.
+         */
+        function get_asignaciones_periodo_ ($id_sede, $dia){
+            //Obtenemos la fecha actual para obtener todas las asignaciones periodicas
+            //que pueden estar solapadas con la asignacion que se quiere registrar.
+            $fecha_actual=date('Y-m-d');
+            $anio=date('Y');
+            //Si no filtramos por periodo, hacemos una busqueda general (que es lo que necesitamos) teniendo
+            //en cuenta todos los periodos academicos, cuatrimestre, examen final etc.
+            $sql="SELECT t_a.hora_inicio,
+                         t_a.hora_fin,
+                         t_a.id_aula,
+                         t_au.nombre as aula,
+                         t_au.capacidad
+                         
+                  FROM asignacion t_a 
+                  JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
+                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
+                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND t_p.fecha_inicio>='$fecha_actual')
+                  JOIN esta_formada t_ef ON (t_p.id_asignacion=t_ef.id_asignacion)
+                  WHERE t_au.id_sede=$id_sede AND t_ef.nombre='$dia' AND t_per.anio_lectivo=$anio";
+            
+            return toba::db('rukaja')->consultar($sql);
+            
+        }
         
+        /*
+         * Esta funcion se utiliza en la funcion se utiliza en la operacion Seleccionar Aula.
+         */
+        function get_asignaciones_examen_final_ ($id_sede, $dia, $id_periodo){
+            $sql="SELECT t_a.hora_inicio, t_a.hora_fin, t_a.id_aula, 
+                         t_au.nombre as aula, t_f.fecha
+                  FROM asignacion t_a 
+                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula) 
+                  JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
+                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
+                  JOIN esta_formada t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_ef.nombre='$dia')
+                  WHERE t_au.id_sede=$id_sede AND t_a.id_periodo=$id_periodo";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * 
+         */
+        function get_asignaciones_periodo_cuatrimestre ($id_sede, $dia, $id_periodo){
+            $fecha_actual=date('Y-m-d');
+            $sql="SELECT t_a.hora_inicio, t_a.hora_fin, t_a.id_aula, 
+                         t_au.nombre as aula, t_ef.fecha
+                  FROM asignacion t_a
+                  JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
+                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
+                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND (t_p.fecha_inicio >= '$fecha_actual'))
+                  JOIN esta_formada t_ef ON (t_p.id_periodo=t_ef.id_periodo)
+                  WHERE t_au.id_sede=$id_sede AND t_ef.nombre='$dia' AND t_a.id_periodo=$id_periodo";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
 }
 ?>

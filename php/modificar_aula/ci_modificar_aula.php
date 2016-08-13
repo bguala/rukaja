@@ -23,8 +23,9 @@ class ci_modificar_aula extends toba_ci
          * @datos contiene la informacion cargada para filtrar
          */
         function evt__filtro__filtrar ($datos){
-            $this->s__datos_filtro=$datos;
-            $this->s__where=$this->dep('filtro')->get_sql_where();
+            if(count($datos)>0){
+                $this->s__where=$this->dep('filtro')->get_sql_where('OR');
+            }
             
         }
         
@@ -32,7 +33,7 @@ class ci_modificar_aula extends toba_ci
          * unset destruye una variable en tiempo de ejecucion, liberando el espacio que ocupa em memoria
          */
         function evt__filtro__cancelar ($datos){
-            unset($this->s__datos_filtro);
+            unset($this->s__where);
         }
         
 	//---- Cuadro -----------------------------------------------------------------------
@@ -48,14 +49,15 @@ class ci_modificar_aula extends toba_ci
 //                    $facultad=toba::db()->consultar($sql);
 //                    $this->s__facultad=$facultad[0]['descripcion'];
                     //$this->s__id_sede=$facultad[0]['id_sede'];
-                      $this->s__facultad='Administración Central';
-                      $this->s__facultad=  utf8_decode($this->s__facultad);
-                      $this->s__id_sede=2;
+                    
+                      //$this->s__facultad='Administración Central';
+                      //$this->s__facultad=  utf8_decode($this->s__facultad);
+                      $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
                 }
                 $cuadro->set_titulo('Listado de aulas de '.$this->s__facultad);
-                if(isset($this->s__datos_filtro)){
+                if(isset($this->s__where)){
                     //print_r("Entra por get_listado");
-                    $cuadro->set_datos($this->dep('datos')->tabla('aula')->get_listado($this->s__datos_filtro,$this->s__id_sede));
+                    $cuadro->set_datos($this->dep('datos')->tabla('aula')->get_listado(" ({$this->s__where}) AND (t_a.id_sede = {$this->s__id_sede})"));
                 }
                 else{
                     //print_r("Entra por get_aulas");
@@ -69,7 +71,7 @@ class ci_modificar_aula extends toba_ci
 	function evt__cuadro__seleccion($datos)
 	{
                 //cargamos el datos tabla aula utilizando la clave del registro seleccionado en el cuadro
-		$this->dep('datos')->cargar($datos);
+		$this->dep('datos')->tabla('aula')->cargar(array('id_aula'=>$datos['id_aula']));
                 $this->s__id_aula=$datos['id_aula'];
                 $this->s__contador += 1;
 	}
@@ -84,7 +86,7 @@ class ci_modificar_aula extends toba_ci
             else{
                 $form->descolapsar();
                 //verificamos si el datos tabla aula tiene 1 registro
-		if ($this->dep('datos')->esta_cargada()) {
+		if ($this->dep('datos')->tabla('aula')->esta_cargada()) {
                         //el metodo get devuleve el registro del datos tabla aula que esta siendo 
                         //referenciado por el cursor
 			$form->set_datos($this->dep('datos')->tabla('aula')->get());
@@ -137,11 +139,12 @@ class ci_modificar_aula extends toba_ci
                 $datos['eliminada']=TRUE;
                 $datos['id_sede']=$this->s__id_sede;
                 $datos['id_aula']=$this->s__id_aula;
-                //print_r($datos);
+                //print_r($datos);exit();
                 //print_r($this->dep('datos')->tabla('aula')->get());
+                //$this->dep('datos')->tabla('aula')->cargar(array('id_aula' => $this->s__id_aula));
                 $this->dep('datos')->tabla('aula')->set($datos);
-                $this->dep('datos')->sincronizar();
-		$this->resetear();
+                $this->dep('datos')->tabla('aula')->sincronizar();
+		$this->dep('datos')->tabla('aula')->resetear();
                 
                 if(isset($this->s__datos_filtro)){
                     $this->s__datos_filtro=NULL;
@@ -193,7 +196,8 @@ class ci_modificar_aula extends toba_ci
                 //print_r($this->dep('datos')->tabla('aula')->get_filas());
             }
             else{
-                $this->s__error[]=$aula['nombre'];
+                if(isset($aula['imagen']))
+                    $this->s__error[]=$aula['nombre'];
             }
             
             //print_r($this->dep('datos')->tabla('aula')->get_id_filas());

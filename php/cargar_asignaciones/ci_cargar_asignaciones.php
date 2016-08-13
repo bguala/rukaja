@@ -3,6 +3,11 @@
 require_once(toba_dir().'/proyectos/rukaja/php/api/Calendario.php');
 require_once(toba_dir().'/proyectos/rukaja/php/api/HorariosDisponibles.php');
 
+/*
+ * Esta operacion permite cargar, en el sistema, asignaciones definitivas o periodicas. Esta operacion no permite 
+ * el solapamiento de asignaciones en un mismo aula. Esta caracteristica se debe ver reflejada durante todo
+ * un periodo academico. 
+ */
 class ci_cargar_asignaciones extends toba_ci
 {
         protected $s__contador;
@@ -188,36 +193,88 @@ class ci_cargar_asignaciones extends toba_ci
         /*
          * Metodo de consulta para cargar el combo periodo. Necesitamos usar el id_sede.
          */
-        function get_periodos_activos (){
+        function get_periodos_activos ($tipo_asignacion){
             //La fecha actual nos ayuda a pensar esto: podemos cargar asignaciones en esta misma fecha o mas 
             //adelante, entonces necesitamos los periodos registrados en el sistema posteriores a esta fecha 
             //o los que contiene a la misma.
             $fecha=date('Y-m-d');
             $anio_lectivo=date('Y');
             $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            switch($tipo_asignacion){
+                case 'CURSADA'        : 
+                case 'EXAMEN PARCIAL' :
+                case 'EVENTO'         :
+                case 'CONSULTA'       : $sql_1="SELECT t_p.id_periodo,
+                                                       t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
+                                                FROM periodo t_p 
+                                                JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
+                                                AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                                                . "AND t_p.id_sede=$id_sede)";
+                                        $periodo=toba::db('rukaja')->consultar($sql_1);
+                                        break;
+                
+                case 'EXAMEN FINAL'   : $sql_2="SELECT t_p.id_periodo,
+                                                       'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' as descripcion
+                                                FROM periodo t_p 
+                                                JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
+                                                AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))"
+                                                . "AND t_p.id_sede=$id_sede)";
+                                        $periodo=toba::db('rukaja')->consultar($sql_2);
+                                        break;
+                default : $sql_3="SELECT t_p.id_periodo,
+                                         'CURSO DE INGRESO' || ' ' || t_ci.facultad || ' ' || t_ci.nombre as descripcion
+                                  FROM periodo t_p 
+                                  JOIN curso_ingreso t_ci ON (t_p.id_periodo=t_ci.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
+                                  AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                                  . "AND t_p.id_sede=$id_sede)";
+                          $curso_ingreso=toba::db('rukaja')->consultar($sql_3);
+                          break;
+                
+            }
+            
+            //$this->unificar_periodos(&$cuatrimestre, $examen_final);
+            
+            //$this->unificar_periodos(&$cuatrimestre, $curso_ingreso);
+                       
+            return $periodo;            
+            
+        }
+        
+        /*
+         * Metodo de consulta para cargar el combo periodo. Necesitamos usar el id_sede.
+         */
+        function get_periodos_academicos (){
+            //La fecha actual nos ayuda a pensar esto: podemos cargar asignaciones en esta misma fecha o mas 
+            //adelante, entonces necesitamos los periodos registrados en el sistema posteriores a esta fecha 
+            //o los que contiene a la misma.
+            $fecha=date('Y-m-d');
+            $anio_lectivo=date('Y');
+            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            
             $sql_1="SELECT t_p.id_periodo,
                            t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
                     FROM periodo t_p 
                     JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
-                         AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                    AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
                     . "AND t_p.id_sede=$id_sede)";
             $cuatrimestre=toba::db('rukaja')->consultar($sql_1);
-            
+                         
+                
             $sql_2="SELECT t_p.id_periodo,
                            'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' as descripcion
                     FROM periodo t_p 
                     JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
-                         AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))"
+                    AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))"
                     . "AND t_p.id_sede=$id_sede)";
             $examen_final=toba::db('rukaja')->consultar($sql_2);
-            
+                                        
             $sql_3="SELECT t_p.id_periodo,
                            'CURSO DE INGRESO' || ' ' || t_ci.facultad || ' ' || t_ci.nombre as descripcion
                     FROM periodo t_p 
                     JOIN curso_ingreso t_ci ON (t_p.id_periodo=t_ci.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
-                         AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                    AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
                     . "AND t_p.id_sede=$id_sede)";
-            $curso_ingreso=toba::db('rukaja')->consultar($sql_3);
+            $curso_ingreso=toba::db('rukaja')->consultar($sql_3);           
             
             $this->unificar_periodos(&$cuatrimestre, $examen_final);
             
@@ -303,7 +360,7 @@ class ci_cargar_asignaciones extends toba_ci
             
             //Es necesario que existan periodos academicos registrados en el sistema para cargar asignaciones.
             //$periodos=$this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede);
-            $periodos=$this->get_periodos_activos();
+            $periodos=$this->get_periodos_academicos();
             
             if(count($periodos)>0){
                 if(!isset($this->s__aula_disponible)){
@@ -1012,11 +1069,12 @@ class ci_cargar_asignaciones extends toba_ci
         function conf__cuadro_fechas (toba_ei_cuadro $cuadro){         
             $fecha_inicio=$this->s__datos_form_asignacion['fecha_inicio'];
             $fecha_fin=$this->s__datos_form_asignacion['fecha_fin'];
+            print_r($fecha_inicio);
             $dias_seleccionados=$this->s__datos_form_asignacion['dias'];
             //obtenemos los dias que pertenecen al periodo
             $fechas=$this->get_dias($fecha_inicio, $fecha_fin, $dias_seleccionados);
             
-            print_r($fechas);
+            //print_r($fechas);exit();
             if(count($fechas)>0){
                 $cuadro->set_datos($this->crear_estructura_cuadro($fechas));
             }
@@ -1119,7 +1177,9 @@ class ci_cargar_asignaciones extends toba_ci
             $this->operar_sobre_docentes($docente_seleccionado, 'e');
         }
         
+        //----------------------------------------------------------------------------------------------
         //---- METODO AJAX -----------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------
         
         function ajax__guardar_horario_en_sesion ($parametros, toba_ajax_respuesta $respuesta){
             //genera un arror javascript, pero es util para ver el contenido de parametros
@@ -1135,11 +1195,31 @@ class ci_cargar_asignaciones extends toba_ci
             //)
             //{"clave":"no alterar ajax"}
             //toba::vinculador()->get_url("gestion_aulas", 3533, array(0 => $parametros));
+            
+            //Primero guardamos los datos comunes. El indice 0 se reserva para el id_sede.
             toba::memoria()->set_dato_instancia(1, $parametros[0]); //hora_inicio
             toba::memoria()->set_dato_instancia(2, $parametros[1]); //hora_fin
             toba::memoria()->set_dato_instancia(3, $parametros[2]); //id_periodo
             toba::memoria()->set_dato_instancia(4, $parametros[3]); //tipo (Definitiva, Periodo)
-            toba::memoria()->set_dato_instancia(5, $parametros[4]); //dia_semana
+            
+            switch($parametros[3]){
+                case 'Definitiva' : toba::memoria()->set_dato_instancia(5, $parametros[4]); //dia_semana
+                                    break;
+                case 'Periodo'    : 
+                                    toba::memoria()->set_dato_instancia(5, $parametros[4]); //dias
+                                    toba::memoria()->set_dato_instancia(6, $parametros[5]); //fecha_inicio
+                                    //print_r($parametros[4]);
+                                    toba::memoria()->set_dato_instancia(7, $parametros[6]); //fecha_fin
+                                    
+                                    toba::memoria()->set_dato_instancia(8,  $parametros[7]);
+                                    toba::memoria()->set_dato_instancia(9,  $parametros[8]);
+                                    toba::memoria()->set_dato_instancia(10, $parametros[9]);
+                                    toba::memoria()->set_dato_instancia(11, $parametros[10]);
+                                    toba::memoria()->set_dato_instancia(12, $parametros[11]);
+                                    toba::memoria()->set_dato_instancia(13, $parametros[12]);
+                                    break;
+            }
+            
             
             $respuesta->set(array('clave' => 'no alterar ajax'));
             //$respuesta->agregar_cadena('clave', 'no alterar ajax');

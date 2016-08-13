@@ -203,9 +203,10 @@ class ci_ver_solicitudes extends toba_ci
         function conceder_multi_evento ($datos){
             print_r($datos);
             $this->s__id_sede=$datos['id_sede'];
-            //Obtenemos las lista de fechas pertenecientes al periodo.
+            //Obtenemos las lista de fechas pertenecientes al periodo. El formato de las fechas es:
+            // Y-m-d.
             $lista_fechas=$this->dep('datos')->tabla('solicitud')->get_lista_fechas($datos['id_solicitud']);
-            //print_r("Estas son las hd fechas: ");print_r($lista_fechas);exit();
+            //print_r("Estas son las lista de fechas: ");print_r($lista_fechas);exit();
             $hd_fechas=$this->horarios_disponibles_por_fecha($lista_fechas);
             //print_r("Estas son las hd fechas: <br><br>");print_r($hd_fechas);exit();
             if($this->existe_hd_para_periodo($hd_fechas, $datos['id_aula'], "{$datos['hora_inicio']}:00", "{$datos['hora_fin']}:00")){

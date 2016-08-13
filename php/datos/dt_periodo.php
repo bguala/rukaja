@@ -101,11 +101,11 @@ class dt_periodo extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion se utiliza en la operacion Cargar Asignaciones, para llenar el combo periodo.
-         * fecha : contiene una fecha para filtrar periodos. 
-         * id_sede : es importante porque cada ua arma su propio calendario.
+         * Esta funcion se utiliza en la operacion Cargar Asignaciones, para llenar el combo periodo si no depende
+         * de otro atributo.
+         * @id_sede : es importante porque cada ua arma su propio calendario.
          */
-        function get_periodos_activos (){
+        function get_periodos_activos ($id_sede){
             //La fecha actual nos ayuda a pensar esto: podemos cargar asignaciones en esta misma fecha o mas 
             //adelante, entonces necesitamos los periodos registrados en el sistema posteriores a esta fecha 
             //o los que contiene a la misma.
@@ -192,7 +192,7 @@ class dt_periodo extends toba_datos_tabla
 	}
 
         /*
-         * Esta funcion se utiliza en la operacion ver solicitudes para obtener el id_periodo y asociarlo
+         * Esta funcion se utiliza en la operacion Ver Solicitudes para obtener el id_periodo y asociarlo
          * a una nueva asignacion en el sistema.
          */
         function get_cuatrimestre ($fecha, $anio_lectivo, $id_sede){
@@ -206,7 +206,7 @@ class dt_periodo extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion se utiliza en la operacion ver solicitudes para obtener el id_periodo de un turno de 
+         * Esta funcion se utiliza en la operacion Ver Solicitudes para obtener el id_periodo de un turno de 
          * examen y asociarlo a una nueva asignacion en el sistema.
          */
         function get_examen_final ($fecha, $anio_lectivo,$id_sede){
@@ -223,6 +223,8 @@ class dt_periodo extends toba_datos_tabla
          * Esta funcion se utiliza para implementar combos en cascada. Se usa en las operaciones Cargar 
          * Asignaciones y Solicitar Aula.
          * @$fecha : se corresponde con la fecha de inicio de una solicitud.
+         * Con esta signatura no puede usar para tal fin, porque no podemos hacer llegar los atributos $fecha y
+         * $id_sede.
          */
         function get_periodo_segun_asignacion ($fecha, $tipo_asignacion, $id_sede){
             //Segun el tipo de asignacion armamos la consulta adecuada.
@@ -258,6 +260,35 @@ class dt_periodo extends toba_datos_tabla
             }
             
             //print_r(toba::perfil_de_datos()->filtrar($sql));exit();
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion se utiliza en la operacion Seleccionar Aula, para realizar calculo de horarios 
+         * disponibles.
+         */
+        function get_fechas_cuatrimestre ($id_sede, $id_periodo){
+            $sql="SELECT t_p.fecha_inicio, t_p.fecha_fin
+                  FROM periodo t_p 
+                  JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_c.id_periodo=$id_periodo)
+                  WHERE t_p.id_sede=$id_sede";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion se utiliza en la operacion Seleccionar Aula, para realizar calculo de horarios 
+         * disponibles.
+         */
+        function get_examenes_ordinarios ($fecha_inicio, $fecha_fin){
+            $fecha_actual=date('Y-m-d');
+            $sql="SELECT t_p.id_periodo, t_ef.turno
+                  FROM periodo t_p
+                  JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo)
+                  WHERE ( t_p.fecha_inicio >= '$fecha_actual' ) AND 
+                        ( t_p.fecha_inicio BETWEEN '$fecha_inicio' AND '$fecha_fin' ) AND "
+                    . " ( t_p.fecha_fin BETWEEN '$fecha_inicio' AND '$fecha_fin' )";
+            
             return toba::db('rukaja')->consultar($sql);
         }
 

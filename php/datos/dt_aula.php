@@ -6,32 +6,22 @@ class dt_aula extends toba_datos_tabla
 		$sql = "SELECT id_aula, nombre FROM aula ORDER BY nombre";
 		return toba::db('rukaja')->consultar($sql);
 	}
-
-
-
-
-
-
         
         /*
          * quote le asigna comillas a una expresion para que pueda ser utilizada en una consulta
          */
-        function get_listado()
+        function get_listado($where)
 	{
 			$sql = "SELECT
 				t_a.id_aula,
 				t_a.capacidad,
-				t_a.nombre,
-				t_a.ubicacion,
-				t_t.descripcion as id_tipo_nombre,
-				t_s.descripcion as id_sede_nombre,
-				t_a.eliminada,
-				t_a.imagen
+				t_a.nombre as aula,
+				t_a.ubicacion
 			FROM
-				aula as t_a	LEFT OUTER JOIN tipo as t_t ON (t_a.id_tipo = t_t.id_tipo),
-				sede as t_s
+				aula as t_a
+				
 			WHERE
-					t_a.id_sede = t_s.id_sede
+					$where
 			ORDER BY nombre";
 			return toba::db('rukaja')->consultar($sql);
         }
@@ -52,7 +42,7 @@ class dt_aula extends toba_datos_tabla
         }
         
         function get_aulas_por_sede ($id_sede){
-            $sql="SELECT nombre as aula, id_aula
+            $sql="SELECT nombre as aula, id_aula, capacidad
                   FROM aula 
                   WHERE id_sede=$id_sede AND (NOT eliminada)";
             return toba::db('rukaja')->consultar($sql);

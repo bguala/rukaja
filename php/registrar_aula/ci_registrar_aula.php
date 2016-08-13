@@ -96,7 +96,7 @@ class ci_registrar_aula extends toba_ci
 //                $this->s__id_sede=$unidad[0]['id_sede'];
                   
                   $this->s__sede=  utf8_decode('Neuquén Capital');
-                  $this->s__id_sede=2;
+                  $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
             }
             
             $form_ml->ef('sede')->set_estado_defecto($this->s__sede);
@@ -105,6 +105,7 @@ class ci_registrar_aula extends toba_ci
         
         function evt__form_ml__aceptar ($datos){
             //print_r($datos);print_r("Este es el formato de la imagen {$datos[156]['imagen']['type']}");exit();
+            //print_r($datos);exit();
             $this->agregar_datos_aula(&$datos);
             //print_r($datos);exit();
             foreach ($datos as $clave=>$aula){
@@ -141,7 +142,7 @@ class ci_registrar_aula extends toba_ci
         function registrar_aula ($aula){
             $this->dep('datos')->tabla('aula')->set($aula);
                     
-            if($this->tiene_formato_admitido($aula['imagen']['type'])){
+            if(isset($aula['imagen']) && $this->tiene_formato_admitido($aula['imagen']['type'])){
                 print_r("ENTRA <br><br>");
                        
                 print_r($aula);
@@ -153,9 +154,9 @@ class ci_registrar_aula extends toba_ci
 //              print_r($aula);
                 //print_r("Esta es la informacion que posee el datos_tabla : <br><br>");
                 //print_r($this->dep('datos')->tabla('aula')->get_filas());
-            }
-            else{
-                $this->s__error[]=$aula['nombre'];
+            }else{
+                if(isset($aula['imagen']))
+                    $this->s__error[]=$aula['nombre'];
             }
             
             //print_r($this->dep('datos')->tabla('aula')->get_id_filas());
