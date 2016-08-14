@@ -20,7 +20,8 @@ class dt_administrador extends toba_datos_tabla {
 	{
 		$sql = "SELECT
 			t_a.nombre_usuario,
-			t_s.descripcion as id_sede_nombre,
+			t_s.descripcion as sede,
+                        t_s.sigla as establecimiento,
 			t_a.id_administrador,
 			t_a.correo_electronico,
 			t_a.nombre,

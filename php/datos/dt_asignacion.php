@@ -676,14 +676,17 @@ class dt_asignacion extends toba_datos_tabla
             
             //$this->unificar_asignaciones(&$asig_periodo, $asig_definitivas);
             
-            foreach ($asig_periodo as $clave=>$valor){
-                $sql="SELECT t_p.nombre, t_p.apellido
-                      FROM persona t_p 
-                      JOIN catedra t_c ON (t_p.nro_doc=t_c.nro_doc AND t_p.tipo_doc=t_c.tipo_doc)
-                      JOIN asignacion t_a ON (t_a.id_asignacion=t_c.id_asignacion)
-                      WHERE t_a.id_asignacion={$valor['id_asignacion']}";
-                $asig_periodo['catedra']=toba::db('rukaja')->consultar($sql);     
-            }
+            //En esta seccion agregamos el equipo de catedra en cada asignacion.
+//            $catedra=array();
+//            foreach ($asig_periodo as $clave=>$valor){
+//                $sql="SELECT t_p.nombre, t_p.apellido
+//                      FROM persona t_p 
+//                      JOIN catedra t_c ON (t_p.nro_doc=t_c.nro_doc AND t_p.tipo_doc=t_c.tipo_doc)
+//                      JOIN asignacion t_a ON (t_a.id_asignacion=t_c.id_asignacion)
+//                      WHERE t_a.id_asignacion={$valor['id_asignacion']}";
+//                $asig_periodo['catedra']=toba::db('rukaja')->consultar($sql);
+//                //$catedra[]=toba::db('rukaja')->consultar($sql);
+//            }
             
             return $asig_periodo;
         }
@@ -767,7 +770,7 @@ class dt_asignacion extends toba_datos_tabla
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula) 
                   JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                   JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
-                  JOIN esta_formada t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_ef.nombre='$dia')
+                  JOIN esta_formada t_ef ON (t_p.id_asignacion=t_ef.id_asignacion AND t_ef.nombre='$dia')
                   WHERE t_au.id_sede=$id_sede AND t_a.id_periodo=$id_periodo";
             
             return toba::db('rukaja')->consultar($sql);
@@ -784,7 +787,7 @@ class dt_asignacion extends toba_datos_tabla
                   JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
                   JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND (t_p.fecha_inicio >= '$fecha_actual'))
-                  JOIN esta_formada t_ef ON (t_p.id_periodo=t_ef.id_periodo)
+                  JOIN esta_formada t_ef ON (t_p.id_asignacion=t_ef.id_asignacion)
                   WHERE t_au.id_sede=$id_sede AND t_ef.nombre='$dia' AND t_a.id_periodo=$id_periodo";
             
             return toba::db('rukaja')->consultar($sql);

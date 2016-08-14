@@ -23,6 +23,10 @@ class ci_seleccionar_organizacion extends toba_ci
 	{
             $this->dep('datos')->cargar($datos);
 	}
+        
+        function conf__form (toba_ei_formulario $form){
+            $form->colapsar();
+        }
 
 }
 

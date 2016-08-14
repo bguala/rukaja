@@ -44,37 +44,47 @@ class ci_buscador_de_aulas extends toba_ci
                                     $id_periodo=toba::memoria()->get_dato_instancia(3);
                                     $dia=toba::memoria()->get_dato_instancia(5);
                                     toba::memoria()->set_dato_instancia(0, $id_sede);
+                                    print_r("id_periodo: $id_periodo, dia: $dia, id_sede: $id_sede");
                                     //print_r($id_periodo);print_r($dia);
-                                    $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
+                                    //$aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
+                                    //Esto es correcto porque obtenemos todas las asignaciones de un establecimiento
+                                    //en un solo paso.
                                     $asignaciones=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_dia($id_sede, $dia, $id_periodo);
-                                    
+                                    //print_r($asignaciones);exit();
                                     //Obtenemos las aulas que estan siendo utilizadas para el dia $dia.
-                                    $aulas=$this->obtener_aulas($asignaciones);
+                                    //$aulas=$this->obtener_aulas($asignaciones);
                                     
                                     $fechas=$this->dep('datos')->tabla('periodo')->get_fechas_cuatrimestre($id_sede, $id_periodo);
-                                    $examenes_ordinarios=$this->dep('datos')->tabla('periodo')->get_examenes_ordinarios($fechas[0]['fecha_inicio'], $fechas[1]['fecha_fin']);
-                                    
-                                    
+                                    //print_r($fechas);exit();
+                                                                                  
                                     $asig_per=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_cuatrimestre($id_sede, $dia, $id_periodo);
-                                    
-                                    foreach ($examenes_ordinarios as $clave=>$examen){
-                                        $asig_ef[]=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final_($id_sede, $dia, $examen['id_periodo']);
+                                    $examenes_ordinarios=$this->dep('datos')->tabla('periodo')->get_examenes_ordinarios($fechas[0]['fecha_inicio'], $fechas[0]['fecha_fin']);
+                                    $asig_ef=array();
+                                    if(count($examenes_ordinarios)>0){
+                                        foreach ($examenes_ordinarios as $clave=>$examen){
+                                            $asig_ef[]=$this->dep('datos')->tabla('asignacion')->get_asignaciones_examen_final_($id_sede, $dia, $examen['id_periodo']);
+                                        }
                                     }
                                     
+                                    $this->s__id_sede=$id_sede;
+                                    
+                                    //En $asig_per guardamos todas las asignaciones periodicas de un cuatrimestre y
+                                    //examenes finales. Asig_per puede quedar vacio, si esto ocurre solamente debemos considerar
+                                    //asignaciones definitivas.
                                     $this->unificar_asignaciones(&$asig_per, $asig_ef);
-                                    $fechas=$this->extraer_fechas($asig_per);
+                                    if(count($asig_per)>0){//Si hay asignaciones periodicas.
+                                        $fechas=$this->extraer_fechas($asig_per);
+                                        $asignaciones_por_fecha=$this->agrupar_asignaciones_por_fecha($fechas, $asig_per);
+                                        print_r($asignaciones);exit();
+                                        $aulas_disponibles=$this->obtener_aulas_disponibles($asignaciones, $asig_per, count($asignaciones_por_fecha), "$hora_inicio:00", "$hora_fin:00");
+                                    }else{
+                                        $aulas_disponibles=$this->obtener_aulas_disponibles($asignaciones, $asig_per, 0, "$hora_inicio:00", "$hora_fin:00");
+                                    }
                                     
-                                    //$asignaciones_periodo=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_($id_sede, $dia);
-                                    //$this->agregar_asignaciones_periodo(&$asignaciones, $asignaciones_periodo);
-                                    
-                                    //print_r("<br><br>");print_r($asignaciones);
-                                    //print_r("<br><br>");print_r($aulas);
-                                    $horarios_disponibles=new HorariosDisponibles();
-                                    $horarios_disponibles_por_aula=$horarios_disponibles->calcular_horarios_disponibles($aulas, $aulas_ua, $asignaciones);
-                                    //print_r("<br><br>");
                                     //print_r($horarios_disponibles_por_aula);
                                     $cuadro->set_titulo(utf8_decode("Asignación Definitiva"));
-                                    $cuadro->set_datos($this->extraer_aulas_disponibles($horarios_disponibles_por_aula, "$hora_inicio:00", "$hora_fin:00"));
+                                    //$cuadro->set_datos($this->extraer_aulas_disponibles($horarios_disponibles_por_aula, "$hora_inicio:00", "$hora_fin:00"));
+                                    $cuadro->set_datos($aulas_disponibles);
                                     
                                     break;
                                 
@@ -134,6 +144,10 @@ class ci_buscador_de_aulas extends toba_ci
             toba::memoria()->limpiar_datos_instancia();
             
 	}
+        
+        //-------------------------------------------------------------------------------------------------
+        //---- SECCION PARA ASIGNACIONES DEFINITIVAS ------------------------------------------------------
+        //-------------------------------------------------------------------------------------------------
         
         /*
          * Genera un arreglo con las aulas utilizadas en un dia especifico.
@@ -233,9 +247,138 @@ class ci_buscador_de_aulas extends toba_ci
             return $fin;
         }
         
-        //-------------------------------------------------------------------------------------------
-        //---- Interfaz para periodos ---------------------------------------------------------------
-        //-------------------------------------------------------------------------------------------
+        /*
+         * Esta funcion permite agrupar asignaciones a partir de fechas en comun, estas asignaciones son periodicas
+         * y pueden pertenecer a un cuatrimestre o a un examen final. Que pasa si existe solapamiento entre dos 
+         * asignaciones periodicas en distinto tiempo??? Nada porque el usu de las aulas es dinamico. Nosotros
+         * debemos otorgar la disponibilidad que existe en una fecha en particular. En este caso vamos a verificar
+         * si en una serie de fechas no esta ocupado el espacio definitivo que quiero colocar.
+         * La estructura devuelta tiene el siguiente formato:
+         * array( 0 => array( 0 => fecha, 1 => array(asignaciones) ) ).
+         */
+        function agrupar_asignaciones_por_fecha($fechas, $asig_per){
+            $asignaciones_por_fecha=array();
+            
+            foreach($fechas as $clave=>$fecha){
+                //Limpiamos la estructura para no acumular resultados sucesivos.
+                $asignaciones=array();
+                foreach($asig_per as $key=>$periodo){
+                    if(strcmp($fecha, $periodo['fecha'])==0){
+                        $asignaciones[]=$periodo;
+                    }
+                }
+                
+                $asignaciones_por_fecha[]=array( 0 => $fecha, 
+                    1 => $asignaciones
+                );
+                                
+            }
+            
+            return $asignaciones_por_fecha;
+        }
+        
+        /*
+         * El objetivo de esta funcion es obtener todas las aulas disponibles para una asignacion definitiva.
+         * Se analiza disponibilidad en el tiempo.
+         */
+        function obtener_aulas_disponibles ($asignaciones, $asignaciones_per, $longitud, $hora_inicio, $hora_fin){
+            $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
+            //Si ambos cjtos. de asignaciones estan vacios, todas las aulas del establecimiento estan 
+            //disponibles.
+            if(count($asignaciones)==0 && count($asignaciones_per)==0){
+                return $aulas_ua;
+            }
+            
+            $i=0;
+            $n=count($asignaciones_per);
+            //Debemos hacer el calculo de aulas disponibles usando solamente las asignaciones definitivas
+            //guardadas en la estructura $asignaciones. Por lo tanto debemos trabajar sieempre con los mismos
+            //horarios disponibles.
+            if($n == 0){
+                $hd=new HorariosDisponibles();
+                $aulas=$this->obtener_aulas($asignaciones);
+                //Estos horarios seran utilizados para verificar disponibilidad de aulas.
+                $this->s__horarios_disponibles=$hd->calcular_horarios_disponibles($aulas, $aulas_ua, $asignaciones);
+            }
+            
+            $cortar=FALSE;
+            $aulas_disponibles=array();
+
+            $j=0;
+            $m=count($aulas_ua);
+            $fin=FALSE;
+            $disponibilidad=0;
+            //Recorremos las aulas de un establecimiento.
+            while($j<$m && !$fin){
+                $aula=$aulas_ua[$j];
+                if($n != 0){
+                    //Recorremos todas las asignaciones periodicas.
+                    while($i<$n && !$cortar){
+                        //Las asignaciones periodicas pueden cambiar los hd por cada fecha del periodo.
+                        $asignaciones_por_fecha=$asignaciones_per[$i][1];
+                        if($this->obtener_resultados($asignaciones, $asignaciones_por_fecha, $aula, $hora_inicio, $hora_fin)){
+                            $disponibilidad++;
+                        }
+                        $i++;
+                    }
+                }else{
+                    //Aca no tenemos asignaciones periodicas distribuidas en diferentes fechas, por lo tanto
+                    //vamos a usar los mismos hd.
+                    if($this->existe_aula_disponible($aula, $hora_inicio, $hora_fin)){
+                        //Para agregar el resultado en la estructura aulas disponibles.
+                        $disponibilidad=0;
+                    }else{
+                        //Para no incluir en $aulas_disponibles el aula en cuestion. Longitud sera 0 si no
+                        //hay asignaciones periodicas pertenecientes a un cuatrimestre o turno de examen.
+                        $disponibilidad=-1;
+                    }
+                }
+
+                if($disponibilidad==$longitud){
+                    $aulas_disponibles[]=$aula;
+                }
+                //Debemos volver a empezar el proceso.
+                $i=0;
+                $disponibilidad=0;
+                $j++;
+            }
+            
+            return $aulas_disponibles;
+        }
+        
+        /*
+         * Devolvemos TRUE si el 
+         */
+        function obtener_resultados ($asignaciones, $asignaciones_por_fecha, $aula, $hora_inicio, $hora_fin){
+            $this->unificar_asignaciones(&$asignaciones, $asignaciones_por_fecha);
+            $hd=new HorariosDisponibles();
+            
+            $aulas=$this->obtener_aulas($asignaciones);
+            //Usamos las mismas aulas, para no generar anomalias con respecto a la disponibilidad horaria de 
+            //8 a 24 hs.
+            $this->s__horarios_disponibles=$hd->calcular_horarios_disponibles($aulas, $aulas, $asignaciones);
+            
+            return $this->existe_aula_disponible($aula, $hora_inicio, $hora_fin);
+        }
+        
+        function existe_aula_disponible ($aula, $hora_inicio, $hora_fin){
+            $fin=FALSE;
+            $i=0;
+            $n=count($this->s__horarios_disponibles);
+            while($i<$n && !$fin){
+                $horario=$this->s__horarios_disponibles[$i];
+                if($this->existe_($horario, $aula, $hora_inicio, $hora_fin)){
+                    $fin=TRUE;
+                }
+                $i++;
+            }
+            
+            return $fin;
+        }
+        
+        //-------------------------------------------------------------------------------------------------
+        //---- SECCION PARA ASIGNACIONES PERIODICAS -------------------------------------------------------
+        //-------------------------------------------------------------------------------------------------
         
         /*
          * @$lista_fechas : el formato de esta estructura es : 
@@ -478,7 +621,8 @@ class ci_buscador_de_aulas extends toba_ci
                 if($disponibilidad == $longitud){
                     $aulas_disponibles[]=$aula;
                 }
-                
+                //Necesitamos resetear el valor de esta variable, para poder computar todas las aulas que esten
+                //disponibles en el periodo seleccionado por el usuario.
                 $disponibilidad=0;
                 
             }

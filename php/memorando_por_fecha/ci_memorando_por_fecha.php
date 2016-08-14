@@ -16,9 +16,7 @@ class ci_memorando_por_fecha extends toba_ci
             
             $nombre_usuario=toba::usuario()->get_id();
             $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
-            
-            //$this->s__id_sede=1;
-            
+                        
             $this->pantalla()->tab('pant_memorando')->desactivar();
             $calendario->set_seleccionar_solo_dias_pasados(FALSE);
             $calendario->set_sab_seleccionable(TRUE);
@@ -42,7 +40,7 @@ class ci_memorando_por_fecha extends toba_ci
             }
             else{
                 
-                //obtenemos las asignaciones por periodo
+                //Obtenemos las asignaciones por periodo para la fecha seleccionada.
                 $this->s__asignaciones=$this->procesar_periodo($periodo);
                 if(count($this->s__asignaciones)==0){
                     toba::notificacion()->agregar(" No existen asignaciones por periodo registradas en el sistema para la fecha {$this->s__fecha_reporte} ", 'info');
@@ -193,6 +191,10 @@ class ci_memorando_por_fecha extends toba_ci
         //---- Funcion Procesar Periodo ------------------------------------------------------------------
         //------------------------------------------------------------------------------------------------
         
+        /*
+         * Una fecha puede estar incluida en dos periodos academicos distintos. Esto ocurre cuando seleccionamos
+         * una fecha que esta dentro de un turno de examen, que a su vez esta incluido en un cuatrimestre.
+         */
         function procesar_periodo ($periodo){
             $cuatrimestre=array();
             $examen_final=array();
@@ -203,7 +205,7 @@ class ci_memorando_por_fecha extends toba_ci
                                           
                                           break;
                                       
-                    case 'Examen Final' : //obtenemos todas las asignaciones por periodo, que estan inluidas en un cuatrimestre,
+                    case 'Examen Final' : //Obtenemos todas las asignaciones por periodo, que estan inluidas en un cuatrimestre,
                                           //pero que pertenecen a un examen_final
                                           $examen_final=$this->dep('datos')->tabla('asignacion')->get_asignaciones_memo_por_examen_final(utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__id_sede, $this->s__fecha_consulta);
                                           

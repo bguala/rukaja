@@ -26,7 +26,11 @@ class ci_seleccionar_persona extends toba_ci
 	function evt__cuadro__seleccion($datos)
 	{
             $this->dep('datos')->cargar($datos);
-	}	
+	}
+        
+        function conf__form (toba_ei_formulario $form){
+            $form->colapsar();
+        }
 
 }
 

@@ -36,10 +36,15 @@ class HorariosDisponibles {
          * Se utiliza en la operacion Generar Solicitud, Calendario Comahue, Cargar Asignaciones.
          */
         public function calcular_horarios_disponibles ($aulas, $aulas_ua, $asignaciones){
+                //Para no acumular resultados de busquedas sucesivas si en una operacion usamos varias 
+                //veces el mismo objeto para calcular hd.
+                $this->s__horarios_disponibles=array();
+                
                 //Obtenemos las aulas con disponibilidad total, de 8 a 22 hs.
                 $aulas_disponibles=$this->obtener_aulas_con_disponibilidad_total($aulas, $aulas_ua);
 
-                //Agrupamos los horarios de clases segun las aulas.
+                //Agrupamos los horarios de clases segun las aulas. Los horarios se encuentran sueltos 
+                //en la estructura $asignaciones.
                 $espacios_filtrados=$this->filtrar_espacios($aulas, $asignaciones);
                 
                 //Obtenemos los horarios disponibles en cada aula .
@@ -268,6 +273,15 @@ class HorariosDisponibles {
                 
             }
             
+            $horarios[$indice]=array(
+                0 => "24:00:00",
+                1 => TRUE
+            );
+            //Replica 
+            $horarios[($indice+1)]=array(
+                0 => "24:00:00",
+                TRUE
+            );
                         
             return $horarios;
         }
