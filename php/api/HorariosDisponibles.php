@@ -270,18 +270,18 @@ class HorariosDisponibles {
                 
                 $indice += 1;
                 $hora += 1;
-                
+                                
             }
             
-            $horarios[$indice]=array(
-                0 => "24:00:00",
-                1 => TRUE
-            );
+//            $horarios[]=array(
+//                0 => "00:00:00", //-- No existe el horario 24:00:00 hs.
+//                1 => TRUE
+//            );
             //Replica 
-            $horarios[($indice+1)]=array(
-                0 => "24:00:00",
-                TRUE
-            );
+//            $horarios[]=array(
+//                0 => "$hora:00:00",
+//                1 => TRUE
+//            );
                         
             return $horarios;
         }

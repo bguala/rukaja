@@ -278,6 +278,7 @@ class ci_ver_solicitudes extends toba_ci
             
             $aulas=$this->obtener_aulas($asignaciones);
             //Guardamos en sesion el id_sede para agregar la capacidad de cada aula a un horario disponible.
+            //En 0 se reserva para el id_sede en esta operacion y en Buscador de Aula.
             toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
             
             $hd=new HorariosDisponibles();
@@ -956,6 +957,8 @@ class ci_ver_solicitudes extends toba_ci
             }else{
                 //Obtenemos la fecha de fin que esta almacenada en la tabla solicitud_multi_evento.
                 $fecha_fin=$this->dep('datos')->tabla('solicitud')->get_datos_multi($this->s__datos_solcitud['id_solicitud']);
+                //Esto surge de una consulta en la bd. Su formato es: 
+                //Array('id_solicitud', 'nombre', 'fecha').
                 $dia=$this->dep('datos')->tabla('solicitud')->get_lista_fechas($this->s__datos_solcitud['id_solicitud']);
                 print_r($dia);print_r("<br><br> Esta es la fecha fin : $fecha_fin <br><br>");
             }
@@ -967,7 +970,8 @@ class ci_ver_solicitudes extends toba_ci
         /*
          * Esta funcion permite registrar una solicitud unica o multi-evento. Se emplean as tablas asignacion,
          * asignacion_periodo y esta_formada.
-         * @dia : si la solicitud es unica dia contiene un unico dia, caso contrario contiene una lista de dias. 
+         * @dia : si la solicitud es unica dia contiene un unico dia/fecha, caso contrario contiene una lista 
+         * de dias/fechas. 
          */
         function registrar_solicitud ($datos, $dia, $fecha_inicio, $fecha_fin){
             //Usamos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
@@ -1192,7 +1196,7 @@ class ci_ver_solicitudes extends toba_ci
             $fecha=date('d-m-y');
             $hora=date('H:m:s');
             //definimos una cadena origen para crear el resto del encabezado
-            $origen="Fecha : $fecha-------------------------------------------------------------------------------------------------------------------------------------------------------Hora : $hora";
+            $origen="Fecha : $fecha--------------Hora : $hora";
             
             $encabezado_inicial=$this->armar_precontenido($origen, TRUE);
             

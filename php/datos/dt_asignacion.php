@@ -323,23 +323,27 @@ class dt_asignacion extends toba_datos_tabla
         
         /*
          * Esta funcion se utiliza en la operacion  Cargar Asignaciones, para cargar el cuadro_asignaciones 
-         * de la pantalla pant_asignacion.
+         * de la pantalla pant_asignacion con todas las asignaciones definitivas o periodicas de un docente
+         * registrado en el sistema. Se tiene en cuenta la fecha actual para obtener periodos academicos.
+         * @$id_responsable: contiene el id de un docente u organizacion.
          */
-        function get_asignaciones_por_persona ($nro_doc, $id_periodo, $fecha){
-            $sql="(SELECT t_a.finalidad as materia, t_a.hora_inicio, t_a.hora_fin, t_au.nombre as aula, t_d.nombre as dia
+        function get_asignaciones_por_persona ($id_responsable, $id_periodo, $fecha){
+            $sql="(SELECT t_a.finalidad as materia, t_a.hora_inicio, t_a.hora_fin, 
+                          t_au.nombre as aula, t_d.nombre as dia, 'Definitiva' as tipo_asignacion
                   FROM asignacion t_a 
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
                   JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion)
-                  WHERE t_a.nro_doc='$nro_doc' AND t_a.id_periodo=$id_periodo)
+                  WHERE t_a.id_responsable_aula=$id_responsable AND t_a.id_periodo=$id_periodo)
                       
                   UNION 
                   
-                  (SELECT t_a.finalidad as materia, t_a.hora_inicio, t_a.hora_fin, t_au.nombre as aula, t_f.nombre as dia 
+                  (SELECT t_a.finalidad as materia, t_a.hora_inicio, t_a.hora_fin, 
+                          t_au.nombre as aula, t_f.nombre as dia, 'Periodica' as tipo_asignacion 
                   FROM asignacion t_a 
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
                   JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) 
                   JOIN esta_formada t_f ON (t_p.id_asignacion=t_f.id_asignacion) 
-                  WHERE t_a.nro_doc='$nro_doc' AND t_a.id_periodo=$id_periodo)";
+                  WHERE t_a.id_responsable_aula=$id_responsable AND t_a.id_periodo=$id_periodo)";
             
             return toba::db('rukaja')->consultar($sql);
         }
@@ -386,14 +390,16 @@ class dt_asignacion extends toba_datos_tabla
          * "horarios registrados" en el combo tipo.
          */
         function get_asignaciones_definitivas_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo){
-            //JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc AND t_a.tipo_doc=t_pe.tipo_doc)
+            
             $sql="SELECT t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.facultad, 
                          t_au.nombre as aula, t_au.capacidad, t_au.id_aula, t_au.capacidad, 
-                         t_a.nro_doc, t_a.tipo_doc, ' ' || ' ' || ' ' as responsable,
+                         --porque asi lo tenemos en el toba_editor
+                         t_doc.nro_docum as nro_doc, t_doc.tipo_docum as tipo_doc, t_doc.nombre || ' ' || t_doc.apellido as responsable,
                          'Definitiva' as tipo, t_a.cantidad_alumnos as cant_alumnos
                   FROM asignacion t_a 
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                  
+                  --hacemos uso de la vista docentes
+                  JOIN docentes t_doc ON (t_a.id_responsable_aula=t_doc.id_docente)
                   JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                   JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion)
                   WHERE t_au.id_sede=$id_sede AND t_d.nombre='$dia' AND t_a.id_periodo=$id_periodo 
@@ -613,21 +619,27 @@ class dt_asignacion extends toba_datos_tabla
          */
         function get_asignaciones ($where, $id_periodo){
             //El JOIN con dia es necesario porque sino el where no nos sirve.
-            $sql="(SELECT t_a.id_asignacion, t_a.nro_doc, t_a.tipo_doc, t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, (t_p.nombre || ' ' || t_p.apellido) as responsable, 'Definitiva' as tipo
-                   FROM asignacion t_a 
-                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                   JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc)
-                   
-                   JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion )
-                   JOIN dia t_dia ON (t_d.nombre=t_dia.nombre)
-                   WHERE ($where) AND t_a.id_periodo=$id_periodo) 
-                   
-                   UNION 
-                   
-                   (SELECT t_a.id_asignacion, t_a.nro_doc, t_a.tipo_doc, t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, (t_p.nombre || ' ' || t_p.apellido) as responsable, 'Periodo' as tipo
+            $sql="( SELECT t_a.id_asignacion, t_doc.nro_docum as nro_doc, t_doc.tipo_docum as tipo_doc, 
+                          t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, 
+                          (t_doc.nombre || ' ' || t_doc.apellido) as responsable, 'Definitiva' as tipo
                     FROM asignacion t_a 
                     JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                    JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc)
+                    --hacemos uso de la vista docentes
+                    JOIN docentes t_doc ON (t_a.id_responsable_aula=t_doc.id_docente)
+                   
+                    JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion )
+                    JOIN dia t_dia ON (t_d.nombre=t_dia.nombre)
+                    WHERE ($where) AND t_a.id_periodo=$id_periodo) 
+                   
+                    UNION 
+                   
+                   (SELECT t_a.id_asignacion, t_doc.nro_docum as nro_doc, t_doc.tipo_docum as tipo_doc, 
+                           t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, 
+                           (t_doc.nombre || ' ' || t_doc.apellido) as responsable, 'Periodo' as tipo
+                    FROM asignacion t_a 
+                    JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
+                    --hacemos uso de la vista docentes
+                    JOIN docentes t_doc ON (t_a.id_responsable_aula=t_doc.id_docente)
                     
                     JOIN asignacion_periodo t_pe ON (t_a.id_asignacion=t_pe.id_asignacion)
                     JOIN esta_formada t_f ON (t_pe.id_asignacion=t_f.id_asignacion)
@@ -715,17 +727,20 @@ class dt_asignacion extends toba_datos_tabla
         /*
          * Esta funcion se usa en la operacion Asignaciones por Dia. Permite devolver las asignaciones definitivas 
          * para un dia de la semana. Las asignaciones retornadas confeccionan el reporte.
-         * @id_periodo = es el id_periodo del cuatrimestre elegido.
+         * @id_periodo = es el id_periodo del cuatrimestre elegido. Si no estan TODOS los datos presentes, el 
+         * string dato_celda se devuelve vacio. 
          * @dia = contiene un dia de la semana, es util para obtener las asignaciones correspondientes.
          */
         function get_asignaciones_por_dia ($id_periodo, $dia){
+            
             $sql="SELECT t_a.hora_inicio, t_a.hora_fin, t_au.id_aula, t_a.facultad,
                          (t_a.finalidad || ' - ' || t_a.facultad || ' - ' || t_a.hora_inicio || ' a ' || t_a.hora_fin || ' - ' || t_a.cantidad_alumnos || 
-                          ' ALUMNOS - ' || t_p.nombre || ' ' || t_p.apellido) as dato_celda 
+                          ' ALUMNOS - ' || t_doc.nombre || ' ' || t_doc.apellido) as dato_celda 
                   FROM asignacion t_a 
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
                   JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion)
-                  JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc AND t_a.tipo_doc=t_p.tipo_doc)
+                  --hacemos uso de la vista docentes
+                  JOIN docentes t_doc ON (t_a.id_responsable_aula=t_doc.id_docente)
                   WHERE t_a.id_periodo=$id_periodo AND t_d.nombre='$dia'";
             
             return toba::db('rukaja')->consultar($sql);
@@ -761,15 +776,19 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * Esta funcion se utiliza en la funcion se utiliza en la operacion Seleccionar Aula.
+         * Esta funcion se utiliza en la operacion Seleccionar Aula. Permite obtener todas las asignaciones 
+         * periodicas petenecientes a un turno de examen. Utilizamos la fecha_actual para filtrar turnos de 
+         * examenes.
+         * @$id_periodo: contiene el id_ de un turno de examen incluido en un cuatrimestre.
          */
         function get_asignaciones_examen_final_ ($id_sede, $dia, $id_periodo){
+            $fecha_actual=date('Y-m-d');
             $sql="SELECT t_a.hora_inicio, t_a.hora_fin, t_a.id_aula, 
                          t_au.nombre as aula, t_f.fecha
                   FROM asignacion t_a 
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula) 
                   JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
-                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
+                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND ((t_p.fecha_inicio >= '$fecha_actual') OR ('$fecha_actual' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)))
                   JOIN esta_formada t_ef ON (t_p.id_asignacion=t_ef.id_asignacion AND t_ef.nombre='$dia')
                   WHERE t_au.id_sede=$id_sede AND t_a.id_periodo=$id_periodo";
             
@@ -777,7 +796,11 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * 
+         * Se utiliza en la operacion Buscador de Aulas o Seleccionar Aula. Permite obtener las asignaciones
+         * periodicas para un cuatrimestre. Para obtener estas asignaciones necesitamos usar la fecha_actual
+         * filtramos todas las asignaciones por periodo cuya fecha_inicio sea mayor a fecha_actual o 
+         * que contengan a fecha_actual.
+         * @$id_periodo: contiene el id_ que identifica a un cuatrimestre.
          */
         function get_asignaciones_periodo_cuatrimestre ($id_sede, $dia, $id_periodo){
             $fecha_actual=date('Y-m-d');
@@ -786,7 +809,7 @@ class dt_asignacion extends toba_datos_tabla
                   FROM asignacion t_a
                   JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                   JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND (t_p.fecha_inicio >= '$fecha_actual'))
+                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND ((t_p.fecha_inicio >= '$fecha_actual') OR ('$fecha_actual' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)))
                   JOIN esta_formada t_ef ON (t_p.id_asignacion=t_ef.id_asignacion)
                   WHERE t_au.id_sede=$id_sede AND t_ef.nombre='$dia' AND t_a.id_periodo=$id_periodo";
             

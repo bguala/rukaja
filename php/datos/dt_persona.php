@@ -77,7 +77,7 @@ class dt_persona extends toba_datos_tabla
          */
         function get_personas ($docente, $org){
             $registros=array();
-            if(strlen($docente)>0 && !isset($org)){//$docente posee datos, $org es null
+            if(strlen($docente)>0 && !isset($org)){//$docente posee datos, $org es null.
                 $sql_docente="SELECT nombre,
                                      apellido,
                                      nro_docum as nro_doc,
@@ -88,7 +88,7 @@ class dt_persona extends toba_datos_tabla
                       
                 $registros=toba::db('mocovi')->consultar($sql_docente);
             }else{
-                if(strlen($docente)==0 && isset($org)){//solamente traemos datos en $org
+                if(strlen($docente)==0 && isset($org)){//Solamente traemos datos en $org.
                     $sql_org="SELECT nombre,
                                      ' '        as apellido,
                                      '--------' as nro_doc,
@@ -98,7 +98,7 @@ class dt_persona extends toba_datos_tabla
                              WHERE $org";
                     $registros=toba::db('rukaja')->consultar($sql_org);
                 }else{
-                    if(strlen($docente)>0 && isset($org)){//traemos datos en ambas variables
+                    if(strlen($docente)>0 && isset($org)){//Traemos datos en ambas variables.
                         $sql_docente="SELECT nombre,
                                              apellido,
                                              nro_docum as nro_doc,
@@ -117,7 +117,7 @@ class dt_persona extends toba_datos_tabla
                                   FROM organizacion 
                                   WHERE $org";
                         $organizaciones=toba::db('rukaja')->consultar($sql_org);
-                        
+                        //Reemplazamos a la union sql.
                         $this->unificar_registros(&$registros, $organizaciones);
                     }
                 }

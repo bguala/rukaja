@@ -5,53 +5,65 @@ class form_asignacion_extendido extends toba_ei_formulario
         echo "{$this->objeto_js}.evt__tipo__validar = function () {
             var estado=this.ef('tipo').get_estado().toString();
             
-            switch (estado){
-            
-             case 'Definitiva' : this.ef('fecha_inicio').ocultar();
-                                 this.ef('fecha_inicio').set_obligatorio(false);
-                                 this.ef('fecha_fin').ocultar();
-                                 this.ef('fecha_fin').set_obligatorio(false);
-                                 this.ef('dias').ocultar();
-                                 this.ef('dias').set_obligatorio(false);
-                                 this.ef('dia_semana').mostrar();
-                                 this.ef('dia_semana').set_obligatorio(true);
-                                 break;
-                                 
-             case 'Periodo' : this.ef('fecha_inicio').mostrar();
-                              this.ef('fecha_inicio').set_obligatorio(true);
-                              this.ef('fecha_fin').mostrar();
-                              this.ef('fecha_fin').set_obligatorio(true);
-                              this.ef('dias').mostrar();
-                              this.ef('dias').set_obligatorio(true);
-                              this.ef('dia_semana').ocultar();
-                              this.ef('dia_semana').set_obligatorio(false);
-                              break;
-                              
-             case 'nopar' : this.ef('fecha_inicio').mostrar();
-                              this.ef('fecha_inicio').set_obligatorio(true);
-                              this.ef('fecha_fin').mostrar();
-                              this.ef('fecha_fin').set_obligatorio(true);
-                              this.ef('dias').mostrar();
-                              this.ef('dias').set_obligatorio(true);
-                              this.ef('dia_semana').mostrar();
-                              this.ef('dia_semana').set_obligatorio(true);
-                              break;
-             
-            }
+//            switch (estado){
+//            
+//             case 'Definitiva' : this.ef('fecha_inicio').ocultar();
+//                                 this.ef('fecha_inicio').set_obligatorio(false);
+//                                 this.ef('fecha_fin').ocultar();
+//                                 this.ef('fecha_fin').set_obligatorio(false);
+//                                 this.ef('dias').ocultar();
+//                                 this.ef('dias').set_obligatorio(false);
+//                                 this.ef('dia_semana').mostrar();
+//                                 this.ef('dia_semana').set_obligatorio(true);
+//                                 break;
+//                                 
+//             case 'Periodo' : this.ef('fecha_inicio').mostrar();
+//                              alert('Ejecutamos case periodo');
+//                              this.ef('fecha_inicio').set_obligatorio(true);
+//                              this.ef('fecha_fin').mostrar();
+//                              this.ef('fecha_fin').set_obligatorio(true);
+//                              this.ef('dias').mostrar();
+//                              this.ef('dias').set_obligatorio(true);
+//                              this.ef('dia_semana').ocultar();
+//                              this.ef('dia_semana').set_obligatorio(false);
+//                              break;
+//                              
+//             case 'nopar' : this.ef('fecha_inicio').mostrar();
+//                              this.ef('fecha_inicio').set_obligatorio(true);
+//                              this.ef('fecha_fin').mostrar();
+//                              this.ef('fecha_fin').set_obligatorio(true);
+//                              this.ef('dias').mostrar();
+//                              this.ef('dias').set_obligatorio(true);
+//                              this.ef('dia_semana').mostrar();
+//                              this.ef('dia_semana').set_obligatorio(true);
+//                              break;
+//             
+//            }
             
             return true;
         }
         
-        
+        {$this->objeto_js}.evt__dia_semana__validar = function () {
+            return this.disparar_llamada_ajax();
+        }
                
         {$this->objeto_js}.evt__tipo_asignacion__validar = function (){
             var tipo_asignacion=this.ef('tipo_asignacion').get_estado().toString();
             
             switch(tipo_asignacion){
-            case 'EXAMEN FINAL' :
-            case 'EVENTO' :
-            case 'CONSULTA' :
-            case 'EXAMEN PARCIAL' ://Debemos ocultar el campo dia_semana.
+            case 'EXAMEN PARCIAL' : 
+            case 'EXAMEN FINAL'   : //Debemos ocultar el campo dia_semana.
+                                    this.ef('dia_semana').ocultar();
+                                    this.ef('dia_semana').set_obligatorio(false);
+                                    this.ef('fecha_fin').ocultar();
+                                    this.ef('fecha_fin').set_obligatorio(false);
+                                    this.ef('dias').ocultar();
+                                    this.ef('dias').set_obligatorio(false);
+                                    this.ef('tipo').set_estado('Periodo');
+                                    this.ef('tipo').set_solo_lectura(true);
+                                    break;
+            case 'EVENTO'   :
+            case 'CONSULTA' :      //Debemos ocultar el campo dia_semana.
                                    this.ef('dia_semana').ocultar();
                                    this.ef('dia_semana').set_obligatorio(false);
                                    
@@ -92,7 +104,7 @@ class form_asignacion_extendido extends toba_ei_formulario
                             
                             break;
                             
-            case 'nopar' :
+            case 'nopar' ://Restauramos el estado inicial del formulario.
                           this.ef('dia_semana').mostrar();
                           this.ef('dia_semana').set_obligatorio(true);
                           
@@ -212,10 +224,10 @@ class form_asignacion_extendido extends toba_ei_formulario
             return true;
         }
         
-          //Para ambos tipos de asignaciones debemos guardar los datos del formulario en sesion.
-//        {$this->objeto_js}.evt__hora_inicio__validar = function (){
-//                return this.disparar_llamada_ajax();
-//        }
+        //Para ambos tipos de asignaciones debemos guardar los datos del formulario en sesion.
+        {$this->objeto_js}.evt__hora_inicio__validar = function (){
+                return this.disparar_llamada_ajax();
+        }
 
           //Agrupamos las sentencias usadas para guardar datos en sesion mediante una llamada ajax.
           //Siempre se deben guardar los mismos datos. Estos dependen del tipo de asignacion.

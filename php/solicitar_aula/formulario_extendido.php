@@ -199,7 +199,7 @@ class formulario_extendido extends toba_ei_formulario
             var hora_fin_disponible=this.ef('fin').hora();
             
             var hora_inicio=this.ef('hora_inicio').hora();
-            var hora_fin=this.ef('hora_fin').get_estado();
+            var hora_fin=this.ef('hora_fin').hora();
             
             if(!this.es_mayor_x(hora_inicio, hora_inicio_disponible, '>=')){
                 this.ef('hora_inicio').set_error('La hora de inicio '+(this.ef('hora_inicio').get_estado())+' hs debe ser mayor o igual que la hora de inicio disponible '+(this.ef('inicio').get_estado())+' hs');

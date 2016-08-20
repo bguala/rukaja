@@ -16,7 +16,8 @@ class dt_sede extends toba_datos_tabla
                   WHERE sigla='$sigla'";
             
             return toba::db('rukaja')->consultar($sql);
-        }       
+        }
+        
 
 }
 

@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS aula (
 
 id_aula serial NOT NULL,
 capacidad integer,
-nombre character varying (10),
+nombre character varying (20),
 ubicacion character varying (150), -- Para indicar la ubicacion del aula
 id_tipo character varying (2),
 id_sede serial,
@@ -352,16 +352,14 @@ CONSTRAINT fk_multi_evento FOREIGN KEY (id_solicitud)
 
 CREATE TABLE IF NOT EXISTS catedra (
 
-id_asignacion serial,
+id_asignacion serial NOT NULL,
 nro_doc character varying (20),
 tipo_doc character varying (12),
-id_docente integer,
+id_docente integer NOT NULL,
 
-CONSTRAINT pk_catedra PRIMARY KEY (id_asignacion,nro_doc,tipo_doc),
+CONSTRAINT pk_catedra PRIMARY KEY (id_asignacion,id_docente),
 CONSTRAINT fk_catedra_asignacion FOREIGN KEY (id_asignacion) REFERENCES asignacion(id_asignacion)
-ON DELETE CASCADE ON UPDATE CASCADE,
-CONSTRAINT fk_catedra_persona FOREIGN KEY (nro_doc,tipo_doc) REFERENCES persona(nro_doc,tipo_doc) ON 
-DELETE CASCADE ON UPDATE CASCADE
+ON DELETE CASCADE ON UPDATE CASCADE
 
 );
 
@@ -375,4 +373,18 @@ email character varying (40),
 CONSTRAINT pk_organizacion PRIMARY KEY (id_organizacion)
 
 );
+
+--instalamos el modulo dblink para relacionar bases de datos a traves de una misma consulta.
+create extension dblink;
+
+--vista relacionada a la tabla docenete de la base de datos mocovi.
+create view docentes as  
+	select * from dblink('host=localhost port=5432 dbname=mocovi user=postgres password=brunoguala', 'select * from docente') as 
+
+		 (id_docente integer,
+		  legajo integer,  
+		  apellido character varying,
+		  nombre character varying,
+		  tipo_docum character(4),
+		  nro_docum integer) ;
 

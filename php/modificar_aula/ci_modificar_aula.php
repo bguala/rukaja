@@ -53,8 +53,9 @@ class ci_modificar_aula extends toba_ci
                       //$this->s__facultad='Administración Central';
                       //$this->s__facultad=  utf8_decode($this->s__facultad);
                       $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+                      $this->s__facultad=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica ($this->s__id_sede);
                 }
-                $cuadro->set_titulo('Listado de aulas de '.$this->s__facultad);
+                $cuadro->set_titulo("Listado de aulas de ".$this->s__facultad[0]['establecimiento']);
                 if(isset($this->s__where)){
                     //print_r("Entra por get_listado");
                     $cuadro->set_datos($this->dep('datos')->tabla('aula')->get_listado(" ({$this->s__where}) AND (t_a.id_sede = {$this->s__id_sede})"));

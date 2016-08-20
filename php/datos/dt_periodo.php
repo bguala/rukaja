@@ -7,7 +7,7 @@ class dt_periodo extends toba_datos_tabla
          */
 	function get_listado($anio_lectivo, $id_sede)
 	{
-		$sql_1 = "(SELECT t_p.id_periodo,
+		$sql_1 = "SELECT t_p.id_periodo,
                                t_p.fecha_inicio,
                                t_p.fecha_fin,
 			       t_p.anio_lectivo,
@@ -15,9 +15,14 @@ class dt_periodo extends toba_datos_tabla
                                '----' as turno,
                                'Cuatrimestre' as tipo_periodo
                         FROM   periodo as t_p
-                        JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede))
+                        inner join sede s on t_p.id_sede=s.id_sede
+                        INNER JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo AND t_p.id_sede=$id_sede)
                         
                    ";
+                //AND t_p.id_sede=$id_sede
+                $s=toba::perfil_de_datos()->filtrar($sql_1);
+                print_r("<br>Consulta con perfil de datos: <br><br>");
+                print_r($s);
                 
                 $cuatrimestre=toba::db('rukaja')->consultar($sql_1);
                 
