@@ -101,11 +101,11 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nombre', --nombre
-	't_p.nombre', --expresion
+	't_doc.nombre', --expresion
 	'Nombre del Responsable', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
-	'0', --inicial
+	'1', --inicial
 	'1', --orden
 	NULL, --estado_defecto
 	'0', --opciones_es_multiple
@@ -159,11 +159,11 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'apellido', --nombre
-	't_p.apellido', --expresion
+	't_doc.apellido', --expresion
 	'Apellido del Responsable', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
-	'0', --inicial
+	'1', --inicial
 	'2', --orden
 	NULL, --estado_defecto
 	'0', --opciones_es_multiple
@@ -275,7 +275,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nro_doc', --nombre
-	't_p.nro_doc', --expresion
+	't_doc.nro_docum', --expresion
 	'Nro de Documento', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -453,7 +453,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'Día', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
-	'1', --inicial
+	'0', --inicial
 	'7', --orden
 	NULL, --estado_defecto
 	'0', --opciones_es_multiple

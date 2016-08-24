@@ -16,8 +16,8 @@ INSERT INTO apex_objeto (proyecto, objeto, anterior, identificador, reflexivo, c
 	'toba', --clase_proyecto
 	'toba_ei_calendario', --clase
 	'21', --punto_montaje
-	NULL, --subclase
-	NULL, --subclase_archivo
+	'calendario_aulas_comahue', --subclase
+	'api/Calendario.php', --subclase_archivo
 	NULL, --objeto_categoria_proyecto
 	NULL, --objeto_categoria
 	'Calendario Comahue - CI - calendario', --nombre

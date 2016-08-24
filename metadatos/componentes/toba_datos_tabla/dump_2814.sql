@@ -90,7 +90,7 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'id_sede', --columna
 	'E', --tipo
 	'0', --pk
-	'administrador_id_sede_seq', --secuencia
+	NULL, --secuencia
 	NULL, --largo
 	NULL, --no_nulo
 	'1', --no_nulo_db
@@ -120,6 +120,34 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'0', --pk
 	'', --secuencia
 	'50', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'administrador'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2814', --objeto
+	'1165', --col_id
+	'nombre', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	'35', --largo
+	NULL, --no_nulo
+	'0', --no_nulo_db
+	'0', --externa
+	'administrador'  --tabla
+);
+INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
+	'rukaja', --objeto_proyecto
+	'2814', --objeto
+	'1166', --col_id
+	'apellido', --columna
+	'C', --tipo
+	'0', --pk
+	'', --secuencia
+	'35', --largo
 	NULL, --no_nulo
 	'0', --no_nulo_db
 	'0', --externa

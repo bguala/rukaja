@@ -270,6 +270,12 @@ INSERT INTO apex_objeto_ut_formulario (objeto_ut_formulario_proyecto, objeto_ut_
 		</tr>
 		<tr>
 			<td>
+				[ef id=dias]</td>
+			<td>
+				&nbsp;</td>
+		</tr>
+		<tr>
+			<td>
 				[ef id=hora_inicio]</td>
 			<td>
 				[ef id=hora_fin]</td>
@@ -289,7 +295,7 @@ INSERT INTO apex_objeto_ut_formulario (objeto_ut_formulario_proyecto, objeto_ut_
 			<td>
 				[ef id=cantidad_alumnos]</td>
 			<td>
-				[ef id=dias]</td>
+				&nbsp;</td>
 		</tr>
 		<tr>
 			<td colspan="2">
@@ -297,7 +303,8 @@ INSERT INTO apex_objeto_ut_formulario (objeto_ut_formulario_proyecto, objeto_ut_
 			</td>
 		</tr>
 	</tbody>
-</table>', --template
+</table>
+<p>&nbsp;</p>', --template
 	NULL  --template_impresion
 );
 
@@ -956,7 +963,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'1', --obligatorio
 	'1', --oculto_relaja_obligatorio
 	'15', --orden
-	'Dia', --etiqueta
+	'Dias', --etiqueta
 	NULL, --etiqueta_estilo
 	NULL, --descripcion
 	'0', --colapsado
@@ -1353,7 +1360,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'id_periodo', --identificador
 	'ef_combo', --elemento_formulario
 	'id_periodo', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'5', --orden
 	'Periodo', --etiqueta
@@ -1372,14 +1379,14 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'get_periodos_activos', --carga_metodo
 	NULL, --carga_clase
 	NULL, --carga_include
-	'2862', --carga_dt
+	NULL, --carga_dt
 	NULL, --carga_consulta_php
 	NULL, --carga_sql
 	'mocovi', --carga_fuente
 	NULL, --carga_lista
 	'id_periodo', --carga_col_clave
 	'descripcion', --carga_col_desc
-	NULL, --carga_maestros
+	'tipo_asignacion', --carga_maestros
 	'0', --carga_cascada_relaj
 	'0', --cascada_mantiene_estado
 	'1', --carga_permite_no_seteado
@@ -1433,7 +1440,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'tipo_asignacion', --identificador
 	'ef_combo', --elemento_formulario
 	'tipo_asignacion', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'1', --orden
 	'Tipo de Asignación', --etiqueta

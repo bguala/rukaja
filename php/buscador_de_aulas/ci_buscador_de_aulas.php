@@ -104,6 +104,14 @@ class ci_buscador_de_aulas extends toba_ci
                                     break;
                                 
                 case 'Periodo' :  $cuadro->set_titulo(utf8_decode("Asignación por Periodo"));
+//                                  switch($tipo_asignacion){
+//                                      case 'EXAMEN PARCIAL' : 
+//                                      case 'EXAMEN FINAL'   : break;
+
+//                                      case 'CONSULTA'       : 
+//                                      case 'EVENTO'         : break;
+//                                  }
+//                                  
                                   //$cuadro->set_datos($this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede));
                                   //array( 1 => hora_inicio, 2 => hora_fin, 3 => id_periodo, 
                                   // 4 => tipo, 5 => $dia, 6 => fecha_inicio, 7 => fecha_fin).

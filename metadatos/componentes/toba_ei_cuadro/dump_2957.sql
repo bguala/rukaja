@@ -189,7 +189,7 @@ INSERT INTO apex_objeto_cuadro (objeto_cuadro_proyecto, objeto_cuadro, titulo, s
 	NULL, --titulo
 	NULL, --subtitulo
 	NULL, --sql
-	'id_solicitud, id_aula, hora_inicio, hora_fin, capacidad, fecha, finalidad, id_responsable, aula, establecimiento, tipo_asignacion, id_sede, id_sede_origen, estado, tipo_agente', --columnas_clave
+	'id_solicitud, id_aula, hora_inicio, hora_fin, capacidad, fecha, finalidad, id_responsable, aula, establecimiento, tipo_asignacion, id_sede, id_sede_origen, estado, tipo_agente, tipo', --columnas_clave
 	NULL, --columna_descripcion
 	'0', --clave_dbr
 	NULL, --archivos_callbacks

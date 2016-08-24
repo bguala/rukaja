@@ -190,7 +190,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'99', --objeto_ei_filtro_col
 	'2899', --objeto_ei_filtro
 	'rukaja', --objeto_ei_filtro_proyecto
-	'cadena', --tipo
+	'hora', --tipo
 	'hora_inicio', --nombre
 	'hora_inicio', --expresion
 	'Hora de Inicio', --etiqueta
@@ -248,7 +248,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'100', --objeto_ei_filtro_col
 	'2899', --objeto_ei_filtro
 	'rukaja', --objeto_ei_filtro_proyecto
-	'cadena', --tipo
+	'hora', --tipo
 	'hora_fin', --nombre
 	'hora_fin', --expresion
 	'Hora de Fin', --etiqueta
