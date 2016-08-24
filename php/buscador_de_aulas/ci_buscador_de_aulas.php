@@ -5,7 +5,7 @@ include_once (toba_dir().'/proyectos/rukaja/php/api/HorariosDisponibles.php');
 /*
  * En esta operacion debemos garantizar el no-solapamiento de asignaciones. Para evitar el no-solapamiento
  * las asignaciones por periodo se comportan como definitivas, cuando queremos registrar asignaciones 
- * definitivas. 
+ * definitivas.
  */
 class ci_buscador_de_aulas extends toba_ci
 {
@@ -109,8 +109,30 @@ class ci_buscador_de_aulas extends toba_ci
                                   switch($tipo_asignacion){
                                       case 'EXAMEN PARCIAL' : 
                                       case 'EXAMEN FINAL'   : //Debemos iniciar un calculo de hd para una fecha en particular.
+                                          
+                                                              //Usamos estas fechas en el switch final.
                                                               $fecha_inicio=toba::memoria()->get_dato_instancia(6);
-                                                              toba::notificacion()->agregar("Esta es la fecha de inicio: $fecha_inicio", 'info');
+                                                              $fecha_fin=$fecha_inicio;
+                                                              $lista_dias=array();
+                                                              
+                                                              $this->s__fecha_consulta=$fecha_inicio;
+                                                              $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
+                                                              //Para no alterar la estructura existente reutilizada en varias operaciones.
+                                                              $this->s__id_sede=$id_sede;
+                                                              //Configuramos el dia de consulta para que este disponible en la funcion procesar_periodo.
+                                                              $this->s__dia_consulta=$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)));
+                                                              //print_r($this->s__datos_solcitud);
+                                                              //Obtenemos los periodos que pueden contener a la fecha de solicitud.
+                                                              $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
+                                                              
+                                                              //Obtenemos todas las asignaciones para una fecha en particular, tenemos en cuenta
+                                                              //asig_def y asig_per para cuatrimestre, ademas tenemos en cuenta la asig_per para
+                                                              //examen_final.
+                                                              $asignaciones=$this->procesar_periodo($periodo, 'hd');
+                                                              //Reutilizamos la operacion pensada para .
+                                                              $aulas_disponibles=$this->obtener_aulas_disponibles_opt($asignaciones, array(), 0, "$hora_inicio:00", "$hora_fin:00");
+                                                              $cuadro->set_datos($aulas_disponibles);
+                                                              
                                                               break;
 
                                       case 'CONSULTA'       : 
@@ -180,14 +202,15 @@ class ci_buscador_de_aulas extends toba_ci
             //verificar en el servidor si el usuario realizo movimientos de hora, fecha o dias sin elegir 
             //nuevamente un aula.
             //Para llevar a cabo el chequeo se utiliza la informacion cargada en el formuario y la informacion 
-            //guardada en sesion, si existe incompatibilidad entre ambas mostramos un mensaje correspondiente y 
+            //guardada en sesion, si existe incompatibilidad entre ambas mostramos un mensaje correspondiente, si
             //no persistimos la asignacion. Este mecanismo nos permite evitar hacer calculos de horarios y tener
             //que integrar codigo y volver a realizar el proceso de verificacion, que es costoso.
             switch($tipo){
                 case 'Definitiva' : toba::memoria()->set_dato_instancia(103, $dia);
                                    break;
                                
-                case 'Periodo'   : toba::memoria()->set_dato_instancia(103, $fecha_inicio);
+                case 'Periodo'   : 
+                                   toba::memoria()->set_dato_instancia(103, $fecha_inicio);
                                    toba::memoria()->set_dato_instancia(104, $fecha_fin);
                                    toba::memoria()->set_dato_instancia(105, $lista_dias);
                                    break;

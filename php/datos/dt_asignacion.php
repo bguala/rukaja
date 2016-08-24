@@ -708,7 +708,7 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * 
+         * @$fecha: contiene una fecha seleccionada de un calendario.
          */
         function get_asignaciones_memo_por_examen_final ($dia, $periodo, $id_sede, $fecha){           
             $sql_2="SELECT t_a.finalidad,

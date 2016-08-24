@@ -2,48 +2,41 @@
 class form_asignacion_extendido extends toba_ei_formulario
 {
     function extender_objeto_js() {
-        echo "{$this->objeto_js}.evt__tipo__validar = function () {
-            var estado=this.ef('tipo').get_estado().toString();
+        echo "
+        
+        //Simulamos un ini__operacion a nivel de JS. Por el momento no lo usamos.
+        //window.setTimeout('ocultar_campos()', 1000);
+        
+        function ocultar_campos () {
+            var form={$this->objeto_js};
+            var tipo_asignacion=form.ef('tipo_asignacion').get_estado().toString();
             
-//            switch (estado){
-//            
-//             case 'Definitiva' : this.ef('fecha_inicio').ocultar();
-//                                 this.ef('fecha_inicio').set_obligatorio(false);
-//                                 this.ef('fecha_fin').ocultar();
-//                                 this.ef('fecha_fin').set_obligatorio(false);
-//                                 this.ef('dias').ocultar();
-//                                 this.ef('dias').set_obligatorio(false);
-//                                 this.ef('dia_semana').mostrar();
-//                                 this.ef('dia_semana').set_obligatorio(true);
-//                                 break;
-//                                 
-//             case 'Periodo' : this.ef('fecha_inicio').mostrar();
-//                              alert('Ejecutamos case periodo');
-//                              this.ef('fecha_inicio').set_obligatorio(true);
-//                              this.ef('fecha_fin').mostrar();
-//                              this.ef('fecha_fin').set_obligatorio(true);
-//                              this.ef('dias').mostrar();
-//                              this.ef('dias').set_obligatorio(true);
-//                              this.ef('dia_semana').ocultar();
-//                              this.ef('dia_semana').set_obligatorio(false);
-//                              break;
-//                              
-//             case 'nopar' : this.ef('fecha_inicio').mostrar();
-//                              this.ef('fecha_inicio').set_obligatorio(true);
-//                              this.ef('fecha_fin').mostrar();
-//                              this.ef('fecha_fin').set_obligatorio(true);
-//                              this.ef('dias').mostrar();
-//                              this.ef('dias').set_obligatorio(true);
-//                              this.ef('dia_semana').mostrar();
-//                              this.ef('dia_semana').set_obligatorio(true);
-//                              break;
-//             
-//            }
+            switch (tipo_asignacion){
+                case 'CURSADA'        : form.ef('fecha_inicio').ocultar();
+                                        form.ef('fecha_inicio').set_obligatorio(false);
+                                        form.ef('fecha_fin').ocultar();
+                                        form.ef('fecha_fin').set_obligatorio(false);
+                                        form.ef('dias').ocultar();
+                                        form.ef('dias').set_obligatorio(false);
+                                        form.ef('tipo').set_solo_lectura(true);
+                                        break;
+                
+                case 'EXAMEN PARCIAL' : 
+                case 'EXAMEN FINAL'   : form.ef('fecha_fin').ocultar();
+                                        form.ef('fecha_fin').set_obligatorio(false);
+                                        form.ef('dias').ocultar();
+                                        form.ef('dias').set_obligatorio(false);
+                                        form.ef('dia_semana').ocultar();
+                                        form.ef('dia_semana').set_obligatorio(false);
+                                        break;
+                
+                case 'CONSULTA'       : 
+                case 'EVENTO'         : form.ef('dia_semana').ocultar();
+                                        form.ef('dia_semana').set_obligatorio(false);
+                                        break;
+            }
             
-            return true;
         }
-        
-        
         
         {$this->objeto_js}.evt__dia_semana__validar = function () {
             return this.disparar_llamada_ajax();
@@ -143,25 +136,36 @@ class form_asignacion_extendido extends toba_ei_formulario
         {$this->objeto_js}.evt__fecha_fin__validar = function (){
             var tipo=this.ef('tipo').get_estado();
             if(tipo == 'Periodo'){
+            var tipo_asignacion=this.ef('tipo_asignacion').get_estado().toString();
             var fecha_inicio=this.ef('fecha_inicio').fecha();
             
-            //Si no cargamos una fecha de inicio obtenemos un null.
-            if(fecha_inicio == null){
-                this.ef('fecha_fin').set_error('Seleccione fecha de inicio');
-                return false;
+                switch(tipo_asignacion){
+                    case 'EXAMEN PARCIAL' : 
+                    case 'EXAMEN FINAL'   : return true;
+
+                    case 'CONSULTA'       :
+                    case 'EVENTO'         : 
+                                            //Si no cargamos una fecha de inicio obtenemos un null.
+                                            if(fecha_inicio == null){
+                                                this.ef('fecha_fin').set_error('Seleccione fecha de inicio');
+                                                return false;
+                                            }
+
+                                            var fecha_fin=this.ef('fecha_fin').fecha();
+
+                                            if( fecha_fin < fecha_inicio){
+                                                this.ef('fecha_fin').set_error('La fecha de fin debe ser mayor a la fecha de inicio');
+                                                return false;
+                                            }
+                                            if( fecha_fin.getTime() == fecha_inicio.getTime() ){
+                                                this.ef('fecha_fin').set_error('La fecha de inicio no puede ser igual a la fecha de fin');
+                                                return false;
+                                            }
+
+                                            return true;
+                 }//Cierre del switch.
             }
             
-            var fecha_fin=this.ef('fecha_fin').fecha();
-            
-            if( fecha_fin < fecha_inicio){
-                this.ef('fecha_fin').set_error('La fecha de fin debe ser mayor a la fecha de inicio');
-                return false;
-            }
-            if( fecha_fin.getTime() == fecha_inicio.getTime() ){
-                this.ef('fecha_fin').set_error('La fecha de inicio no puede ser igual a la fecha de fin');
-                return false;
-            }
-            }
             return true;
         }
         

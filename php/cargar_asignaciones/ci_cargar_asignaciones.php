@@ -670,6 +670,7 @@ class ci_cargar_asignaciones extends toba_ci
                 default :          toba::notificacion()->agregar("La variable accion esta vacia!", 'error');break;
             }
             
+            
         }
                 
         /*
@@ -979,29 +980,21 @@ class ci_cargar_asignaciones extends toba_ci
                                     
                                     
                                     
-                case 'Periodo'    : $fecha_inicio=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(103)));
-                                    $fecha_fin=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(104)));
-                                    $lista_dias=toba::memoria()->get_dato_instancia(105);
-                                    print_r("<br><br>Estos son los datos asociados a un perido guardados en sesion: <br><br>");
-                                    print_r(date('Y-m-d', strtotime($fecha_inicio)));print_r("<br><br>");print_r($fecha_fin);print_r("<br><br>");print_r($lista_dias);
-                                    if(!(strcmp($fecha_inicio, $datos['fecha_inicio'])==0 && strcmp($fecha_fin, $datos['fecha_fin'])==0)){
-                                        $mensaje="Acaba de cambiar las fechas de inicio y fin y no seleccionó nuevamente un aula";
-                                        toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
-                                        toba::memoria()->limpiar_datos_instancia();
-                                        return ;
-                                    }
-                                    
-                                    if(!($this->mismos_dias($datos['dias'], $lista_dias))){
-                                        $mensaje="Acaba de modifcar la lista de días elegidos y no seleccionó nuevamente un aula";
-                                        toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
-                                        toba::memoria()->limpiar_datos_instancia();
-                                        return ;
-                                    }
+                case 'Periodo'    : 
                                     
                                     switch($datos['tipo_asignacion']){
                         
                                        case 'EXAMEN PARCIAL' : 
-                                       case 'EXAMEN FINAL'   : //Para evitar conflictos. La fecha es la misma.
+                                       case 'EXAMEN FINAL'   : $fecha_inicio=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(103)));
+                                                               
+                                                               if(!strcmp($fecha_inicio, $datos['fecha_inicio'])==0){
+                                                                   $mensaje="Acaba de cambiar la fecha de inicio y no seleccionó nuevamente un aula";
+                                                                   toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                                                                   toba::memoria()->limpiar_datos_instancia();
+                                                                   return ;
+                                                               }
+                                                               
+                                                               //Para evitar conflictos. La fecha es la misma.
                                                                $fecha_fin=$datos['fecha_inicio'];
                                                                //La lista de fechas se guarda en un arreglo asociativo.
                                                                $dias=array(0 => $fecha_fin);
@@ -1012,7 +1005,27 @@ class ci_cargar_asignaciones extends toba_ci
 
                                                                break;
                                        case 'CONSULTA'       :
-                                       case 'EVENTO'         : print_r("<br><br> LLegamos al case EVENTO <br><br>");                                             
+                                       case 'EVENTO'         : $fecha_inicio=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(103)));
+                                                               $fecha_fin=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(104)));
+                                                               $lista_dias=toba::memoria()->get_dato_instancia(105);
+                                                               print_r("<br><br>Estos son los datos asociados a un perido guardados en sesion: <br><br>");
+                                                               print_r(date('Y-m-d', strtotime($fecha_inicio)));print_r("<br><br>");print_r($fecha_fin);print_r("<br><br>");print_r($lista_dias);
+                                                               if(!(strcmp($fecha_inicio, $datos['fecha_inicio'])==0 && strcmp($fecha_fin, $datos['fecha_fin'])==0)){
+                                                                    $mensaje="Acaba de cambiar las fechas de inicio y fin y no seleccionó nuevamente un aula";
+                                                                    toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                                                                    toba::memoria()->limpiar_datos_instancia();
+                                                                    return ;
+                                                               }
+                                    
+                                                                if(!($this->mismos_dias($datos['dias'], $lista_dias))){
+                                                                    $mensaje="Acaba de modifcar la lista de días elegidos y no seleccionó nuevamente un aula";
+                                                                    toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                                                                    toba::memoria()->limpiar_datos_instancia();
+                                                                    return ;
+                                                                }
+                                                               
+                                                               
+                                                               print_r("<br><br> LLegamos al case EVENTO <br><br>");                                             
                                                                $hd=new HorariosDisponibles();
                                                                $dias=$hd->get_dias($datos['fecha_inicio'], $datos['fecha_fin'], $datos['dias']);
                                                                print_r($dias);print_r("<br><br>");

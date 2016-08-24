@@ -2,66 +2,7 @@
 class formulario_extendido extends toba_ei_formulario
 {
     function extender_objeto_js() {
-        
-//        {$this->objeto_js}.evt__tipo__validar = function () {
-//            var tipo=this.ef('tipo').get_estado().toString();
-//            switch (tipo){
-//            
-//            case 'Denuncia de aula' :    //alert('LLega');
-//                                         this.ef('descripcion').mostrar();
-//                                         this.ef('fecha').ocultar();
-//                                         this.ef('id_aula').mostrar();
-//                
-//                                         this.ef('fijo3').mostrar();
-//                                         this.ef('den1').mostrar();
-//                                         this.ef('den2').mostrar();
-//                                         this.ef('den3').mostrar();
-//                                         this.ef('den4').mostrar();
-//                                         break;
-//                                         
-//            case 'Solicitud de aula' :   this.ef('descripcion').input().value='';
-//                                         this.ef('descripcion').ocultar();
-//                                         this.ef('fijo3').ocultar();
-//                
-//                                         this.ef('den1').input().checked=false;
-//                                         this.ef('den1').ocultar();
-//                
-//                                         this.ef('den2').input().checked=false;
-//                                         this.ef('den2').ocultar();
-//                
-//                                         this.ef('den3').input().checked=false;
-//                                         this.ef('den3').ocultar();
-//                
-//                                         this.ef('den4').input().checked=false;
-//                                         this.ef('den4').ocultar();
-//                
-//                                         this.ef('id_aula').ocultar();
-//                                         this.ef('fecha').mostrar();
-//                                         break;
-//                                         
-//            case 'nopar' :               this.ef('descripcion').input().value='';
-//                                         this.ef('descripcion').ocultar();
-//                                         this.ef('fijo3').ocultar();
-//                
-//                                         this.ef('den1').input().checked=false;
-//                                         this.ef('den1').ocultar();
-//                
-//                                         this.ef('den2').input().checked=false;
-//                                         this.ef('den2').ocultar();
-//                
-//                                         this.ef('den3').input().checked=false;
-//                                         this.ef('den3').ocultar();
-//                
-//                                         this.ef('den4').input().checked=false;
-//                                         this.ef('den4').ocultar();
-//                
-//                                         this.ef('id_aula').ocultar();
-//                                         break;
-//            
-//            }
-//            return true;
-//        }
-        
+                
         echo "
         
         //La funcion setTimeout se ejecuta solamente una vez. En este caso cuando se carga el documento html
