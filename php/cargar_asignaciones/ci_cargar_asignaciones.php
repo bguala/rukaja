@@ -228,7 +228,8 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         /*
-         * Metodo de consulta para cargar el combo periodo. Necesitamos usar el id_sede.
+         * Metodo de consulta para cargar el combo periodo. Necesitamos usar el id_sede, por ese motivo se 
+         * implementa en el ci.
          */
         function get_periodos_activos ($tipo_asignacion){
             //La fecha actual nos ayuda a pensar esto: podemos cargar asignaciones en esta misma fecha o mas 
@@ -1491,12 +1492,14 @@ class ci_cargar_asignaciones extends toba_ci
                                     //print_r($parametros[4]);
                                     toba::memoria()->set_dato_instancia(7, $parametros[6]); //fecha_fin
                                     
-                                    toba::memoria()->set_dato_instancia(8,  $parametros[7]);
-                                    toba::memoria()->set_dato_instancia(9,  $parametros[8]);
-                                    toba::memoria()->set_dato_instancia(10, $parametros[9]);
-                                    toba::memoria()->set_dato_instancia(11, $parametros[10]);
-                                    toba::memoria()->set_dato_instancia(12, $parametros[11]);
-                                    toba::memoria()->set_dato_instancia(13, $parametros[12]);
+                                    toba::memoria()->set_dato_instancia(8,  $parametros[7]); //tipo_asignacion
+                                    toba::memoria()->set_dato_instancia(9,  $parametros[8]); //Lunes
+                                    toba::memoria()->set_dato_instancia(10, $parametros[9]); //Martes
+                                    toba::memoria()->set_dato_instancia(11, $parametros[10]); //Miercoles
+                                    toba::memoria()->set_dato_instancia(12, $parametros[11]); //Jueves
+                                    toba::memoria()->set_dato_instancia(13, $parametros[12]); //Viernes
+                                    toba::memoria()->set_dato_instancia(14, $parametros[13]); //Sabado.
+                                    toba::memoria()->set_dato_instancia(15, $parametros[14]); //Domingo
                                     break;
             }
             

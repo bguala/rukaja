@@ -375,16 +375,16 @@ CONSTRAINT pk_organizacion PRIMARY KEY (id_organizacion)
 );
 
 --instalamos el modulo dblink para relacionar bases de datos a traves de una misma consulta.
-create extension dblink;
+--create extension dblink;
 
 --vista relacionada a la tabla docenete de la base de datos mocovi.
-create view docentes as  
-	select * from dblink('host=localhost port=5432 dbname=mocovi user=postgres password=brunoguala', 'select * from docente') as 
+--create view docentes as  
+--	select * from dblink('host=localhost port=5432 dbname=mocovi user=postgres password=brunoguala', 'select * from docente') as 
 
-		 (id_docente integer,
-		  legajo integer,  
-		  apellido character varying,
-		  nombre character varying,
-		  tipo_docum character(4),
-		  nro_docum integer) ;
+--		 (id_docente integer,
+--		  legajo integer,  
+--		  apellido character varying,
+--		  nombre character varying,
+--		  tipo_docum character(4),
+--		  nro_docum integer) ;
 

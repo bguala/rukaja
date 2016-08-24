@@ -130,55 +130,8 @@ class form_asignacion_extendido extends toba_ei_formulario
         
         
         
-        {$this->objeto_js}.evt__hora_fin__validar = function (){
-            
-            var tipo=this.ef('tipo').get_estado().toString();
-            var id_periodo=this.ef('id_periodo').get_estado();
-            
-            if(id_periodo == 'nopar'){
-                alert('Debe elegir un periodo de tiempo');
-                return false;
-            }
-            else{
-                //get_estado devuelve un arreglo con los parametros asociados a la hora del ef_editable_hora
-                var hora_fin=this.ef('hora_fin').get_estado(); 
-                var hora_inicio=this.ef('hora_inicio').get_estado();
-                
-                switch(tipo){
-                    case 'Definitiva': var dia=this.ef('dia_semana').get_estado().toString();
-                                       
-                                       //array( 0 => hora_inicio, 1 => hora_fin, 2 => id_periodo, 3 => tipo, 4 => dia);
-                                       var horario=[ hora_inicio, hora_fin, id_periodo, tipo, dia ];
-                                       //alert(horario);
-                                       this.controlador.ajax('guardar_horario_en_sesion', horario, this, this.atender_respuesta);
-                                       break; 
-                    
-                    case 'Periodo':    var lista_dias=this.ef('dias').get_estado();
-                                       
-                                       //Si usamos get_estado(), por algun motivo que desconozco, la fecha se 
-                                       //obtiene corrupta. Ese string corrupto no se puede convertir a time, lo 
-                                       //que nos complica el proceso de obtencion de fechas pertenecientes a un 
-                                       //periodo. Para que esto no ucurra debemos usar la funcion fecha() para
-                                       //obtener un objeto date puro, con fecha, hora y zona horaria. 
-                                       //Usamos la funcion toDateString(), para pasar a string la parte 
-                                       //correspondiente a la fecha. Ese string-fecha viaja al servidor y
-                                       //parece que funciona.
-                                       var fecha_inicio=this.ef('fecha_inicio').fecha();
-                                       var fecha_fin=this.ef('fecha_fin').fecha();
-                                       
-                                       //array( 0 => hora_inicio, 1 => hora_fin, 2 => id_periodo, 3 => tipo, 4 => lista_dias, 
-                                       // 5 => fecha_inicio, 6 => fecha_fin, 7 => Dia1, 8 => Dia2, 9 => Dia3, 10 => Dia4, 11 => Dia5, 12 => Dia6 );
-                                       var horario=[ hora_inicio, hora_fin, id_periodo, tipo, lista_dias, fecha_inicio.toDateString(), fecha_fin.toDateString(), lista_dias[0], lista_dias[1], lista_dias[2], lista_dias[3], lista_dias[4], lista_dias[5], lista_dias[6] ];
-                                       
-                                       this.controlador.ajax('guardar_horario_en_sesion', horario, this, this.atender_respuesta);
-                                       break;
-                }
-                
-
-                return true;
-            }
-            
-                       
+        {$this->objeto_js}.evt__hora_fin__validar = function (){             
+                return this.disparar_llamada_ajax();        
         } 
         
         {$this->objeto_js}.atender_respuesta = function (respuesta) {
@@ -234,7 +187,7 @@ class form_asignacion_extendido extends toba_ei_formulario
 
           //Agrupamos las sentencias usadas para guardar datos en sesion mediante una llamada ajax.
           //Siempre se deben guardar los mismos datos. Estos dependen del tipo de asignacion.
-          //Internamente distiguimos entre 
+          //Internamente distiguimos entre asignacion definitivas y periodicas.
           {$this->objeto_js}.disparar_llamada_ajax = function (){
             var tipo=this.ef('tipo').get_estado().toString();
             var id_periodo=this.ef('id_periodo').get_estado();
@@ -267,12 +220,27 @@ class form_asignacion_extendido extends toba_ei_formulario
                                        //Usamos la funcion toDateString(), para pasar a string la parte 
                                        //correspondiente a la fecha. Ese string-fecha viaja al servidor y
                                        //parece que funciona.
-                                       var fecha_inicio=this.ef('fecha_inicio').fecha();
-                                       var fecha_fin=this.ef('fecha_fin').fecha();
-                                       
+                                       var tipo_asignacion=this.ef('tipo_asignacion').get_estado().toString();
+                                       var fecha_inicio;
+                                       var fecha_fin;
+                                       switch(tipo_asignacion){
+                                          case 'EXAMEN PARCIAL' : 
+                                          case 'EXAMEN FINAL'   : fecha_inicio=this.ef('fecha_inicio').fecha();
+                                                                  //Duplicamos la fecha para no alterar la llamada ajax, para evitar posibles problemas 
+                                                                  //con el formulario.
+                                                                  fecha_fin=this.ef('fecha_inicio').fecha();
+                                                                  break;
+                                          
+                                          case 'CONSULTA' : 
+                                          case 'EVENTO'         : fecha_inicio=this.ef('fecha_inicio').fecha();
+                                                                  fecha_fin=this.ef('fecha_fin').fecha();
+                                                                  break;
+          
+                                       }
+                                                                         
                                        //array( 0 => hora_inicio, 1 => hora_fin, 2 => id_periodo, 3 => tipo, 4 => lista_dias, 
-                                       // 5 => fecha_inicio, 6 => fecha_fin, 7 => Dia1, 8 => Dia2, 9 => Dia3, 10 => Dia4, 11 => Dia5, 12 => Dia6 );
-                                       var horario=[ hora_inicio, hora_fin, id_periodo, tipo, lista_dias, fecha_inicio.toDateString(), fecha_fin.toDateString(), lista_dias[0], lista_dias[1], lista_dias[2], lista_dias[3], lista_dias[4], lista_dias[5], lista_dias[6] ];
+                                       // 5 => fecha_inicio, 6 => fecha_fin, 7 => tipo_asignacion, 8 => Dia1, 9 => Dia2, 10 => Dia3, 11 => Dia4, 12 => Dia5, 13 => Dia6, 14 => Dia7 );
+                                       var horario=[ hora_inicio, hora_fin, id_periodo, tipo, lista_dias, fecha_inicio.toDateString(), fecha_fin.toDateString(), tipo_asignacion, lista_dias[0], lista_dias[1], lista_dias[2], lista_dias[3], lista_dias[4], lista_dias[5], lista_dias[6] ];
                                        
                                        this.controlador.ajax('guardar_horario_en_sesion', horario, this, this.atender_respuesta);
                                        break;

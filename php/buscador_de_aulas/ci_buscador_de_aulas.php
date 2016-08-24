@@ -104,61 +104,67 @@ class ci_buscador_de_aulas extends toba_ci
                                     break;
                                 
                 case 'Periodo' :  $cuadro->set_titulo(utf8_decode("Asignación por Periodo"));
-//                                  switch($tipo_asignacion){
-//                                      case 'EXAMEN PARCIAL' : 
-//                                      case 'EXAMEN FINAL'   : break;
+                                  $tipo_asignacion=toba::memoria()->get_dato_instancia(8);
+                                  print_r("<br><br>Este es el contenido de tipo_asignacion: ");print_r($tipo_asignacion);
+                                  switch($tipo_asignacion){
+                                      case 'EXAMEN PARCIAL' : 
+                                      case 'EXAMEN FINAL'   : //Debemos iniciar un calculo de hd para una fecha en particular.
+                                                              $fecha_inicio=toba::memoria()->get_dato_instancia(6);
+                                                              toba::notificacion()->agregar("Esta es la fecha de inicio: $fecha_inicio", 'info');
+                                                              break;
 
-//                                      case 'CONSULTA'       : 
-//                                      case 'EVENTO'         : break;
-//                                  }
-//                                  
+                                      case 'CONSULTA'       : 
+                                      case 'EVENTO'         : $lista_dias=array();
+                                                              for($i=9; $i<=15; $i++){
+                                                                  $dia=toba::memoria()->get_dato_instancia($i);
+                                                                  if(strcmp($dia, 'undefined') != 0){
+                                                                      $lista_dias[]=$dia;
+                                                                  }
+                                                              }
+
+                                                              //print_r($lista_dias);exit();
+                                                              $fecha_inicio=toba::memoria()->get_dato_instancia(6);
+
+                                                              print_r($fecha_inicio);print_r("<br><br>");
+
+                                                              $fecha_fin=toba::memoria()->get_dato_instancia(7);
+                                                              print_r($fecha_fin);print_r("<br><br>");
+
+                                                              toba::memoria()->set_dato_instancia(0, $id_sede);
+                                                              $this->s__id_sede=$id_sede;
+                                                              $hd=new HorariosDisponibles();
+                                                              toba::memoria()->limpiar_datos_instancia();
+                                                              //lista_dias = array( 0 => 'Lunes', ....., 5 => 'Sábado' ).
+                                                              $lista_fechas=$hd->get_dias($fecha_inicio, $fecha_fin, $lista_dias);
+                                                              //print_r($lista_fechas);exit();
+
+                                                              //El formato de hd_fechas es:
+                                                              //array( 0 => array( 0 => fecha, 1 => hd) ). A su vez cada hd es:
+                                                              //array( 0 => array( hora_inicio, hora_fin, aula, id_aula, capacidad) ).
+                                                              $hd_fechas=$this->horarios_disponibles_por_fecha($lista_fechas);
+                                                              //print_r($hd_fechas[0]);//exit();
+
+                                                              //Obtenemos las aulas de la unidad academica en cuestion.
+                                                              //Y no va a quedar otra que ponerse a recorren todo el arreglo, en busca de un aula
+                                                              //que este disponible todos los dias del periodo en ese horario. La complejidad 
+                                                              //va aumentar a partir de la longitud del periodo.
+                                                              $aulas=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
+
+                                                              $aulas_disponibles=$this->extraer_aulas_disponibles_para_periodo_opt($aulas, $hd_fechas, "$hora_inicio:00", "$hora_fin:00", count($lista_fechas));
+                                                              print_r("<br><br>Estas son las aulas disponibles: <br><br>");
+                                                              print_r($aulas_disponibles);
+                                                              $cuadro->set_datos($aulas_disponibles);
+                                                              print_r("<br><br> Longitudes de lista_fechas y hd_fechas, respectivamente: <br><br>");
+                                                              print_r(count($lista_fechas));print_r("<br><br>");
+                                                              print_r(count($hd_fechas));
+                                                              break;
+                                  }
+                                                                    
                                   //$cuadro->set_datos($this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede));
                                   //array( 1 => hora_inicio, 2 => hora_fin, 3 => id_periodo, 
                                   // 4 => tipo, 5 => $dia, 6 => fecha_inicio, 7 => fecha_fin).
                                   
-                                  $lista_dias=array();
-                                  for($i=8; $i<=13; $i++){
-                                      $dia=toba::memoria()->get_dato_instancia($i);
-                                      if(strcmp($dia, 'undefined') != 0){
-                                          $lista_dias[]=$dia;
-                                      }
-                                  }
                                   
-                                  //print_r($lista_dias);
-                                  $fecha_inicio=toba::memoria()->get_dato_instancia(6);
-                                  
-                                  print_r($fecha_inicio);print_r("<br><br>");
-                                                                    
-                                  $fecha_fin=toba::memoria()->get_dato_instancia(7);
-                                  print_r($fecha_fin);print_r("<br><br>");
-                                                                    
-                                  toba::memoria()->set_dato_instancia(0, $id_sede);
-                                  $this->s__id_sede=$id_sede;
-                                  $hd=new HorariosDisponibles();
-                                  toba::memoria()->limpiar_datos_instancia();
-                                  //lista_dias = array( 0 => 'Lunes', ....., 5 => 'Sábado' ).
-                                  $lista_fechas=$hd->get_dias($fecha_inicio, $fecha_fin, $lista_dias);
-                                  //print_r($lista_fechas);exit();
-                                  
-                                  //El formato de hd_fechas es:
-                                  //array( 0 => array( 0 => fecha, 1 => hd) ). A su vez cada hd es:
-                                  //array( 0 => array( hora_inicio, hora_fin, aula, id_aula, capacidad) ).
-                                  $hd_fechas=$this->horarios_disponibles_por_fecha($lista_fechas);
-                                  //print_r($hd_fechas[0]);//exit();
-                                  
-                                  //Obtenemos las aulas de la unidad academica en cuestion.
-                                  //Y no va a quedar otra que ponerse a recorren todo el arreglo, en busca de un aula
-                                  //que este disponible todos los dias del periodo en ese horario. La complejidad 
-                                  //va aumentar a partir de la longitud del periodo.
-                                  $aulas=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
-                                  
-                                  $aulas_disponibles=$this->extraer_aulas_disponibles_para_periodo_opt($aulas, $hd_fechas, "$hora_inicio:00", "$hora_fin:00", count($lista_fechas));
-                                  print_r("<br><br>Estas son las aulas disponibles: <br><br>");
-                                  print_r($aulas_disponibles);
-                                  $cuadro->set_datos($aulas_disponibles);
-                                  print_r("<br><br> Longitudes de lista_fechas y hd_fechas, respectivamente: <br><br>");
-                                  print_r(count($lista_fechas));print_r("<br><br>");
-                                  print_r(count($hd_fechas));
                                   break;
             }
             
