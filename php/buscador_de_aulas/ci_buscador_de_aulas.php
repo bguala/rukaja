@@ -144,7 +144,8 @@ class ci_buscador_de_aulas extends toba_ci
                                   //va aumentar a partir de la longitud del periodo.
                                   $aulas=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
                                   
-                                  $aulas_disponibles=$this->extraer_aulas_disponibles_para_periodo($aulas, $hd_fechas, "$hora_inicio:00", "$hora_fin:00", count($lista_fechas));
+                                  $aulas_disponibles=$this->extraer_aulas_disponibles_para_periodo_opt($aulas, $hd_fechas, "$hora_inicio:00", "$hora_fin:00", count($lista_fechas));
+                                  print_r("<br><br>Estas son las aulas disponibles: <br><br>");
                                   print_r($aulas_disponibles);
                                   $cuadro->set_datos($aulas_disponibles);
                                   print_r("<br><br> Longitudes de lista_fechas y hd_fechas, respectivamente: <br><br>");
@@ -155,12 +156,28 @@ class ci_buscador_de_aulas extends toba_ci
             
             //$cuadro->set_datos($this->dep('datos')->tabla('aula')->get_aulas($id_sede));
                        
-            toba::memoria()->limpiar_datos_instancia();
-            
-            
-            //Guardamos el horarios seleccionado, para hacer un ultimo chequeo en el server.
+            //toba::memoria()->limpiar_datos_instancia();
             toba::memoria()->set_dato_instancia(100, $hora_inicio);
-            toba::memoria()->set_dato_instancia(101, $hora_fin);
+            toba::memoria()->set_dato_instancia(101, $hora_fin);           
+            toba::memoria()->set_dato_instancia(102, $tipo);
+            
+            //Guardamos el horario seleccionado, para hacer un ultimo chequeo en el server. Si el usuario no abre
+            //el pop up aula no se guardan en sesion los datos cargados en el formulario, esto es util para 
+            //verificar en el servidor si el usuario realizo movimientos de hora, fecha o dias sin elegir 
+            //nuevamente un aula.
+            //Para llevar a cabo el chequeo se utiliza la informacion cargada en el formuario y la informacion 
+            //guardada en sesion, si existe incompatibilidad entre ambas mostramos un mensaje correspondiente y 
+            //no persistimos la asignacion. Este mecanismo nos permite evitar hacer calculos de horarios y tener
+            //que integrar codigo y volver a realizar el proceso de verificacion, que es costoso.
+            switch($tipo){
+                case 'Definitiva' : toba::memoria()->set_dato_instancia(103, $dia);
+                                   break;
+                               
+                case 'Periodo'   : toba::memoria()->set_dato_instancia(103, $fecha_inicio);
+                                   toba::memoria()->set_dato_instancia(104, $fecha_fin);
+                                   toba::memoria()->set_dato_instancia(105, $lista_dias);
+                                   break;
+            }
             
 	}
         
@@ -705,8 +722,12 @@ class ci_buscador_de_aulas extends toba_ci
             return $fin;
         }
         
-        /*
+        /*-----------------------------VERSION DEFICIENTE---------------------------------------------------
+         * 
+         * @$aulas: contiene todas las aulas de un establecimiento.
          * @$longitud: representa la cantidad de fechas.
+         * 
+         * Esta funcion tarda 2,77 segundos en emitir una respuesta.
          */
         function extraer_aulas_disponibles_para_periodo($aulas, $hd_fechas, $hora_inicio, $hora_fin, $longitud){
             //Significa que para al menos una fecha no hay horarios disponibles en el sistema. Esto puede ocurrir
@@ -750,6 +771,57 @@ class ci_buscador_de_aulas extends toba_ci
                 //disponibles en el periodo seleccionado por el usuario.
                 $disponibilidad=0;
                 
+            }
+            
+            return $aulas_disponibles;
+        }
+        
+        /*---------------------------------VERSION OPTIMIZADA-----------------------------------------
+         * 
+         * Esta funcion tarda 2,23 segundos en emitir una respuesta. Si comparamos los tiempos de ejecucion
+         * de ambas funciones no es tan grande la diferencia. 
+         * 
+         */
+        function extraer_aulas_disponibles_para_periodo_opt($aulas_ua, $hd_fechas, $hora_inicio, $hora_fin, $longitud){
+            //Significa que para al menos una fecha no hay horarios disponibles en el sistema. Esto puede ocurrir
+            //si un aula esta ocupada todo el dia. Entonces no se otorgaran aulas para satisfacer parte del 
+            //periodo. Esto es poco probable, pero igual se contempla.
+            $n=count($hd_fechas);
+            if($n < $longitud){
+                return array();
+            }
+            
+            $i=0;
+            
+            //Recorremos hd_fechas.
+            while($i<$n){
+                //Obtenemos los hd para una fecha del periodo.
+                $hd=$hd_fechas[$i][1];
+                print_r("<br><br>Estos son los hd por fecha : <br><br>");print_r($hd);
+                //Hacemos un descarte de aulas en cascada, a traves de las fechas del periodo.
+                $aulas_ua=$this->extraer_aulas($hd, $aulas_ua, $hora_inicio, $hora_fin);
+                $i++;
+            }
+            
+            return $aulas_ua;
+        }
+        
+        /*------------------------------------VERSION OPTIMIZADA--------------------------------------------
+         * 
+         * Permite optimizar el proceso de busqueda de aulas disponibles para un periodo.
+         * @$hd: contiene todos los horarios disponibles para una fecha.
+         * @$aulas_ua: contiene en ppio todas las aulas de un establecimiento. Despues se descartan segun la
+         * disponibilidad horaria.
+         */
+        function extraer_aulas ($hd, $aulas_ua, $hora_inicio, $hora_fin){
+            $aulas_disponibles=array();
+            //Guardamos los hd para reutilizar la funcion existe_aula_disponible.
+            $this->s__horarios_disponibles=$hd;
+            //Verificamos si un aula se encuentra disponible para un horario en particular.
+            foreach ($aulas_ua as $key=>$aula){
+                if($this->existe_aula_disponible($aula, $hora_inicio, $hora_fin)){
+                    $aulas_disponibles[]=$aula;
+                }
             }
             
             return $aulas_disponibles;

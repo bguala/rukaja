@@ -109,10 +109,19 @@ class ci_registrar_aula extends toba_ci
             $this->agregar_datos_aula(&$datos);
             //print_r($datos);exit();
             foreach ($datos as $clave=>$aula){
-                $accion=$aula['apex_analisis_fila'];
-                if(strcmp($accion, "A")){
+                //EN ESTE CASO:
+                //Si estamos dando de alta aulas $accion contiene un valor nulo si usamos apex_analisis_fila. Para
+                //saber si estamos dando de alta eltos. desde un form_ml debemos usar el indice x_dbr_clave, 
+                //que empieza en 156.
+                //$accion=$aula['apex_analisis_fila'];
+                //Pero si comparamos un valor nulo con "A" strcmp devuelve un numero negativo, que se considera
+                //TRUE. Por lo tanto esto nos si sirve para pasar la condicion y guardar el aula en la base de
+                //datos.
+                //if(strcmp($accion, "A")){
+                //Finalmente no tiene sentido tener una condicion porque este formulario ml solamente se 
+                //utiliza para guardar aulas en la base de datos, no permite hacer bajas y modificaciones.
                     $this->registrar_aula($aula);                    
-                }
+                //}
             }
             
             if(count($this->s__error)>0){
@@ -124,7 +133,7 @@ class ci_registrar_aula extends toba_ci
         }
         
         /*
-         * Esta funcion arma una cadena con las aulas que tenian un archivo con formato incorrecto
+         * Esta funcion arma una cadena con las aulas que tenian un archivo con formato incorrecto.
          */
         function generar_cadena (){
             $cadena="";

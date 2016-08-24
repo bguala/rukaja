@@ -620,13 +620,15 @@ class dt_asignacion extends toba_datos_tabla
         function get_asignaciones ($where, $id_periodo){
             //El JOIN con dia es necesario porque sino el where no nos sirve.
             $sql="( SELECT t_a.id_asignacion, t_doc.nro_docum as nro_doc, t_doc.tipo_docum as tipo_doc, 
-                          t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, 
-                          (t_doc.nombre || ' ' || t_doc.apellido) as responsable, 'Definitiva' as tipo
+                           t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, 
+                           (t_doc.nombre || ' ' || t_doc.apellido) as responsable, 'Definitiva' as tipo,
+                           t_a.tipo_asignacion, t_per.anio_lectivo
                     FROM asignacion t_a 
                     JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
                     --hacemos uso de la vista docentes
                     JOIN docentes t_doc ON (t_a.id_responsable_aula=t_doc.id_docente)
-                   
+                    
+                    JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                     JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion )
                     JOIN dia t_dia ON (t_d.nombre=t_dia.nombre)
                     WHERE ($where) AND t_a.id_periodo=$id_periodo) 
@@ -635,12 +637,14 @@ class dt_asignacion extends toba_datos_tabla
                    
                    (SELECT t_a.id_asignacion, t_doc.nro_docum as nro_doc, t_doc.tipo_docum as tipo_doc, 
                            t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, 
-                           (t_doc.nombre || ' ' || t_doc.apellido) as responsable, 'Periodo' as tipo
+                           (t_doc.nombre || ' ' || t_doc.apellido) as responsable, 'Periodo' as tipo,
+                           t_a.tipo_asignacion, t_per.anio_lectivo
                     FROM asignacion t_a 
                     JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
                     --hacemos uso de la vista docentes
                     JOIN docentes t_doc ON (t_a.id_responsable_aula=t_doc.id_docente)
                     
+                    JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
                     JOIN asignacion_periodo t_pe ON (t_a.id_asignacion=t_pe.id_asignacion)
                     JOIN esta_formada t_f ON (t_pe.id_asignacion=t_f.id_asignacion)
                     JOIN dia t_dia ON (t_f.nombre=t_dia.nombre)
@@ -812,6 +816,38 @@ class dt_asignacion extends toba_datos_tabla
                   JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND ((t_p.fecha_inicio >= '$fecha_actual') OR ('$fecha_actual' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)))
                   JOIN esta_formada t_ef ON (t_p.id_asignacion=t_ef.id_asignacion)
                   WHERE t_au.id_sede=$id_sede AND t_ef.nombre='$dia' AND t_a.id_periodo=$id_periodo";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        function get_asignacion_definitiva ($id_asignacion){
+            $sql="SELECT t_a.*, t_au.nombre as aula, t_d.nombre as dia_semana, 
+                         'Definitiva' as tipo
+                    FROM asignacion t_a 
+                    JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
+                    JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
+                    JOIN asignacion_definitiva t_d ON (t_a.id_asignacion=t_d.id_asignacion)
+                    WHERE t_a.id_asignacion=$id_asignacion";
+            
+            return toba::db('rukaja')->consultar($sql);
+            
+        }
+        
+        function get_asignacion_periodo ($id_asignacion){
+            $sql="SELECT t_a.*, t_au.nombre as aula, t_p.*, 'Periodo' as tipo
+                  FROM asignacion t_a 
+                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
+                  JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
+                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
+                  WHERE t_a.id_asignacion=$id_asignacion";
+                
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        function get_dias_periodo ($id_asignacion){
+            $sql="SELECT DISTINCT t_f.nombre
+                  FROM esta_formada t_f 
+                  WHERE t_f.id_asignacion=$id_asignacion";
             
             return toba::db('rukaja')->consultar($sql);
         }

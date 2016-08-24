@@ -161,6 +161,14 @@ class dt_solicitud extends toba_datos_tabla
             return toba::db('rukaja')->consultar($sql);
         }
         
+        function get_lista_dias ($id_solicitud){
+            $sql="SELECT DISTINCT nombre
+                  FROM multi_evento 
+                  WHERE t_me.id_solicitud=$id_solicitud";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
         function get_datos_multi ($id_solicitud){
             $sql="SELECT fecha_fin
                   FROM solicitud_multi_evento 

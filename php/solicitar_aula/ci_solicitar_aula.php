@@ -547,7 +547,8 @@ class ci_solicitar_aula extends toba_ci
          * En esta funcion agregamos la logica necesaria para cargar el formulario con datos por defecto.
          */
 	function conf__formulario(toba_ei_formulario $form)
-	{           
+	{   
+            //Esta variable se carga con valores cuando queremos hacer ediciones.
             if(count($this->s__datos_solicitud)==0){
                 /** Cargamos informacion en la seccion 'datos iniciales'. **/
                 $form->ef('fecha_seleccionada')->set_estado(date('d-m-Y', strtotime($this->s__fecha_consulta)));
@@ -564,10 +565,13 @@ class ci_solicitar_aula extends toba_ci
                     $form->ef('fecha_fin')->set_estado(date('d-m-Y', strtotime($this->s__datos_multi[0])));
                     $form->ef('dias')->set_estado($this->s__datos_multi[1]);
                     $form->ef('dias')->set_solo_lectura();
+                }else{
+                    $form->desactivar_efs(array('dias', 'fecha_fin'));
                 }
                 
                 $this->s__accion="registrar";
             }else{
+                //Si tebemos eltos. en s__datos_solicitud es porque queremos hacer una edicion.
                 $form->ef('dias')->set_solo_lectura();
                 //Cargamos datos por defecto para editar solicitudes.
                 switch($this->s__datos_solicitud['tipo_edicion']){
@@ -725,6 +729,13 @@ class ci_solicitar_aula extends toba_ci
             $this->s__datos_solicitud['hora_fin']=$this->s__datos_cuadro['hora_fin'];
             $this->s__datos_solicitud['fecha']=$this->s__datos_cuadro['fecha'];
             $this->s__datos_solicitud['capacidad']=$this->s__datos_cuadro['capacidad'];
+            
+            if(strcmp($this->s__tipo, "multi")==0){
+                $dias=$this->dep('datos')->tabla('solicitud')->get_lista_dias($this->s__datos_solicitud['id_solicitud']);
+                $fecha_fin=$this->dep('datos')->tabla('solicitud')->get_datos_multi($this->s__datos_solicitud['id_solicitud']);
+                $this->s__datos_solicitud['fecha_fin']="";
+                $this->s__datos_solicitud['dias']="";
+            }
         }
         
         //------------------------------------------------------------------------------------------

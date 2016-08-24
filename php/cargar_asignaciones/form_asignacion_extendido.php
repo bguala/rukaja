@@ -43,6 +43,8 @@ class form_asignacion_extendido extends toba_ei_formulario
             return true;
         }
         
+        
+        
         {$this->objeto_js}.evt__dia_semana__validar = function () {
             return this.disparar_llamada_ajax();
         }
@@ -59,6 +61,7 @@ class form_asignacion_extendido extends toba_ei_formulario
                                     this.ef('fecha_fin').set_obligatorio(false);
                                     this.ef('dias').ocultar();
                                     this.ef('dias').set_obligatorio(false);
+                                    
                                     this.ef('tipo').set_estado('Periodo');
                                     this.ef('tipo').set_solo_lectura(true);
                                     break;

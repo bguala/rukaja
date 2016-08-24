@@ -13,6 +13,7 @@ class dt_organizacion extends toba_datos_tabla
 		ORDER BY nombre";
 		return toba::db('rukaja')->consultar($sql);
 	}
+
         
         function get_organizaciones ($where){
             
@@ -36,5 +37,4 @@ class dt_organizacion extends toba_datos_tabla
         }
 
 }
-
 ?>
