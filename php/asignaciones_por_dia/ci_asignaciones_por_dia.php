@@ -31,13 +31,16 @@ class ci_asignaciones_por_dia extends toba_ci
 
         protected $s__id_sede;
 
-
+        
+        //-----------------------------------------------------------------------------------
         //---- Pant Edicion -----------------------------------------------------------------
-	//---- Formulario -------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------
+        
+        //---- Formulario -------------------------------------------------------------------
 
 	function conf__formulario(toba_ei_formulario $form)
 	{
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
         }
 
 	function evt__formulario__alta($datos)
@@ -47,7 +50,7 @@ class ci_asignaciones_por_dia extends toba_ci
             //$excel=new PHPExcel();
             $this->s__datos=$datos;
             $this->s__hoja_activa=0;
-            //print_r($datos);
+            
             //$this->iniciar_proceso($datos, $excel);
             $this->set_pantalla('pant_reporte');
             //creamos un archivo temporal, con el objeto phpexcel ya configurado
@@ -84,6 +87,8 @@ class ci_asignaciones_por_dia extends toba_ci
             else{
                 $sin_asignaciones=FALSE;
                 $dias_sin_asig="";
+                //Recorremos los dias seleccionados por el usuario. La idea es por cada dia generar el reporte
+                //adecuado.
                 foreach ($dias as $dia){
                     //obtenemos las asignaciones para armar el reporte.
                     $asignaciones=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_dia($id_periodo['id_periodo'], $dia);                
@@ -375,7 +380,7 @@ class ci_asignaciones_por_dia extends toba_ci
          * Esta funcion agrega las asignaciones en el cuerpo principal del reporte. 
          */
         function completar_reporte (PHPExcel $excel){
-            //print_r($this->s__asignaciones);
+            
             //debemos tener cuidado con el formato de la hora. Desde postgres extraemos la hora con el siguiente
             //formato hh:mm:ss, ejemplo 08:00:00.
             //Si en posicion_hora guardamos hh:mm la comparacion no es exitosa por lo tanto el reporte no se 
@@ -386,13 +391,13 @@ class ci_asignaciones_por_dia extends toba_ci
                 $fila=$this->s__posicion_aula[$asignacion['id_aula']];
                 $primer_columna=$this->s__posicion_hora[$asignacion['hora_inicio']];
                 $segunda_columna=$this->s__posicion_hora[$asignacion['hora_fin']];
-                //print_r(" Esta es la primer columna : $primer_columna, y esta es una columna : {$this->s__posicion_hora[$hora_inicio]}");exit();
-                //print_r($this->s__asignaciones);exit();
+                
+                
                 $columna_anterior=$this->buscar_columna_anterior($segunda_columna);
                 $excel->getActiveSheet()->mergeCells("$primer_columna$fila:$columna_anterior$fila");
-                //print_r("$primer_columna$fila:$segunda_columna$fila");
+                
                 $excel->getActiveSheet()->getCell("$primer_columna$fila")->setDataType(PHPExcel_Cell_DataType::TYPE_STRING);
-                //print_r("esta es la primer columna del mergue : $primer_columna$fila, y este es el dato {$asignacion['dato_celda']} \n");
+                
                 //agregamos un color de fondo
                 $excel->getActiveSheet()->getStyle("$primer_columna$fila")->getFill()->applyFromArray(
                        array( 

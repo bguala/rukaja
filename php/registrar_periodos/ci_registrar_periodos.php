@@ -8,7 +8,7 @@ class ci_registrar_periodos extends toba_ci
 
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
             $cuadro->set_datos($this->dep('datos')->tabla('periodo')->get_listado(date('Y'), $this->s__id_sede));
 	}
 

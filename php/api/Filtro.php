@@ -3,7 +3,7 @@
 /*
  * Esta clase permite filtrar horarios disponibles. Se aplica sobre datos que poseen :
  * (capacidad, hora_inicio, hora_fin).
- * Se usa en las operaciones Calendario Comahue y Generar Solicitud.
+ * Se usa en las operaciones Calendario Comahue y Solicitar Aula.
  */
 class Filtro {
     

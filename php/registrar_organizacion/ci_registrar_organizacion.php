@@ -9,7 +9,7 @@ class ci_registrar_organizacion extends toba_ci
 	}
 
 	function evt__cuadro__seleccion($datos)
-	{//print_r($datos);exit();
+	{
 		$this->dep('datos')->tabla('organizacion')->cargar($datos);
 	}
 
@@ -35,7 +35,7 @@ class ci_registrar_organizacion extends toba_ci
          * Baja: el arreglo $datos solamnete contiene el atributo apex_ei_analisis_fila con la letra B.
          */
         function evt__formulario__aceptar ($datos){
-            print_r($datos);
+            
             try{
                 foreach($datos as $key=>$organizacion){
                     $accion=$organizacion['apex_ei_analisis_fila'];
@@ -49,7 +49,7 @@ class ci_registrar_organizacion extends toba_ci
                                    break;
 
                         case 'M' : $organizacion_cargada=$this->dep('datos')->tabla('organizacion')->get();
-                                   print_r($organizacion_cargada);
+                                   
                                    //Despues de presionar el boton 'Editar' del cuadro 'organizaciones existentes' 
                                    //el datos_tabla queda cargado con la informacion que podemos editar desde el 
                                    //form_ml.
@@ -60,7 +60,7 @@ class ci_registrar_organizacion extends toba_ci
                                    break;
 
                         case 'B' : $organizacion_cargada=$this->dep('datos')->tabla('organizacion')->get();
-                                   print_r($organizacion_cargada);
+                                  
                                    //Despues de presionar el boton 'Editar' del cuadro 'organizaciones existentes' 
                                    //el datos_tabla queda cargado con la informacion que podemos eliminar desde el 
                                    //form_ml.
@@ -71,42 +71,11 @@ class ci_registrar_organizacion extends toba_ci
                                    break;
                     }
                 }
-            }catch(toba_error $e){
-                //print_r($e);
+            }catch(toba_error $ex){
+                //Capturamos la excepcion generada por el objeto datos_tabla.
             }
         }
         
-	function evt__formulario__alta($datos)
-	{
-            print_r($datos);exit();
-		$this->dep('datos')->tabla('organizacion')->set($datos);
-		$this->dep('datos')->sincronizar();
-		$this->resetear();
-	}
-
-	function evt__formulario__modificacion($datos)
-	{
-		$this->dep('datos')->tabla('organizacion')->set($datos);
-		$this->dep('datos')->sincronizar();
-		$this->resetear();
-	}
-
-	function evt__formulario__baja()
-	{
-		$this->dep('datos')->eliminar_todo();
-		$this->resetear();
-	}
-
-	function evt__formulario__cancelar()
-	{
-		$this->resetear();
-	}
-
-	function resetear()
-	{
-		$this->dep('datos')->resetear();
-	}
-
 }
 
 ?>

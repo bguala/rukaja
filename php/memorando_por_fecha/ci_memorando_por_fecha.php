@@ -14,8 +14,7 @@ class ci_memorando_por_fecha extends toba_ci
     
         function conf__calendario (toba_ei_calendario $calendario){
             
-            $nombre_usuario=toba::usuario()->get_id();
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
                         
             $this->pantalla()->tab('pant_memorando')->desactivar();
             $calendario->set_seleccionar_solo_dias_pasados(FALSE);
@@ -122,7 +121,7 @@ class ci_memorando_por_fecha extends toba_ci
             $asunto="Asunto : Dictado del día $dia {$this->s__fecha_reporte} \n\n";
             $pdf->ezText(utf8_d_seguro($asunto), 8);
             
-            //es otra variante para obtener la fecha actual
+            //Es otra variante para obtener la fecha actual.
             $fecha=getdate();
             $mes_actual=$this->obtener_mes($fecha['mon']);
             $fecha_actual="Neuquén, {$fecha['mday']} de $mes_actual de {$fecha['year']} \n";
@@ -154,7 +153,7 @@ class ci_memorando_por_fecha extends toba_ci
                 'yPos' => 'centre',
             );
             
-            //definimos las columnas de una tabla
+            //Definimos las columnas de la tabla.
             $columnas=array(
                 'finalidad' => 'Materia/Curso/Evento',
                 'hora_inicio' => 'Hora Inicio',

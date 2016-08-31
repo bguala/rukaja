@@ -1,7 +1,3 @@
---hay que agregar el id_sede porque cada ua elabora su propio calendario.
-
---hay que arreglar el problema de las dos fuentes de datos. Esto genera cambios en las consultas donde
---estan involucrados los docentes.
 
 CREATE TABLE IF NOT EXISTS unidad_academica (
 
@@ -51,8 +47,8 @@ CONSTRAINT pk_tipo PRIMARY KEY (id_tipo)
 
 );
 
---A=Aula comun identifica aulas con pizarra y pupitre para dar clases
---B=Eventos identifica a salones sin pupitres como el salón azul
+--A=Aula comun identifica aulas con pizarra y pupitre para dar clases.
+--B=Eventos identifica a salones sin pupitres como el salón azul.
 --C=Laboratorios identifica salas de máquinas(con computadoras).
 
 INSERT INTO tipo (id_tipo,descripcion) VALUES
@@ -66,7 +62,7 @@ CREATE TABLE IF NOT EXISTS aula (
 id_aula serial NOT NULL,
 capacidad integer,
 nombre character varying (20),
-ubicacion character varying (150), -- Para indicar la ubicacion del aula
+ubicacion character varying (150), -- Para indicar la ubicacion del aula.
 id_tipo character varying (2),
 id_sede serial,
 eliminada boolean,
@@ -94,6 +90,9 @@ INSERT INTO aula (id_aula,capacidad,nombre,ubicacion,id_tipo,id_sede) VALUES
 (14, 80, '24', 'Se encuentra ubicada en el edificio del Rectorado o Administración Central', 'A', 1),
 (15, 200, '25', 'Se encuentra ubicada en el edificio del Rectorado o Administración Central', 'A', 1),
 (16, 60, '26', 'Se encuentra ubicada en el edificio del Rectorado o Administración Central', 'A', 1);
+
+--Reseteamos la secuencia para evitar problemas de PK duplicadas.
+SELECT setval('aula_id_aula_seq', 16, 't');
 
 CREATE TABLE IF NOT EXISTS dia (
 
@@ -133,6 +132,7 @@ nombre_usuario character varying (35),
 id_sede serial,
 nombre character varying(35),
 apellido character varying(35),
+correo_electronico character varying(50),
 CONSTRAINT pk_admin PRIMARY KEY (id_administrador),
 CONSTRAINT fk_sede FOREIGN KEY (id_sede) REFERENCES sede(id_sede) 
 
@@ -248,6 +248,11 @@ CREATE TABLE IF NOT EXISTS asignacion (
   tipo_asignacion character varying(15),
   id_periodo integer,
   id_responsable_aula integer,
+  nombre character varying,
+  
+  apellido character varying,
+
+  legajo integer,
 
   CONSTRAINT pk_asignacion PRIMARY KEY (id_asignacion),
   CONSTRAINT fk_asignacion_aula FOREIGN KEY (id_aula)
@@ -306,7 +311,7 @@ CREATE TABLE IF NOT EXISTS esta_formada
 CREATE TABLE IF NOT EXISTS solicitud (
 
   id_solicitud serial NOT NULL,
-  nombre character varying(70),  --Contiene nombre-apelido de docente o nombre de una org.
+  nombre character varying(70),  --Contiene nombre-apelido del docente o el nombre de una org.
   --apellido character varying(35), Eliminado, pasa a estar contenido en nombre.
   tipo_agente character varying (12), --Agregamos el tipo de agente para distinguir entre docente u org.
   fecha date,
@@ -315,7 +320,7 @@ CREATE TABLE IF NOT EXISTS solicitud (
   hora_inicio time without time zone,
   hora_fin time without time zone,
   tipo_asignacion character varying (20),
-  id_sede serial NOT NULL,
+  id_sede serial NOT NULL,       --Guardamos quien recibe el pedido de aula.
   estado character varying(12),
   id_responsable integer,
   id_aula integer,
@@ -356,6 +361,10 @@ id_asignacion serial NOT NULL,
 nro_doc character varying (20),
 tipo_doc character varying (12),
 id_docente integer NOT NULL,
+nombre character varying,
+
+apellido character varying,
+legajo integer,
 
 CONSTRAINT pk_catedra PRIMARY KEY (id_asignacion,id_docente),
 CONSTRAINT fk_catedra_asignacion FOREIGN KEY (id_asignacion) REFERENCES asignacion(id_asignacion)
@@ -374,10 +383,10 @@ CONSTRAINT pk_organizacion PRIMARY KEY (id_organizacion)
 
 );
 
---instalamos el modulo dblink para relacionar bases de datos a traves de una misma consulta.
+--Instalamos el modulo dblink para relacionar bases de datos a traves de una misma consulta.
 --create extension dblink;
 
---vista relacionada a la tabla docenete de la base de datos mocovi.
+--Vista relacionada a la tabla docente de la base de datos mocovi.
 --create view docentes as  
 --	select * from dblink('host=localhost port=5432 dbname=mocovi user=postgres password=brunoguala', 'select * from docente') as 
 

@@ -41,27 +41,16 @@ class ci_modificar_aula extends toba_ci
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{
                 if($this->s__contador == 0){
-//                    $nombre_usuario=toba::usuario()->get_id();
-//                    $sql="SELECT t_ua.descripcion, t_s.id_sede FROM administrador t_a 
-//                          JOIN sede t_s ON (t_s.id_sede=t_a.id_sede) 
-//                          JOIN unidad_academica t_ua ON (t_s.sigla=t_ua.sigla)
-//                          WHERE t_a.nombre_usuario=$nombre_usuario";
-//                    $facultad=toba::db()->consultar($sql);
-//                    $this->s__facultad=$facultad[0]['descripcion'];
-                    //$this->s__id_sede=$facultad[0]['id_sede'];
                     
-                      //$this->s__facultad='Administración Central';
-                      //$this->s__facultad=  utf8_decode($this->s__facultad);
-                      $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
-                      $this->s__facultad=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica ($this->s__id_sede);
+                    $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
+                    $this->s__facultad=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica ($this->s__id_sede);
+                    
                 }
                 $cuadro->set_titulo("Listado de aulas de ".$this->s__facultad[0]['establecimiento']);
                 if(isset($this->s__where)){
-                    //print_r("Entra por get_listado");
                     $cuadro->set_datos($this->dep('datos')->tabla('aula')->get_listado(" ({$this->s__where}) AND (t_a.id_sede = {$this->s__id_sede})"));
                 }
                 else{
-                    //print_r("Entra por get_aulas");
                     $cuadro->set_datos($this->dep('datos')->tabla('aula')->get_aulas($this->s__id_sede));
                 }
 	}
@@ -134,15 +123,10 @@ class ci_modificar_aula extends toba_ci
          */
 	function evt__formulario__baja($datos)
 	{
-//		$this->dep('datos')->eliminar_todo();
-//                $sql="UPDATE aula SET eliminada=TRUE WHERE id_aula=$this->s__id_aula";
-//                toba::db('gestion_aulas')->ejecutar($sql);
                 $datos['eliminada']=TRUE;
                 $datos['id_sede']=$this->s__id_sede;
                 $datos['id_aula']=$this->s__id_aula;
-                //print_r($datos);exit();
-                //print_r($this->dep('datos')->tabla('aula')->get());
-                //$this->dep('datos')->tabla('aula')->cargar(array('id_aula' => $this->s__id_aula));
+                
                 $this->dep('datos')->tabla('aula')->set($datos);
                 $this->dep('datos')->tabla('aula')->sincronizar();
 		$this->dep('datos')->tabla('aula')->resetear();
@@ -191,17 +175,13 @@ class ci_modificar_aula extends toba_ci
                 $fp=  fopen($aula['imagen']['tmp_name'], 'rb');
                        
                 $this->dep('datos')->tabla('aula')->set_blob('imagen', $fp);
-//              $aula['imagen']=$fp;
-//              print_r($aula);
-                //print_r("Esta es la informacion que posee el datos_tabla : <br><br>");
-                //print_r($this->dep('datos')->tabla('aula')->get_filas());
+                
             }
             else{
                 if(isset($aula['imagen']))
                     $this->s__error[]=$aula['nombre'];
             }
-            
-            //print_r($this->dep('datos')->tabla('aula')->get_id_filas());
+                        
             $this->dep('datos')->tabla('aula')->sincronizar();
             $this->dep('datos')->tabla('aula')->resetear();
         }

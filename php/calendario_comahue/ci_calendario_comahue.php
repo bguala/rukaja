@@ -65,11 +65,10 @@ class ci_calendario_comahue extends toba_ci
         
         function conf__formulario (toba_ei_formulario $form){
             //Obtenemos la sede del usuario logueado en el sistema.
-            $nombre_usuario=toba::usuario()->get_id();
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
-           
-            //$this->s__id_sede=1;
             
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
+           
+                       
             $fecha="{$this->s__fecha_seleccionada['dia']}-{$this->s__fecha_seleccionada['mes']}-{$this->s__fecha_seleccionada['anio']}";
             $dia_numerico=date('N', strtotime($fecha));
             $this->s__dia_consulta=$this->obtener_dia($dia_numerico);
@@ -148,8 +147,8 @@ class ci_calendario_comahue extends toba_ci
                 
                 $filtro=new Filtro($this->s__horarios_disponibles);
                 $this->s__datos_filtro=$filtro->filtrar($datos);
-                //print_r("<br><br><br> Estos son los datos filtrados en evt__filtro__filtrar : <br><br>");
-                //print_r($datos_filtro);
+                
+                
                 //$this->dep('cuadro_horarios_disponibles')->set_datos($datos_filtro);
             }
             else{
@@ -339,7 +338,7 @@ class ci_calendario_comahue extends toba_ci
         function obtener_asignaciones (){
             $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
             $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);            
-            print_r($periodo);
+            
             $this->s__asignaciones=$this->procesar_periodo($periodo, 'hr');
             
             if(count($this->s__asignaciones)==0){
@@ -378,7 +377,6 @@ class ci_calendario_comahue extends toba_ci
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
             }
             
-            //print_r($this->s__horarios_disponibles);
             toba::memoria()->set_dato_operacion(0, $this->s__fecha_consulta);
             
         }
@@ -397,10 +395,10 @@ class ci_calendario_comahue extends toba_ci
                     case 'Cuatrimestre' : if(strcmp($accion, 'hd')==0){
                                               $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
-                                          else{print_r($this->s__fecha_consulta);
+                                          else{
                                               $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_definitivas_por_fecha_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo']);
                                               $periodos=$this->dep('datos')->tabla('asignacion')->get_asignaciones_periodo_por_fecha_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
-                                              //print_r($periodos);
+                                              
                                           }
                                           break;
                                       
@@ -419,17 +417,16 @@ class ci_calendario_comahue extends toba_ci
             
             if((count($cuatrimestre)>0) && (count($examen_final)>0)){
                 if(strcmp($accion, 'hd')==0){
-                    //debemos iniciar descarte y unificacion
+                    //Debemos iniciar descarte y unificacion.
                     //asig_definitivas = cuatrimestre, asig_periodo = examen final.
-                    $this->descartar_asignaciones_definitivas($examen_final, &$cuatrimestre);
+                    //$this->descartar_asignaciones_definitivas($examen_final, &$cuatrimestre);
 
                     $this->unificar_asignaciones(&$examen_final, $cuatrimestre);
 
                     return $examen_final;
                 }
                 else{
-                    //debemos unificar periodo con examen final
-                    print_r("Entra por 1");
+                    //Debemos unificar periodo con examen final.
                     $this->unificar_asignaciones(&$periodos, $examen_final);
                     $this->s__asignaciones_periodo=$periodo;
                     return $cuatrimestre;
@@ -442,9 +439,8 @@ class ci_calendario_comahue extends toba_ci
                     return $cuatrimestre;
                 }
                 else{
-                    //devolvemos cuatrimestre y guardamos en una variable de sesion el resultado obtenido en 
-                    //periodo
-                    print_r("Entra por 2");
+                    //Devolvemos cuatrimestre y guardamos en una variable de sesion el resultado obtenido en 
+                    //periodo.
                     $this->s__asignaciones_periodo=$periodos;
                     return $cuatrimestre;
                 }
@@ -452,11 +448,10 @@ class ci_calendario_comahue extends toba_ci
             
             if((count($cuatrimestre)==0) && (count($examen_final)>0)){
                 if(strcmp($accion, 'hd')==0){
-                    //devolvemos solo examen final
+                    //Devolvemos solo examen final.
                     return $examen_final;
                 }
                 else{
-                    print_r("Entra por 3");
                     $this->s__asignaciones_periodo=$examen_final;
                     return $cuatrimestre;
                 }
@@ -466,8 +461,8 @@ class ci_calendario_comahue extends toba_ci
                 if(strcmp($accion, 'hr')==0){
                     $this->s__asignaciones_periodo=$periodos;
                 }
-                print_r("Entra por 4");
-                //devolvemos vacio
+                
+                //Devolvemos vacio.
                 return array();
                                
             }

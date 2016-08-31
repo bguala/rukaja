@@ -4,11 +4,7 @@ class ci_seleccionar_persona extends toba_ci
         protected $s__personas;
         
         //---- Filtro -----------------------------------------------------------------------
-        
-        function conf__filtro (toba_ei_filtro $filtro){
-            
-        }
-        
+                
         function evt__filtro__filtrar (){
             $this->s__personas=$this->dep('datos')->tabla('persona')->get_docentes($this->dep('filtro')->get_sql_where());
         }
@@ -28,6 +24,9 @@ class ci_seleccionar_persona extends toba_ci
             $this->dep('datos')->cargar($datos);
 	}
         
+        /*
+         * Este formulario nos ayuda a redimensionar el tamanio de la ventana emergente que implementa un pop-up.
+         */
         function conf__form (toba_ei_formulario $form){
             $form->colapsar();
         }

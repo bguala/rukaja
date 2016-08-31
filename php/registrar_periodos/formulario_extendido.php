@@ -16,7 +16,6 @@ class formulario_extendido extends toba_ei_formulario {
                                       this.ef('nombre').ocultar();
                                       this.ef('turno').mostrar();
                                       this.ef('numero').mostrar();
-                                      //this.ef('num_llamado').set_etiqueta('LLamado');
                                       break;
                                       
                 case 'Curso de Ingreso' : this.ef('turno').ocultar();

@@ -13,27 +13,24 @@ class ci_cargar_asignaciones extends toba_ci
         protected $s__contador;
         protected $s__tipo;                             //guardamos el tipo de asignacion que elige el usuario
         protected $s__dia;                              //guardamos el dia elegido por el usuario en caso de seleccionar tipo Definitiva
-        protected $s__nro_doc;                          //guardamos el nro_doc de la persona para cargar el formulario form_datos
-        protected $s__tipo_doc;                         //guardamos el tipo_doc de la persona para cargar el formulario form_datos
-        protected $s__nombre;
-        protected $s__apellido;
+        protected $s__datos_responsable;
         protected $s__datos_cuadro;                     //guarda una lista de personas (docentes y no docentes), se utiliza para cargar cuadro_personas de la pantalla pant_persona
         protected $s__datos_cuadro_asig;                //para cargar todas las asignaciones de un docente en un cuatrimestre
-        protected $s__error;                            //guardamos los datos que generan conflictos en el sistema
+        
         protected $s__accion;                           //guardamos el tipo de accion elegida en los eventos del cuadro y en el boton cargar asignaciones del filtro
         protected $s__datos_cuadro_asignaciones;        //para cargar el cuadro de la pantalla pant_edicion
         protected $s__id_asignacion;                    //guardamos el id del registro seleccionado en la pantalla pant_edicion
         protected $s__datos_form;                       //guardamos datos para cargar al formulario form_asignacion
         protected $s__where;                            //guardamos el where que genera el filtro de la pantalla pant_edicion
         protected $s__horarios_disponibles;
-        protected $s__responsable_de_aula;
+        
         protected $s__aula_disponible;                  //guarda los datos enviados desde la operacion "aulas disponibles"
         protected $s__fechas=array();                   //guarda una lista de fechas asociadas a una asignacion_periodo
         protected $s__docentes=array();                 //guarda una listas de docentes filtrados para cargar el cuadro_docentes en la pantalla pant_catedra
         protected $s__datos_form_asignacion;            //guarda los datos cargados en el form_asignacion, sirve para mantener eñ estado del formulario cuando nos cambiamos a las pantallas pant_extra o pant_catedra
         protected $s__docentes_seleccionados=array();   //contiene los miembros del equipo de catedra
         protected $s__cargar_fechas;
-        protected $s__calendario;
+        
         protected $s__id_sede;
         protected $s__fecha_consulta;
         protected $s__dia_consulta;
@@ -53,8 +50,8 @@ class ci_cargar_asignaciones extends toba_ci
         );
         
         //#5252C8
-        //secuencia de asignacion_periodo : asignacion_periodo_id_asignacion_seq
-        //secuencia de esta_formada :  esta_formada_id_asignacion_seq
+        //Secuencia de asignacion_periodo : asignacion_periodo_id_asignacion_seq
+        //Secuencia de esta_formada :  esta_formada_id_asignacion_seq
         
         //-----------------------------------------------------------------------------------
         //---- Pant Edicion -----------------------------------------------------------------
@@ -75,12 +72,11 @@ class ci_cargar_asignaciones extends toba_ci
             if(isset($datos_ad['id_aula'])){
                 $this->s__accion="Vinculo";
                 $this->s__aula_disponible=$datos_ad;
-                //print_r($datos_ad);
-                //Eliminamos la informacion guardada en el arreglo $_SESSION
+                
+                //Eliminamos la informacion guardada en el arreglo $_SESSION.
                 toba::memoria()->limpiar_memoria();
                 
-            }else
-                print_r("Ejecutamos sin problemas ini operacion");
+            }
             
         }
                 
@@ -90,7 +86,6 @@ class ci_cargar_asignaciones extends toba_ci
          * Filtro para realizar busquedas de asignaciones en el sistema para el periodo actual.
          */
         function conf__filtro (toba_ei_filtro $filtro){
-            print_r("Se ejecuta conf filtro <br>");
             $this->pantalla()->tab('pant_edicion')->activar();
             $this->pantalla()->tab('pant_asignacion')->desactivar();
             $this->pantalla()->tab('pant_extra')->desactivar();
@@ -98,15 +93,13 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         function evt__filtro__filtrar ($datos){
-            print_r("<br><br>Este es el contenido de datos: ");print_r($datos);
+            
             if(count($datos)>0){
-                $this->s__where=$this->dep('filtro')->get_sql_where('OR'); 
-                print_r("<br><br>Y este es el contenido del where: <br><br>");print_r($this->s__where);
+                $this->s__where=$this->dep('filtro')->get_sql_where('OR');    
             }
             
         }
-        
-        
+                
         //---- Cuadro -----------------------------------------------------------------------
         
         /*
@@ -116,7 +109,7 @@ class ci_cargar_asignaciones extends toba_ci
             if(isset($this->s__where)){
                 $cuadro->descolapsar();
                 //Obtenemos la sede para el usuario logueado.
-                $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+                $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
                 
                 //Usamos la fecha actual para buscar periodos en el sistema.
                 $fecha=date('Y-m-d');
@@ -135,10 +128,9 @@ class ci_cargar_asignaciones extends toba_ci
             $this->s__accion="Editar";
             $this->s__id_asignacion=$datos['id_asignacion'];
             //Para obtener las asignaciones de un docente.
-            print_r("<br><br>Este es el contenido de datos: ");print_r($datos);
-            
+                        
             $this->obtener_asignacion($datos);
-            //exit();
+            
             //$this->s__nro_doc=$datos['nro_doc'];
             //$this->s__tipo_doc=$datos['tipo_doc'];
             
@@ -157,7 +149,7 @@ class ci_cargar_asignaciones extends toba_ci
         function obtener_asignacion ($datos){
             switch($datos['tipo_asignacion']){
                 case 'CURSADA'        : $asignacion_definitiva=$this->dep('datos')->tabla('asignacion')->get_asignacion_definitiva($datos['id_asignacion']);
-                                        print_r($asignacion_definitiva);
+                                        
                                         $this->s__edicion=$asignacion_definitiva;
                                         $this->s__tipo="Definitiva";
                                         $this->s__id_docente=$asignacion_definitiva[0]['id_responsable_aula'];
@@ -168,11 +160,11 @@ class ci_cargar_asignaciones extends toba_ci
                 
                 case 'EVENTO'         : 
                 case 'CONSULTA'       : $asignacion_periodo=$this->dep('datos')->tabla('asignacion')->get_asignacion_periodo($datos['id_asignacion']);
-                                        print_r($asignacion_periodo);
+                                        
                                         $this->s__edicion=$asignacion_periodo;
                                         $this->s__tipo="Periodo";
                                         $this->s__id_docente=$asignacion_periodo[0]['id_responsable_aula'];
-                                        print_r("<br><br>Este es el id_docente: ");print_r($this->s__id_docente);
+                                        
                                         break;
             }
         }
@@ -189,23 +181,7 @@ class ci_cargar_asignaciones extends toba_ci
 //            $this->s__responsable_de_aula=$datos['responsable'];
             $this->set_pantalla('pant_asignacion');
         }
-        
-//        function evt__cuadro__confirmar ($datos){
-//            $this->s__accion="Confirmar";
-//            $this->s__id_asignacion=$datos['id_asignacion'];
-//            $this->s__tipo=$datos['tipo'];
-//            
-//            $this->set_pantalla('pant_asignacion');
-//        }
-//        
-//        function evt__cuadro__cambiar ($datos){
-//            $this->s__accion="Cambiar";
-//            $this->s__id_asignacion=$datos['id_asignacion'];
-//            $this->s__tipo=$datos['tipo'];
-//
-//            $this->set_pantalla('pant_asignacion');
-//        }
-        
+                
         /*
          * Devuelve todos los dias de la semana para cargar el combo tipo 
          */
@@ -237,7 +213,7 @@ class ci_cargar_asignaciones extends toba_ci
             //o los que contiene a la misma.
             $fecha=date('Y-m-d');
             $anio_lectivo=date('Y');
-            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
             switch($tipo_asignacion){
                 case 'CURSADA'        : 
                 case 'EXAMEN PARCIAL' :
@@ -287,7 +263,7 @@ class ci_cargar_asignaciones extends toba_ci
             //o los que contiene a la misma.
             $fecha=date('Y-m-d');
             $anio_lectivo=date('Y');
-            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            $id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
             
             $sql_1="SELECT t_p.id_periodo,
                            t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
@@ -345,7 +321,6 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Cuadro Personas --------------------------------------------------------------
 	function conf__cuadro_personas (toba_ei_cuadro $cuadro)
 	{
-            //$cuadro->set_datos($this->dep('datos')->tabla('asignacion')->get_listado());
             if(isset($this->s__datos_cuadro)){
                 $cuadro->set_titulo("Listado de personas u organizaciones");
                 //esta variable se carga en el evento filtrar de filtro_busqueda
@@ -359,10 +334,17 @@ class ci_cargar_asignaciones extends toba_ci
 
 	function evt__cuadro_personas__seleccionar ($datos)
 	{
-            //print_r($datos);exit();
-            $this->s__nro_doc=$datos['nro_doc'];
-            $this->s__tipo_doc=$datos['tipo_doc'];
-            $this->s__responsable_de_aula=$datos['nombre'].' '.$datos['apellido'];
+            
+            //$this->s__nro_doc=$datos['nro_doc'];
+            //$this->s__tipo_doc=$datos['tipo_doc'];
+            if(strcmp($datos['tipo_agente'], 'Org')==0){
+                //Anulamos el apellido (-----) para no concatenarlo con el nombre de una organizacion en 
+                //form_datos.
+                $datos['apellido']=' ';
+            }
+            $this->s__datos_responsable=$datos;
+            //$this->s__responsable_de_aula=$datos['nombre'].' '.$datos['apellido'];
+            //Guardamos el id_docente o el id_organizacion. 
             $this->s__id_docente=$datos['id_responsable_aula'];
             //$this->obtener_asignaciones();
             $this->set_pantalla('pant_asignacion');
@@ -371,12 +353,10 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Filtro Busqueda -------------------------------------------------------------------
         
         function conf__filtro_busqueda (toba_ei_filtro $filtro){
-            //print_r("Este es el perfil de datos: <br>");
-            //print_r(toba::usuario()->get_perfil_datos());
-            //$filtro->generar_html(); nos genera un nuevo ei pero desplazado
+             
             $filtro->get_sql_clausulas();
-            print_r("Se ejecuta conf filtro busqueda <br>");
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado(toba::usuario()->get_id());
+            
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
             
         }
         
@@ -404,10 +384,8 @@ class ci_cargar_asignaciones extends toba_ci
                 if(!isset($this->s__aula_disponible)){
                     $this->s__accion="Registrar";
                 }
-                
-                //$where=$this->dep('filtro_busqueda')->get_sql_where('OR');
-                print_r($this->dep('filtro_busqueda')->get_sql_clausulas());
-                
+                               
+                                
                 $atributos_filtro=$this->dep('filtro_busqueda')->get_sql_clausulas();
                 $sql_docente="";
                 //Creamos nuestro propio where sql. 
@@ -448,9 +426,11 @@ class ci_cargar_asignaciones extends toba_ci
         
         //---- Formulario ------------------------------------------------------------------------
         
-        //Nos permite registrar organizaciones en el sistema
+        /*
+         * Nos permite registrar organizaciones en el sistema. 
+         */
         function conf__formulario (toba_ei_formulario $form){
-            //otra forma de colapsar ei
+            //Otra forma de colapsar ei.
             if(($this->s__contador % 2)==0){
                 $form->colapsar();
             }
@@ -467,11 +447,15 @@ class ci_cargar_asignaciones extends toba_ci
             $this->dep('datos')->tabla('organizacion')->sincronizar();
             $this->dep('datos')->tabla('organizacion')->resetear();
                         
-            $this->s__nro_doc="******************";
-            $this->s__tipo_doc="******************";
+            //$this->s__nro_doc="******************";
+            //$this->s__tipo_doc="******************";
+            $this->s__datos_responsable['nro_doc']="******************";
+            $this->s__datos_responsable['tipo_doc']="******************";
             $this->s__id_docente=  recuperar_secuencia('organizacion_id_organizacion_seq');
-            $this->s__nombre=$datos['nombre'];
-            $this->s__apellido='';
+            //$this->s__nombre=$datos['nombre'];
+            //$this->s__apellido='';
+            $this->s__datos_responsable['nombre']=$datos['nombre'];
+            $this->s__datos_responsable['apellido']='';
             $this->set_pantalla('pant_asignacion');
         }
         
@@ -497,9 +481,9 @@ class ci_cargar_asignaciones extends toba_ci
 //            $form->ef('tipo')->set_estado($this->s__tipo);
             switch($this->s__accion){
                 case "Vinculo"   : 
-                case "Registrar" : $form->ef('responsable')->set_estado($this->s__responsable_de_aula);
-                                   $form->ef('nro_doc')->set_estado($this->s__nro_doc);
-                                   $form->ef('tipo_doc')->set_estado($this->s__tipo_doc);
+                case "Registrar" : $form->ef('responsable')->set_estado($this->s__datos_responsable['nombre'] . ' ' . $this->s__datos_responsable['apellido']);
+                                   $form->ef('nro_doc')->set_estado($this->s__datos_responsable['nro_doc']);
+                                   $form->ef('tipo_doc')->set_estado($this->s__datos_responsable['tipo_doc']);
                                    break;               
                 case "Borrar"    :
                 case "Editar"    :
@@ -507,14 +491,7 @@ class ci_cargar_asignaciones extends toba_ci
                 case "Cambiar"   : $form->set_datos($this->datos_responsable_de_aula());
                                    break;
             }
-            
-//            if(strcmp($this->s__tipo, 'Definitiva')==0){
-//                $form->ef('dia')->set_estado($this->s__dia);
-//            }
-//            else{
-//                $form->desactivar_efs('dia');
-//            }
-            
+                        
         }
         
         function datos_responsable_de_aula (){
@@ -571,10 +548,10 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Cuadro Asignaciones ----------------------------------------------------------------
         
         function conf__cuadro_asignaciones (toba_ei_cuadro $cuadro){
-            //este cuadro se debe actualizar por cada asignacion cargada
+            //Este cuadro se actualiza por cada asignacion cargada.
             $this->obtener_asignaciones();
             if(count($this->s__datos_cuadro_asig) > 0){
-                $cuadro->set_titulo("Asignaciones de {$this->s__responsable_de_aula} ");
+                $cuadro->set_titulo("Asignaciones de {$this->s__datos_responsable['nombre']} {$this->s__datos_responsable['apellido']}");
                 $cuadro->set_datos($this->s__datos_cuadro_asig);
             }
         }
@@ -582,7 +559,7 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Form Asignacion --------------------------------------------------------------------
         
         function conf__form_asignacion (toba_ei_formulario $form){
-            print_r($this->s__aula_disponible);
+            //Conservamos los datos cargados por el usuario si nos cambiamos a la pantalla catedra.
             if(count($this->s__datos_form_asignacion)>0){
                 $form->set_datos($this->s__datos_form_asignacion);
             }
@@ -612,7 +589,7 @@ class ci_cargar_asignaciones extends toba_ci
                                                             //$this->s__edicion[0]=$dia_semana;
                                                             
                                                             //$form->ef('dia_semana')->set_estado($dia_semana);
-                                                            $efs=array('fecha_inicio', 'fecha_fin', 'dias', 'tipo_asignacion', 'tipo');
+                                                            
                                                             //Cargamos lo justo y necesario para no daniar al formulario.
                                                             $datos=array(
                                                                 'tipo_asignacion' => $this->s__edicion[0]['tipo_asignacion'],
@@ -628,8 +605,9 @@ class ci_cargar_asignaciones extends toba_ci
                                                                 'cantidad_alumnos' => $this->s__edicion[0]['cantidad_alumnos'],
                                                                 'tipo' => "Definitiva"
                                                             );
-                                                            $form->set_datos($datos);
                                                             
+                                                            $form->set_datos($datos);
+                                                            $form->ef('tipo_asignacion')->set_solo_lectura();
                                                             //$form->set_solo_lectura($efs);
                                                             break;
                                                         
@@ -639,30 +617,30 @@ class ci_cargar_asignaciones extends toba_ci
                                                                                         break;
                                                                 
                                                                 case 'CONSULTA'       : 
-                                                                case 'EVENTO'         : 
+                                                                case 'EVENTO'         : $lista_dias=$this->dep('datos')->tabla('asignacion')->get_dias_periodo($this->s__edicion[0]['id_asignacion']);
+                                                                                        
+                                                                                        $datos=array(
+                                                                                            'tipo_asignacion' => $this->s__edicion[0]['tipo_asignacion'],
+                                                                                            'finalidad' => $this->s__edicion[0]['finalidad'],
+                                                                                            'descripcion' => $this->s__edicion[0]['descripcion'],
+                                                                                            'modulo' => $this->s__edicion[0]['modulo'],
+                                                                                            'id_periodo' => $this->s__edicion[0]['id_periodo'],
+                                                                                            'fecha_inicio' => $this->s__edicion[0]['fecha_inicio'],
+                                                                                            'fecha_fin' => $this->s__edicion[0]['fecha_fin'],
+                                                                                            'dias' => $this->obtener_dias_seleccionados($lista_dias),
+                                                                                            'hora_inicio' => $this->s__edicion[0]['hora_inicio'],
+                                                                                            'hora_fin' => $this->s__edicion[0]['hora_fin'],
+                                                                                            'facultad' => $this->s__edicion[0]['facultad'],
+                                                                                            'id_aula'   => $this->s__edicion[0]['id_aula'],
+                                                                                            'cantidad_alumnos' => $this->s__edicion[0]['cantidad_alumnos'],
+                                                                                            'tipo' => "Periodo"
+                                                                                        );
+                                                                                        $form->set_datos($datos);
+                                                                                        //Otra forma de definir campos en solo lectura.
+                                                                                        $form->set_solo_lectura(array('tipo_asignacion'));
                                                                                         break;
                                                             }
-                                                            $lista_dias=$this->dep('datos')->tabla('asignacion')->get_dias_periodo($this->s__edicion[0]['id_asignacion']);
-                                                            print_r("<br><br>Esta es la lista de dias: ");print_r($lista_dias);
-                                                            $datos=array(
-                                                                'tipo_asignacion' => $this->s__edicion[0]['tipo_asignacion'],
-                                                                'finalidad' => $this->s__edicion[0]['finalidad'],
-                                                                'descripcion' => $this->s__edicion[0]['descripcion'],
-                                                                'modulo' => $this->s__edicion[0]['modulo'],
-                                                                'id_periodo' => $this->s__edicion[0]['id_periodo'],
-                                                                'fecha_inicio' => $this->s__edicion[0]['fecha_inicio'],
-                                                                'fecha_fin' => $this->s__edicion[0]['fecha_fin'],
-                                                                'dias' => $this->obtener_dias_seleccionados($lista_dias),
-                                                                'hora_inicio' => $this->s__edicion[0]['hora_inicio'],
-                                                                'hora_fin' => $this->s__edicion[0]['hora_fin'],
-                                                                'facultad' => $this->s__edicion[0]['facultad'],
-                                                                'id_aula'   => $this->s__edicion[0]['id_aula'],
-                                                                'cantidad_alumnos' => $this->s__edicion[0]['cantidad_alumnos'],
-                                                                'tipo' => "Periodo"
-                                                            );
-                                                            $form->set_datos($datos);
-                                                            //$form->ef('dias')->set_estado($lista_dias);
-                                                            $form->set_solo_lectura(array('dia_semana', 'tipo', 'tipo_asignacion'));
+                                                            
                                                             break;
                                    }
                                                                      
@@ -685,58 +663,58 @@ class ci_cargar_asignaciones extends toba_ci
             return $dias;
         }
         
-        function cargar_form_definitivo (toba_ei_formulario $form){
-           $efs=array(
-               'fecha_inicio',
-               'fecha_fin',
-               'dias',
-           );
-           $form->set_efs_obligatorios($efs, FALSE);
-           $form->desactivar_efs($efs);
-                                       
-           //$form->ef('tipo')->set_estado($asignacion[0]['tipo']);
-           //$form->ef('dia_semana')->set_estado($asignacion[0]['dia']);
-           //$form->set_datos($this->s__edicion[0]);
-           $form->ef('finalidad')->set_estado("Se rompe???");
-            
-        }
+//        function cargar_form_definitivo (toba_ei_formulario $form){
+//           $efs=array(
+//               'fecha_inicio',
+//               'fecha_fin',
+//               'dias',
+//           );
+//           $form->set_efs_obligatorios($efs, FALSE);
+//           $form->desactivar_efs($efs);
+//                                       
+//           //$form->ef('tipo')->set_estado($asignacion[0]['tipo']);
+//           //$form->ef('dia_semana')->set_estado($asignacion[0]['dia']);
+//           //$form->set_datos($this->s__edicion[0]);
+//           $form->ef('finalidad')->set_estado("Se rompe???");
+//            
+//        }
         
-        function cargar_form_periodo (toba_ei_formulario $form){
-            $efs=array('tipo','dia_semana');
-            $form->set_efs_obligatorios($efs, FALSE);
-            $form->desactivar_efs($efs);
-            
-            $sql="SELECT * , t_f.nombre as dia
-                  FROM asignacion t_a 
-                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                  JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
-                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
-                  JOIN esta_formada t_f ON (t_p.id_asignacion=t_f.id_asignacion)
-                  WHERE t_a.id_asignacion={$this->s__id_asignacion}";
-                  
-            $asignaciones=toba::db('rukaja')->consultar($sql);
-            
-            $dias=array();
-            foreach ($asignaciones as $clave=>$valor){
-                $dias[]=$valor['dia'];
-            }
-            
-            $form->ef('dias')->set_estado($dias);
-            $form->ef('tipo')->set_estado($this->s__tipo);
-            $form->set_datos($asignaciones[0]);
-            
-        }
+//        function cargar_form_periodo (toba_ei_formulario $form){
+//            $efs=array('tipo','dia_semana');
+//            $form->set_efs_obligatorios($efs, FALSE);
+//            $form->desactivar_efs($efs);
+//            
+//            $sql="SELECT * , t_f.nombre as dia
+//                  FROM asignacion t_a 
+//                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
+//                  JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
+//                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
+//                  JOIN esta_formada t_f ON (t_p.id_asignacion=t_f.id_asignacion)
+//                  WHERE t_a.id_asignacion={$this->s__id_asignacion}";
+//                  
+//            $asignaciones=toba::db('rukaja')->consultar($sql);
+//            
+//            $dias=array();
+//            foreach ($asignaciones as $clave=>$valor){
+//                $dias[]=$valor['dia'];
+//            }
+//            
+//            $form->ef('dias')->set_estado($dias);
+//            $form->ef('tipo')->set_estado($this->s__tipo);
+//            $form->set_datos($asignaciones[0]);
+//            
+//        }
         
         /*
          * Boton aceptar del formulario form_asignacion.
          */
         function evt__form_asignacion__aceptar ($datos){
-            print_r($this->s__accion);
+            
             switch($this->s__accion){
                 case "Vinculo"      :      $this->procesar_vinculo($datos);break;  //Ok
                 case "Registrar"    :      $this->procesar_carga($datos); break;   //Ok
                 case "Borrar"       :      $this->procesar_delete($datos); break;  //Ok
-                case "Editar"       :      $this->procesar_edicion($datos); break; //Ok
+                case "Editar"       :      $this->procesar_carga($datos); break; //Ok
                 case "Cambiar"      :      $this->procesar_cambio($datos); break;  //Por ahora no se implementa
                 case "Confirmar"    :      $this->procesar_confirmacion($datos); break;
                 default             :      toba::notificacion()->agregar("La variable accion esta vacia!", 'error'); break;
@@ -751,7 +729,7 @@ class ci_cargar_asignaciones extends toba_ci
          */
         function evt__form_asignacion__agregar_dias (){
             $datos_form_asignacion=$this->dep('form_asignacion')->get_datos();
-            print_r($datos_form_asignacion);
+            
             $tipo=$datos_form_asignacion['tipo'];
             //debemos quitar este chequeo, debe hacerse en el cliente. Podriamos intentar anular el evento 
             //agregar_dias a traves de JS.
@@ -795,12 +773,16 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         function registrar_asignacion ($datos){
-            //nro_doc y tipo_doc se pueden eliminar cuando el sistema trabaje bien con las fuentes de datos
-            //rukaja y mocovi. Por ahora no generan problemas porque son FK.
-            $datos['nro_doc']=$this->s__nro_doc;
-            $datos['tipo_doc']=$this->s__tipo_doc;        
+                       
+            //Evitamos guardar valores nulos en la base de datos, veremos si postgres admite conversion implicita
+            //entre tipos de datos character varying e integer.
+            $datos['nro_doc']=$this->s__datos_responsable['nro_doc'];
+            $datos['tipo_doc']=$this->s__datos_responsable['tipo_doc'];        
             $datos['id_responsable_aula']=$this->s__id_docente;
-            print_r($datos);
+            $datos['nombre']=$this->s__datos_responsable['nombre'];
+            $datos['apellido']=$this->s__datos_responsable['apellido'];
+            $datos['legajo']=$this->s__datos_responsable['legajo'];
+            
             $this->dep('datos')->tabla('asignacion')->nueva_fila($datos);
             $this->dep('datos')->tabla('asignacion')->sincronizar();
             $this->dep('datos')->tabla('asignacion')->resetear();
@@ -936,10 +918,8 @@ class ci_cargar_asignaciones extends toba_ci
             //-- Check en sesion
             $hora_inicio=toba::memoria()->get_dato_instancia(100);
             $hora_fin=toba::memoria()->get_dato_instancia(101);
-            $tipo=toba::memoria()->get_dato_instancia(102);
-            print_r("<br><br>Estos son los datos permiliminares extraidos de sesion: <br><br>");
-            print_r($hora_inicio);print_r("<br><br>");print_r($hora_fin);print_r("<br><br>");
-            print_r($datos);//exit();
+            $tipo=toba::memoria()->get_dato_instancia(102);         
+            
             //Hacemos un ultimo check en el server, verificamos si el usuario hizo un movimiento de horarios y no 
             //selecciono nuevamente un aula disponible. Si hacemos un movimiento de horarios no sabemos si ese 
             //mismo aula estara disponible. Y esto ocurre cuando el usuario modifica el horario y no abre el 
@@ -954,7 +934,7 @@ class ci_cargar_asignaciones extends toba_ci
             
             switch($tipo){
                 case 'Definitiva' : $dia=toba::memoria()->get_dato_instancia(103);
-                                    print_r("<br><br>Este es el dia de la semana en sesion: <br><br>");print_r($dia);
+                                    
                                     if(!(strcmp($dia, $datos['dia_semana'])==0)){
                                         $mensaje="Acaba de cambiar el dia de la asignación y no seleccionó nuevamente un aula";
                                         toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
@@ -962,20 +942,24 @@ class ci_cargar_asignaciones extends toba_ci
                                         return ;
                                     }
                                     
-                                    $this->s__dia=$datos['dia_semana'];               
-                                    //Si ejecutamos un script sql, con insert into, la secuencia no se actualiza, por lo tanto debemos
-                                    //resetearla manualmente mediante select setval('secuencia', numero, 't').
-                                    //recuperar_secuencia utiliza la funcion currval('secuencia') que devuleve el valor actual de la
-                                    //misma. Cuando insertamos una tupla en una tabla, toba de alguna manera, usa la funcion 
-                                    //nextval('secuencia') para obtener el proximo id, y asi evitar problemas con claves repetidas.
-                                    $this->registrar_asignacion($datos);
-                                    //Obtenemos el numero que utiliza postgres para garantizar unicidad en claves serials
-                                    $secuencia= recuperar_secuencia('asignacion_id_asignacion_seq');
-                                    //print_r("Este es el valor de la secuencia despues de registrar_asignacion : $secuencia");
-                                    $this->registrar_asignacion_definitiva($datos);
+                                    if(strcmp($this->s__accion, "Registrar")==0){
+                                        $this->s__dia=$datos['dia_semana'];               
+                                        //Si ejecutamos un script sql, con insert into, la secuencia no se actualiza, por lo tanto debemos
+                                        //resetearla manualmente mediante select setval('secuencia', numero, 't').
+                                        //recuperar_secuencia utiliza la funcion currval('secuencia') que devuleve el valor actual de la
+                                        //misma. Cuando insertamos una tupla en una tabla, toba de alguna manera, usa la funcion 
+                                        //nextval('secuencia') para obtener el proximo id, y asi evitar problemas con claves repetidas.
+                                        $this->registrar_asignacion($datos);
+                                        //Obtenemos el numero que utiliza postgres para garantizar unicidad en claves serials
+                                        $secuencia= recuperar_secuencia('asignacion_id_asignacion_seq');
+                                        
+                                        $this->registrar_asignacion_definitiva($datos);
+
+                                        $this->registrar_equipo_de_catedra($secuencia);
+                                    }else{//En accion tenemos 'Editar'
+                                        $this->procesar_edicion($datos);
+                                    }
                                     
-                                    $this->registrar_equipo_de_catedra($secuencia);
-                                                                        
                                     break;
                                     
                                     
@@ -994,22 +978,25 @@ class ci_cargar_asignaciones extends toba_ci
                                                                    return ;
                                                                }
                                                                
-                                                               //Para evitar conflictos. La fecha es la misma.
-                                                               $fecha_fin=$datos['fecha_inicio'];
-                                                               //La lista de fechas se guarda en un arreglo asociativo.
-                                                               $dias=array(0 => $fecha_fin);
-                                                               $datos['fecha_fin']=$fecha_fin;
-                                                               $datos['dias']=$dias;
-                                                               $this->registrar_asignacion($datos);
-                                                               $this->registrar_asignacion_periodo($datos);
+                                                               if(strcmp($this->s__accion, "Registrar")==0){
+                                                                   //Para evitar conflictos. La fecha es la misma.
+                                                                   $fecha_fin=$datos['fecha_inicio'];
+                                                                   //La lista de fechas se guarda en un arreglo asociativo.
+                                                                   $dias=array(0 => $fecha_fin);
+                                                                   $datos['fecha_fin']=$fecha_fin;
+                                                                   $datos['dias']=$dias;
+                                                                   $this->registrar_asignacion($datos);
+                                                                   $this->registrar_asignacion_periodo($datos);
+                                                               }else{
+                                                                   
+                                                               }
 
                                                                break;
                                        case 'CONSULTA'       :
                                        case 'EVENTO'         : $fecha_inicio=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(103)));
                                                                $fecha_fin=date('Y-m-d', strtotime(toba::memoria()->get_dato_instancia(104)));
                                                                $lista_dias=toba::memoria()->get_dato_instancia(105);
-                                                               print_r("<br><br>Estos son los datos asociados a un perido guardados en sesion: <br><br>");
-                                                               print_r(date('Y-m-d', strtotime($fecha_inicio)));print_r("<br><br>");print_r($fecha_fin);print_r("<br><br>");print_r($lista_dias);
+                                                                                                                              
                                                                if(!(strcmp($fecha_inicio, $datos['fecha_inicio'])==0 && strcmp($fecha_fin, $datos['fecha_fin'])==0)){
                                                                     $mensaje="Acaba de cambiar las fechas de inicio y fin y no seleccionó nuevamente un aula";
                                                                     toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
@@ -1024,17 +1011,18 @@ class ci_cargar_asignaciones extends toba_ci
                                                                     return ;
                                                                 }
                                                                
-                                                               
-                                                               print_r("<br><br> LLegamos al case EVENTO <br><br>");                                             
-                                                               $hd=new HorariosDisponibles();
-                                                               $dias=$hd->get_dias($datos['fecha_inicio'], $datos['fecha_fin'], $datos['dias']);
-                                                               print_r($dias);print_r("<br><br>");
-                                                               print_r("Estos son los dias: <br><br>");
-                                                               $datos['dias']=$dias;
-                                                               print_r($datos);
-                                                               //exit();
-                                                               $this->registrar_asignacion($datos);
-                                                               $this->registrar_asignacion_periodo($datos);
+                                                               if(strcmp($this->s__accion, "Registrar")==0){
+                                                                                                              
+                                                                   $hd=new HorariosDisponibles();
+                                                                   $dias=$hd->get_dias($datos['fecha_inicio'], $datos['fecha_fin'], $datos['dias']);
+                                                                                                                                      
+                                                                   $datos['dias']=$dias;
+                                                                                                                                      
+                                                                   $this->registrar_asignacion($datos);
+                                                                   $this->registrar_asignacion_periodo($datos);
+                                                               }else{
+                                                                   
+                                                               }
 
                                                                break;
                                     }
@@ -1042,72 +1030,6 @@ class ci_cargar_asignaciones extends toba_ci
                                     break;
             }
             
-//            if(strcmp($datos['tipo'], "Definitiva")==0){
-//                $this->s__dia=$datos['dia_semana'];               
-//                //Si ejecutamos un script sql, con insert into, la secuencia no se actualiza, por lo tanto debemos
-//                //resetearla manualmente mediante select setval('secuencia', numero, 't').
-//                //recuperar_secuencia utiliza la funcion currval('secuencia') que devuleve el valor actual de la
-//                //misma. Cuando insertamos una tupla en una tabla, toba de alguna manera, usa la funcion 
-//                //nextval('secuencia') para obtener el proximo id, y asi evitar problemas con claves repetidas.
-//                $this->registrar_asignacion($datos);
-//                //Obtenemos el numero que utiliza postgres para garantizar unicidad en claves serials
-//                $secuencia= recuperar_secuencia('asignacion_id_asignacion_seq');
-//                //print_r("Este es el valor de la secuencia despues de registrar_asignacion : $secuencia");
-//                $this->registrar_asignacion_definitiva($datos);
-//                
-//                //Agregamos el equipo de catedra si existe.
-//                if(count($this->s__docentes_seleccionados)>0){
-//                    foreach($this->s__docentes_seleccionados as $clave=>$docente){
-//                        $catedra=array(
-//                            'id_asignacion' => $secuencia,
-//                            //nro_doc y tipo_doc se pueden sacar cuando el sistema trabaje bien con las fuentes
-//                            //de datos mocovi y rukaja
-//                            'nro_doc' => $docente['nro_doc'],
-//                            'tipo_doc' => $docente['tipo_doc'],
-//                            'id_docente' => $docente['id_docente']
-//                        );
-//
-//                        $this->dep('datos')->tabla('catedra')->nueva_fila($catedra);
-//                        $this->dep('datos')->tabla('catedra')->sincronizar();
-//                        $this->dep('datos')->tabla('catedra')->resetear();
-//                    }
-//                }
-//            }
-//            else{
-//                
-////                if($this->s__periodo_analizado && !$this->existen_cadenas_nulas()){ 
-//                    switch($datos['tipo_asignacion']){
-//                        
-//                       case 'EXAMEN PARCIAL' : 
-//                       case 'EXAMEN FINAL'   : //Para evitar conflictos. La fecha es la misma
-//                                               $fecha_fin=$datos['fecha_inicio'];
-//                                               $dias=array(0 => $fecha_fin);
-//                                               $datos['fecha_fin']=$fecha_fin;
-//                                               $datos['dias']=$dias;
-//                                               $this->registrar_asignacion($datos);
-//                                               $this->registrar_asignacion_periodo($datos);
-//                                               
-//                                               break;
-//                       case 'CONSULTA'       :
-//                       case 'EVENTO'         : print_r("<br><br> LLegamos al case EVENTO <br><br>");                                             
-//                                               $hd=new HorariosDisponibles();
-//                                               $dias=$hd->get_dias($datos['fecha_inicio'], $datos['fecha_fin'], $datos['dias']);
-//                                               print_r($dias);print_r("<br><br>");
-//                                               print_r("Estos son los dias: <br><br>");
-//                                               $datos['dias']=$dias;
-//                                               print_r($datos);
-//                                               //exit();
-//                                               $this->registrar_asignacion($datos);
-//                                               $this->registrar_asignacion_periodo($datos);
-//                                               
-//                                               break;
-//                    }
-////                }else{
-////                    $mensaje="Debe realizar un análisis del periodo seleccionado. Presione el botón Analizar Periodo";
-////                    toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
-////                }
-//                    
-//            }
         }
         
         /*
@@ -1118,22 +1040,27 @@ class ci_cargar_asignaciones extends toba_ci
             //Agregamos el equipo de catedra si existe.
             if(count($this->s__docentes_seleccionados)>0){
                 foreach($this->s__docentes_seleccionados as $clave=>$docente){
-                    $catedra=array(
-                        'id_asignacion' => $secuencia,
-                        //nro_doc y tipo_doc se pueden sacar cuando el sistema trabaje bien con las fuentes
-                        //de datos mocovi y rukaja
-                        'nro_doc' => $docente['nro_doc'],
-                        'tipo_doc' => $docente['tipo_doc'],
-                        'id_docente' => $docente['id_docente']
-                    );
-
-                    $this->dep('datos')->tabla('catedra')->nueva_fila($catedra);
+//                    $catedra=array(
+//                        'id_asignacion' => $secuencia,
+//                        //nro_doc y tipo_doc se pueden sacar cuando el sistema trabaje bien con las fuentes
+//                        //de datos mocovi y rukaja
+//                        'nro_doc' => $docente['nro_doc'],
+//                        'tipo_doc' => $docente['tipo_doc'],
+//                        'id_docente' => $docente['id_docente']
+//                    );
+                    $docente['id_asignacion']=$secuencia;
+                    
+                    $this->dep('datos')->tabla('catedra')->nueva_fila($docente);
                     $this->dep('datos')->tabla('catedra')->sincronizar();
                     $this->dep('datos')->tabla('catedra')->resetear();
                 }
                 
                 //Limpiamos el arreglo para no acumular resultados en busquedas sucesivas.
                 $this->s__docentes_seleccionados=array();
+                
+                //Limpiamos el arreglo para no cargar datos por defecto en el formulario despues de seleccionar
+                //un equipo de catedra y registrar la asignacion correspondiente en el sistema.
+                $this->s__datos_form_asignacion=array();
             }
             
         }
@@ -1232,7 +1159,7 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         /*
-         * eliminamos una asignacion definitiva o por periodo
+         * Eliminamos una asignacion definitiva o periodica.
          */
         function procesar_delete ($datos){
             try{
@@ -1246,15 +1173,66 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         /*
-         * modificamos una asignacion existente. Debemos verificar si el nuevo lugar especificado esta 
-         * disponible.
+         * Modificamos una asignacion existente, esto implica:
+         * 1) Modificar las tablas asignacion y asignacion_definitiva.
+         * 2) Modificar las tablas asignacion, asignacion_periodo y esta_formada. En este caso es mas conveniente 
+         * borrar parte de la asignacion en la tabla esta_formada y volver a cargarla porque se pueden agregar o 
+         * quitar dias del periodo.
+         * 
+         * @$datos: contiene los nuevos valores que queremos agregar en las tablas involucradas.
+         * 
          */
         function procesar_edicion ($datos){
+                       
+            if(strcmp($this->s__tipo, "Definitiva")==0){
+                $this->dep('datos')->tabla('asignacion')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
+                $asignacion=$this->dep('datos')->tabla('asignacion')->get();
+                $datos['nombre']=$asignacion['nombre'];
+                $datos['nombre']=$asignacion['apellido'];
+                $datos['legajo']=$asignacion['legajo'];
+                $datos['nro_doc']=$asignacion['nro_doc'];
+                $datos['tipo_doc']=$asignacion['tipo_doc'];
+                $datos['id_asignacion']=$this->s__id_asignacion;
+                $this->dep('datos')->tabla('asignacion')->set($datos);
+                $this->dep('datos')->tabla('asignacion')->sincronizar(); 
+                
+                $asignacion_definitiva=array(
+                    'nombre' => $datos['dia_semana'],
+                    'id_asignacion' => $this->s__id_asignacion
+                );
+                
+                //Esta vez cargamos el datos_tabla con la asignacion_definitiva correspondiente.
+                $this->dep('datos')->tabla('asignacion_definitiva')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
+                $this->dep('datos')->tabla('asignacion_definitiva')->set($asignacion_definitiva);
+                $this->dep('datos')->tabla('asignacion_definitiva')->sincronizar();
+            }else{//Editamos una asignacion periodica.
+                //En asignacion y asignacion_periodo hacemos un set.
+                $this->dep('datos')->tabla('asignacion')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
+                $asignacion=$this->dep('datos')->tabla('asignacion')->get();
+                $datos['nombre']=$asignacion['nombre'];
+                $datos['nombre']=$asignacion['apellido'];
+                $datos['legajo']=$asignacion['legajo'];
+                $datos['nro_doc']=$asignacion['nro_doc'];
+                $datos['tipo_doc']=$asignacion['tipo_doc'];
+                $datos['id_asignacion']=$this->s__id_asignacion;
+                $this->dep('datos')->tabla('asignacion')->set($datos);
+                $this->dep('datos')->tabla('asignacion')->sincronizar();
+                
+                $asignacion_periodo=array(
+                    'id_asignacion' => $this->s__id_asignacion,
+                    'fecha_inicio' => $datos['fecha_inicio'],
+                    'fecha_fin' =>  $datos['fecha_fin']
+                );
+                
+                $this->dep('datos')->tabla('asignacion_periodo')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
+                $this->dep('datos')->tabla('asignacion_periodo')->set($asignacion_periodo);
+                $this->dep('datos')->tabla('asignacion_periodo')->sincronizar();
+                
+                //En esta_formada hacemos un delete (eliminar_todo) y posteriormente un insert (nueva_fila). 
+                //$this->dep('datos')->tabla('esta_formada')->
+            }         
             
-            $this->dep('datos')->tabla('asignacion')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
-            $datos['id_asignacion']=$this->s__id_asignacion;
-            $this->dep('datos')->tabla('asignacion')->set($datos);
-            $this->dep('datos')->tabla('asignacion')->sincronizar();
+            $this->s__accion="Registrar";
         }
         
         /*
@@ -1342,8 +1320,7 @@ class ci_cargar_asignaciones extends toba_ci
                 // el espacio que ocupa en memoria. El problema que tenemos es que al aplicar unset sobre 
                 // eltos de un arreglo nos genera huecos en el mismo, lo que hace que una busqueda por indice
                 // sea inapropiada.
-                //$r=strcmp($fecha['fecha'], $fecha_calendario);
-                //print_r("<br> Este es el resultado de comparar fechas, {$fecha['fecha']} = $fecha_calendario -> $r. <br>");
+                                
                 if(strcmp($fecha['fecha'], $fecha_calendario)==0){
                     $existe=TRUE;
                     
@@ -1363,12 +1340,12 @@ class ci_cargar_asignaciones extends toba_ci
         function conf__cuadro_fechas (toba_ei_cuadro $cuadro){         
             $fecha_inicio=$this->s__datos_form_asignacion['fecha_inicio'];
             $fecha_fin=$this->s__datos_form_asignacion['fecha_fin'];
-            print_r($fecha_inicio);
+            
             $dias_seleccionados=$this->s__datos_form_asignacion['dias'];
             //obtenemos los dias que pertenecen al periodo
             $fechas=$this->get_dias($fecha_inicio, $fecha_fin, $dias_seleccionados);
             
-            //print_r($fechas);exit();
+            
             if(count($fechas)>0){
                 $cuadro->set_datos($this->crear_estructura_cuadro($fechas));
             }
@@ -1401,12 +1378,11 @@ class ci_cargar_asignaciones extends toba_ci
         
         //---- Filtro Docentes -------------------------------------------------------------------------
         
-        function conf__filtro_docentes (toba_ei_filtro $filtro){
-           
-        }
+//        function conf__filtro_docentes (toba_ei_filtro $filtro){
+//           
+//        }
         
         function evt__filtro_docentes__filtrar ($datos){
-            
             $where=$this->dep('filtro_docentes')->get_sql_where('OR');
             $this->s__docentes=$this->dep('datos')->tabla('persona')->get_docentes(strtoupper($where));
         }
@@ -1414,7 +1390,7 @@ class ci_cargar_asignaciones extends toba_ci
         //---- Cuadro Docentes -------------------------------------------------------------------------
         
         /*
-         * Este cuadro guarda a un cjto. de docentes, que son el resultado de una consulta en la db.
+         * Este cuadro guarda a un cjto. de docentes, que son el resultado de una consulta en la db mocovi.
          */
         function conf__cuadro_docentes (toba_ei_cuadro $cuadro){
             if(count($this->s__docentes)>0){
@@ -1422,9 +1398,6 @@ class ci_cargar_asignaciones extends toba_ci
             }
         }
         
-        /*
-         * Este cuadro guarda el los docentes seleccionados por el usuario.
-         */
         function evt__cuadro_docentes__seleccionar ($docente_seleccionado){
             if(!($this->operar_sobre_docentes($docente_seleccionado, 'd'))){
                 $this->s__docentes_seleccionados[]=$docente_seleccionado;
@@ -1433,8 +1406,8 @@ class ci_cargar_asignaciones extends toba_ci
         
         /*
          * operar_sobre_docentes cumple con dos funciones :
-         * a) verifica si un docente existe en la estructura s__docentes_seleccionados, para ello debemos pasar como
-         * segundo parametro la letra d.
+         * a) verifica si un docente existe en la estructura s__docentes_seleccionados, para ello debemos pasar 
+         * como segundo parametro la letra d.
          * b) elimina un docente existente en la estructura s__docentes_seleccionados, para ello debemos pasar
          * como segundo parametro la letra e.
          */
@@ -1502,7 +1475,7 @@ class ci_cargar_asignaciones extends toba_ci
                 case 'Periodo'    : 
                                     toba::memoria()->set_dato_instancia(5, $parametros[4]); //dias
                                     toba::memoria()->set_dato_instancia(6, $parametros[5]); //fecha_inicio
-                                    //print_r($parametros[4]);
+                                    
                                     toba::memoria()->set_dato_instancia(7, $parametros[6]); //fecha_fin
                                     
                                     toba::memoria()->set_dato_instancia(8,  $parametros[7]); //tipo_asignacion
@@ -1631,9 +1604,8 @@ class ci_cargar_asignaciones extends toba_ci
             switch($i){
                 case 'mm' : while($dia_inicio <= $dia_fin){
                                 $fecha=  date('d-m-Y', strtotime("$dia_inicio-$mes_inicio-$anio"));
-                                //print_r("<br>");
-                                //print_r($fecha);
-                                //print_r("<br>");
+                                                               
+                                
                                 if($this->es_dia_valido(date('N', strtotime($fecha)), $dias_seleccionados)){
                                     $dias[]=$fecha;
                                 }
@@ -1674,15 +1646,12 @@ class ci_cargar_asignaciones extends toba_ci
         function obtener_dias ($dia_inicial, $mes_inicial, $mes, $dias_seleccionados, $dias){
             //$dias=array();
             $anio=date('Y');
-            //print_r("Mes Inicial : $mes_inicial <br>");
-            //$tipo=  gettype($mes_inicial);
-            //print_r("Tipo de dato : $tipo <br>");
-            //print_r("Dias del mes : $mes <br>");
+                    
+                       
             for($i=$dia_inicial; $i<=$mes; $i++){
-                //print_r("Dia inicial : $i <br>");
+                
                 $fecha=  date('d-m-Y', strtotime("$i-$mes_inicial-$anio"));
-                //print_r("<br>");
-                //print_r($fecha);
+                                
                 if($this->es_dia_valido(date('N', strtotime($fecha)), $dias_seleccionados)){
                     $dias[]=$fecha;
                 }
@@ -1702,8 +1671,7 @@ class ci_cargar_asignaciones extends toba_ci
             while($i<$n && !$fin){
                 //podemos obtener Lunes, Martes, .....
                 $dia=$dias_seleccionados[$i];
-                //print_r("Este es el dia inicio : $dia_inicio <br>");
-                //print_r(utf8_decode($this->_dias[$dia_inicio]));
+                                
                 if(strcmp(utf8_decode($this->_dias[$dia_inicio]), $dia)==0){
                     $fin=TRUE;
                 }
@@ -1723,10 +1691,9 @@ class ci_cargar_asignaciones extends toba_ci
          */
         function crear_estructura_cuadro ($fechas){
             $cuadro=array();
-            //necesitamos la sede del usuario logueado
-            $nombre_usuario=toba::usuario()->get_id();
-            $this->s__id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
-            $this->s__id_sede=1;
+            
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
+            
             toba::memoria()->limpiar_datos_instancia();
             //creamos un objeto HorariosDisponibles para realizar calculo de horarios disponibles
             $hd=new HorariosDisponibles();

@@ -6,21 +6,20 @@ class formulario_extendido extends toba_ei_formulario
         echo "
         
         //La funcion setTimeout se ejecuta solamente una vez. En este caso cuando se carga el documento html
-        //transcurren 2 segundos y se ejecuta la operacion ocultar_campos. Considero que 2 segundos es el tiempo
+        //transcurren 1,2 segundos y se ejecuta la operacion ocultar_campos. Considero que 1,2 segundos es el tiempo
         //adecuado para realizar el chequeo correspondiente. El tiempo se debe especificar en milisegundos.
         //setInterval(funcion, tiempo) se ejecuta periodicamente, su funcionamiento es similar a un timer por SW.
         
-        var id= setTimeout('ocultar_campos()', 2000);
+        var id= setTimeout('ocultar_campos()', 1200);
         
         function ocultar_campos (){
             var form={$this->objeto_js};
             var tipo_agente=form.ef('tipo_agente').get_estado().toString();
+            var tipo_asignacion=form.ef('tipo_asignacion').get_estado().toString();
             
-            //Falta desactivar el campo tipo nombre. Lo hacemos dentro de docente u organizacion.
-
             switch(tipo_agente){
                 case 'Docente'      : //Ocultamos los campos pertenecientes a organizacion.
-                                      //alert('El campo actualmente cargado es Docente');
+                                      
                                       form.ef('org').ocultar();
                                       form.ef('nombre_org').ocultar();
                                       form.ef('telefono_org').ocultar();
@@ -28,15 +27,30 @@ class formulario_extendido extends toba_ei_formulario
                                       break;
                                  
                 case 'Organizacion' : //Ocultamos los campos pertenecientes a docente.
-                                      //alert('El campo actualmente cargado es Organizacion');
+                                      
                                       form.ef('legajo').ocultar();
                                       form.ef('nombre').ocultar();
                                       form.ef('apellido').ocultar();
                                       break;
                                       
-                default : //alert('No existe una opcion elegida en el combo tipo_agente');
+                default : 
                           break;
             }
+            
+            switch(tipo_asignacion){
+                case 'EXAMEN PARCIAL' : 
+                case 'EXAMEN FINAL'   : form.ef('fecha_fin').ocultar();
+                                        form.ef('dias').ocultar();
+                                        form.ef('tipo_asignacion').set_solo_lectura(true);
+                                        form.ef('tipo_nombre').ocultar();
+                                        break;
+                
+                case 'CONSULTA'       : 
+                case 'EVENTO'         : form.ef('tipo_asignacion').set_solo_lectura(true);
+                                        form.ef('tipo_nombre').ocultar();
+                                        break;
+            }
+            
             
         }
         
@@ -44,7 +58,7 @@ class formulario_extendido extends toba_ei_formulario
             var tipo=this.ef('tipo_agente').get_estado();
             
             switch(tipo){
-                case 'Docente' : //Ocultamos campos pertenecientes a una organizacion
+                case 'Docente' : //Ocultamos campos pertenecientes a una organizacion.
                                  this.ef('org').ocultar();
                                  this.ef('org').set_estado('');
                                  this.ef('nombre_org').ocultar();
@@ -56,7 +70,7 @@ class formulario_extendido extends toba_ei_formulario
                                  this.ef('email_org').set_estado('');
                                  
                                  
-                                 //Mostramos campos pertenecientes a un docente
+                                 //Mostramos campos pertenecientes a un docente.
                                  this.ef('legajo').mostrar();
                                  this.ef('legajo').set_estado('');
                                  
@@ -78,7 +92,7 @@ class formulario_extendido extends toba_ei_formulario
                                       this.ef('org').mostrar();
                                       
                                       //Ocultamos campos pertenecientes a un docente y borramos informacion 
-                                      //cargada en ellos
+                                      //cargada en ellos.
                                       this.ef('legajo').ocultar();
                                       this.ef('legajo').set_estado('');
                                       
@@ -89,7 +103,7 @@ class formulario_extendido extends toba_ei_formulario
                                       
                                       break;
                 
-                case 'nopar' : //Restauramos el formulario original y borramos informacion cargada en los campos
+                case 'nopar' : //Restauramos el formulario original y borramos informacion cargada en los campos.
                                this.ef('org').mostrar();
                                this.ef('org').set_estado('');
                                this.ef('nombre_org').mostrar();
@@ -230,7 +244,7 @@ class formulario_extendido extends toba_ei_formulario
         {$this->objeto_js}.evt__org__validar = function (){
             var tipo_agente=this.ef('tipo_agente').get_estado().toString();
             if(tipo_agente == 'Organizacion'){
-            //alert('Se ejecuta ajax organizacion');
+            
             this.controlador.ajax_cadenas('autocompletar_org', this.ef('org').get_estado(), this, this.atender_respuesta);
             
             }
@@ -243,7 +257,6 @@ class formulario_extendido extends toba_ei_formulario
                 
                 //Con esta condicion evitamos eliminar el id del responsable de aula.
                 if(agente == '2'){
-                    //alert('Objetenemos del server un 2');
                     return false;
                 }
 
@@ -251,7 +264,7 @@ class formulario_extendido extends toba_ei_formulario
                 
                     var nombre = respuesta.get_cadena('nombre');
                     var apellido = respuesta.get_cadena('apellido');
-                    //alert('nombre: '+nombre+' apellido: '+apellido);
+                    
                     this.ef('nombre').set_estado(nombre);
                     this.ef('apellido').set_estado(apellido);
 
@@ -274,7 +287,7 @@ class formulario_extendido extends toba_ei_formulario
         {$this->objeto_js}.evt__legajo__validar = function (){
             var tipo_agente=this.ef('tipo_agente').get_estado().toString();
             if(tipo_agente == 'Docente'){
-            //alert('Se ejecuta ajax docente');
+            
             this.controlador.ajax_cadenas('autocompletar_form', this.ef('legajo').get_estado(), this, this.atender_respuesta);
                    
             }
