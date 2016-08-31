@@ -101,7 +101,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nombre', --nombre
-	't_doc.nombre', --expresion
+	't_a.nombre', --expresion
 	'Nombre del Responsable', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -159,7 +159,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'apellido', --nombre
-	't_doc.apellido', --expresion
+	't_a.apellido', --expresion
 	'Apellido del Responsable', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -217,7 +217,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'legajo', --nombre
-	't_doc.legajo', --expresion
+	't_a.legajo', --expresion
 	'Legajo', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -275,7 +275,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nro_doc', --nombre
-	't_doc.nro_docum', --expresion
+	't_a.nro_docum', --expresion
 	'Nro de Documento', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio

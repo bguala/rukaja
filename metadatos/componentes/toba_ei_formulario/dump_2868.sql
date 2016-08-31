@@ -118,13 +118,13 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	'2868', --objeto
 	'agregar_dias', --identificador
 	'Analizar Periodo', --etiqueta
-	'1', --maneja_datos
+	'0', --maneja_datos
 	NULL, --sobre_fila
 	NULL, --confirmacion
 	NULL, --estilo
 	'apex', --imagen_recurso_origen
 	'calendario.gif', --imagen
-	'1', --en_botonera
+	'0', --en_botonera
 	NULL, --ayuda
 	'3', --orden
 	NULL, --ci_predep

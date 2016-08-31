@@ -123,4 +123,16 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 	NULL, --inicializar
 	'2'  --orden
 );
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
+	'1877', --dep_id
+	'2886', --objeto_consumidor
+	'2826', --objeto_proveedor
+	'sede', --identificador
+	'1', --parametros_a
+	'1', --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	'6'  --orden
+);
 --- FIN Grupo de desarrollo 0

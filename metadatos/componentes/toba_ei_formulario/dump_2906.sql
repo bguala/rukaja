@@ -244,7 +244,7 @@ INSERT INTO apex_objeto_ut_formulario (objeto_ut_formulario_proyecto, objeto_ut_
 			</tr>
 			<tr>
 				<td>
-					[ef id=tipo]</td>
+					[ef id=tipo_asignacion]</td>
 				<td>
 					[ef id=tipo_nombre]</td>
 			</tr>
@@ -807,7 +807,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'0', --permitir_html
 	'0', --deshabilitar_rest_func
 	NULL, --estado_defecto
-	'0', --solo_lectura
+	'1', --solo_lectura
 	'0', --solo_lectura_modificacion
 	NULL, --carga_metodo
 	NULL, --carga_clase
@@ -887,7 +887,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'0', --permitir_html
 	'0', --deshabilitar_rest_func
 	NULL, --estado_defecto
-	'0', --solo_lectura
+	'1', --solo_lectura
 	'0', --solo_lectura_modificacion
 	NULL, --carga_metodo
 	NULL, --carga_clase
@@ -967,7 +967,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'0', --permitir_html
 	'0', --deshabilitar_rest_func
 	NULL, --estado_defecto
-	'0', --solo_lectura
+	'1', --solo_lectura
 	'0', --solo_lectura_modificacion
 	NULL, --carga_metodo
 	NULL, --carga_clase
@@ -1270,9 +1270,9 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'6398', --objeto_ei_formulario_fila
 	'2906', --objeto_ei_formulario
 	'rukaja', --objeto_ei_formulario_proyecto
-	'tipo', --identificador
+	'tipo_asignacion', --identificador
 	'ef_combo', --elemento_formulario
-	'tipo', --columnas
+	'tipo_asignacion', --columnas
 	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'15', --orden

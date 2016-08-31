@@ -289,7 +289,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'fecha_inicio', --identificador
 	'ef_editable_fecha', --elemento_formulario
 	'fecha_inicio', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'2', --orden
 	'Fecha Inicio', --etiqueta
@@ -369,7 +369,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'fecha_fin', --identificador
 	'ef_editable_fecha', --elemento_formulario
 	'fecha_fin', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'3', --orden
 	'Fecha Fin', --etiqueta
@@ -449,7 +449,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'tipo_periodo', --identificador
 	'ef_combo', --elemento_formulario
 	'tipo_periodo', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'1', --orden
 	'Tipo de Periodo', --etiqueta
@@ -529,8 +529,8 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'numero', --identificador
 	'ef_combo', --elemento_formulario
 	'numero', --columnas
-	'0', --obligatorio
-	'0', --oculto_relaja_obligatorio
+	'1', --obligatorio
+	'1', --oculto_relaja_obligatorio
 	'4', --orden
 	'Numero', --etiqueta
 	NULL, --etiqueta_estilo

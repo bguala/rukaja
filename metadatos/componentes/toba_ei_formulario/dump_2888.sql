@@ -192,7 +192,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'cuatrimestre', --identificador
 	'ef_combo', --elemento_formulario
 	'cuatrimestre', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'1', --orden
 	'Cuatrimestre', --etiqueta
@@ -272,7 +272,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'anio_lectivo', --identificador
 	'ef_editable_numero', --elemento_formulario
 	'anio_lectivo', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'2', --orden
 	'Año Lectivo', --etiqueta
@@ -352,7 +352,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'dia', --identificador
 	'ef_multi_seleccion_check', --elemento_formulario
 	'dia', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'3', --orden
 	'Dias', --etiqueta

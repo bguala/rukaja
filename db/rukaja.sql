@@ -24,6 +24,7 @@ descripcion character varying (20),
 telefono character varying (20),
 direccion character varying (35),
 sigla character varying (6), 
+
 CONSTRAINT pk_sede PRIMARY KEY (id_sede),
 CONSTRAINT fk_unidad FOREIGN KEY (sigla) REFERENCES unidad_academica(sigla)
 
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS tipo (
 
 id_tipo character varying (2) NOT NULL,
 descripcion character varying (32),
+
 CONSTRAINT pk_tipo PRIMARY KEY (id_tipo)
 
 );
@@ -67,6 +69,7 @@ id_tipo character varying (2),
 id_sede serial,
 eliminada boolean,
 imagen bytea,
+
 CONSTRAINT pk_aula PRIMARY KEY (id_aula),
 CONSTRAINT fk_aula FOREIGN KEY (id_tipo) REFERENCES tipo(id_tipo) ,
 CONSTRAINT fk_aula_sede FOREIGN KEY (id_sede) REFERENCES sede(id_sede) 
@@ -98,6 +101,7 @@ CREATE TABLE IF NOT EXISTS dia (
 
 nombre character varying(10) NOT NULL,
 orden integer,
+
 CONSTRAINT pk_dia PRIMARY KEY (nombre)
 
 );
@@ -121,6 +125,7 @@ telefono character varying (20),
 correo_electronico character varying (50),
 domicilio character varying (35),
 ciudad character varying (30),
+
 CONSTRAINT pk_persona PRIMARY KEY (tipo_doc,nro_doc)
 
 );
@@ -189,7 +194,7 @@ ON DELETE CASCADE ON UPDATE CASCADE
 
 CREATE TABLE IF NOT EXISTS tipo_examen (
 
-turno character varying (15),
+turno character varying (15) NOT NULL,
 tipo character varying (15), --puede ser ordinario o extraordinario
 
 CONSTRAINT pk_tipo_examen PRIMARY KEY (turno)
@@ -264,10 +269,7 @@ CREATE TABLE IF NOT EXISTS asignacion (
   CONSTRAINT fk_asignacion_tipo_asignacion FOREIGN KEY (tipo_asignacion)
       REFERENCES tipo_asignacion (tipo) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT fk_doc FOREIGN KEY (nro_doc, tipo_doc)
-      REFERENCES persona (nro_doc, tipo_doc) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
-
+  
 );
 
 CREATE TABLE IF NOT EXISTS asignacion_definitiva
@@ -288,6 +290,7 @@ CREATE TABLE IF NOT EXISTS asignacion_periodo
   id_asignacion serial NOT NULL,
   fecha_inicio date,
   fecha_fin date,
+
   CONSTRAINT pk_asignacion_periodo PRIMARY KEY (id_asignacion),
   CONSTRAINT fk_asignacion_periodo FOREIGN KEY (id_asignacion)
       REFERENCES asignacion (id_asignacion) MATCH SIMPLE
@@ -299,6 +302,7 @@ CREATE TABLE IF NOT EXISTS esta_formada
   nombre character varying(10) NOT NULL,
   id_asignacion serial NOT NULL,
   fecha date NOT NULL,
+
   CONSTRAINT pk_esta_formada PRIMARY KEY (id_asignacion, fecha),
   CONSTRAINT fk_esta_formada_asignacion FOREIGN KEY (id_asignacion)
       REFERENCES asignacion_periodo (id_asignacion) MATCH SIMPLE
@@ -326,6 +330,7 @@ CREATE TABLE IF NOT EXISTS solicitud (
   id_aula integer,
   id_sede_origen integer,         --Guardamos quien hizo el pedido de aula.
   facultad character varying(6),
+
   CONSTRAINT pk_solicitud PRIMARY KEY (id_solicitud),
   CONSTRAINT fk_solicitud FOREIGN KEY (id_sede)
       REFERENCES sede (id_sede) MATCH SIMPLE
@@ -344,9 +349,9 @@ CONSTRAINT fk_solicitud_multi_evento FOREIGN KEY (id_solicitud)	REFERENCES solic
 
 CREATE TABLE IF NOT EXISTS multi_evento (
 
-id_solicitud serial,
-fecha date,
-nombre character varying (10),
+id_solicitud serial NOT NULL,
+fecha date NOT NULL,
+nombre character varying (10) NOT NULL,
 
 CONSTRAINT pk_multi_evento PRIMARY KEY (id_solicitud, fecha, nombre)
 CONSTRAINT fk_multi_evento FOREIGN KEY (id_solicitud)
