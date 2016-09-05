@@ -268,7 +268,7 @@ CREATE TABLE IF NOT EXISTS asignacion (
       ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT fk_asignacion_tipo_asignacion FOREIGN KEY (tipo_asignacion)
       REFERENCES tipo_asignacion (tipo) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION,
+      ON UPDATE NO ACTION ON DELETE NO ACTION
   
 );
 
@@ -316,7 +316,7 @@ CREATE TABLE IF NOT EXISTS solicitud (
 
   id_solicitud serial NOT NULL,
   nombre character varying(70),  --Contiene nombre-apelido del docente o el nombre de una org.
-  --apellido character varying(35), Eliminado, pasa a estar contenido en nombre.
+  
   tipo_agente character varying (12), --Agregamos el tipo de agente para distinguir entre docente u org.
   fecha date,
   capacidad integer,
@@ -353,7 +353,7 @@ id_solicitud serial NOT NULL,
 fecha date NOT NULL,
 nombre character varying (10) NOT NULL,
 
-CONSTRAINT pk_multi_evento PRIMARY KEY (id_solicitud, fecha, nombre)
+CONSTRAINT pk_multi_evento PRIMARY KEY (id_solicitud, fecha, nombre),
 CONSTRAINT fk_multi_evento FOREIGN KEY (id_solicitud)
       REFERENCES solicitud_multi_evento (id_solicitud) MATCH SIMPLE
       ON UPDATE CASCADE ON DELETE CASCADE
