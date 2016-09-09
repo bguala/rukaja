@@ -1,5 +1,4 @@
-
-CREATE TABLE IF NOT EXISTS unidad_academica (
+CREATE TABLE  unidad_academica (
 
 sigla character varying (6) NOT NULL,
 descripcion character varying (50),
@@ -17,7 +16,7 @@ INSERT INTO unidad_academica (sigla,descripcion) VALUES
 ('BIBLIO','Biblioteca'),
 ('FACIAS','Facultad de Ciencias del Ambiente y la Salud');
 
-CREATE TABLE IF NOT EXISTS sede (
+CREATE TABLE  sede (
 
 id_sede serial NOT NULL,
 descripcion character varying (20),
@@ -40,7 +39,7 @@ INSERT INTO sede (id_sede,descripcion,sigla,telefono,direccion) VALUES
 (7,'Neuquén Capital', 'FAIN', '+54 0299 4490368', 'Buenos Aires 1400'),
 (8,'Neuquén Capital', 'BIBLIO', '+54 0299 4490398', 'Buenos Aires 1400');
 
-CREATE TABLE IF NOT EXISTS tipo (
+CREATE TABLE  tipo (
 
 id_tipo character varying (2) NOT NULL,
 descripcion character varying (32),
@@ -59,11 +58,11 @@ INSERT INTO tipo (id_tipo,descripcion) VALUES
 ('C','Laboratorio'),
 ('D','Aula Propia de Unidad Académica');
 
-CREATE TABLE IF NOT EXISTS aula (
+CREATE TABLE  aula (
 
 id_aula serial NOT NULL,
 capacidad integer,
-nombre character varying (20),
+nombre character varying,
 ubicacion character varying (150), -- Para indicar la ubicacion del aula.
 id_tipo character varying (2),
 id_sede serial,
@@ -97,7 +96,7 @@ INSERT INTO aula (id_aula,capacidad,nombre,ubicacion,id_tipo,id_sede) VALUES
 --Reseteamos la secuencia para evitar problemas de PK duplicadas.
 SELECT setval('aula_id_aula_seq', 16, 't');
 
-CREATE TABLE IF NOT EXISTS dia (
+CREATE TABLE  dia (
 
 nombre character varying(10) NOT NULL,
 orden integer,
@@ -115,7 +114,7 @@ INSERT INTO dia (nombre,orden) VALUES
 ('Sábado', 6),
 ('Domingo', 7);
 
-CREATE TABLE IF NOT EXISTS persona (
+CREATE TABLE  persona (
 
 nro_doc character varying (20) NOT NULL,
 tipo_doc character varying (12) NOT NULL,
@@ -130,7 +129,7 @@ CONSTRAINT pk_persona PRIMARY KEY (tipo_doc,nro_doc)
 
 );
 
-CREATE TABLE IF NOT EXISTS administrador (
+CREATE TABLE  administrador (
 
 id_administrador serial NOT NULL,
 nombre_usuario character varying (35),
@@ -143,7 +142,7 @@ CONSTRAINT fk_sede FOREIGN KEY (id_sede) REFERENCES sede(id_sede)
 
 );
 
-CREATE TABLE IF NOT EXISTS docente (
+CREATE TABLE  docente (
 
 nro_doc character varying (20) NOT NULL,
 tipo_doc character varying (12) NOT NULL,
@@ -154,7 +153,7 @@ CONSTRAINT fk_docente FOREIGN KEY (tipo_doc,nro_doc) REFERENCES persona(tipo_doc
 
 );
 
-CREATE TABLE IF NOT EXISTS tipo_asignacion (
+CREATE TABLE  tipo_asignacion (
 
 tipo character varying (20) NOT NULL,
 
@@ -169,7 +168,7 @@ INSERT INTO tipo_asignacion (tipo) VALUES
 ('EVENTO'),
 ('CONSULTA');
 
-CREATE TABLE IF NOT EXISTS periodo (
+CREATE TABLE  periodo (
 
 id_periodo serial NOT NULL,
 fecha_inicio date,
@@ -181,7 +180,7 @@ CONSTRAINT pk_perido PRIMARY KEY (id_periodo)
 
 );
 
-CREATE TABLE IF NOT EXISTS cuatrimestre (
+CREATE TABLE  cuatrimestre (
 
 id_periodo serial NOT NULL,
 numero integer,
@@ -192,7 +191,7 @@ ON DELETE CASCADE ON UPDATE CASCADE
 
 );
 
-CREATE TABLE IF NOT EXISTS tipo_examen (
+CREATE TABLE  tipo_examen (
 
 turno character varying (15) NOT NULL,
 tipo character varying (15), --puede ser ordinario o extraordinario
@@ -211,7 +210,7 @@ INSERT INTO tipo_examen (turno, tipo) VALUES
 ('SEPTIEMBRE', 'EXTRAORDINARIO'),
 ('OCTUBRE', 'EXTRAORDINARIO');
 
-CREATE TABLE IF NOT EXISTS examen_final (
+CREATE TABLE  examen_final (
 
 id_periodo serial NOT NULL,
 numero integer,
@@ -225,7 +224,7 @@ ON UPDATE CASCADE
 
 );
 
-CREATE TABLE IF NOT EXISTS curso_ingreso (
+CREATE TABLE  curso_ingreso (
 
 id_periodo serial NOT NULL,
 facultad character varying (6),
@@ -237,7 +236,7 @@ ON DELETE CASCADE ON UPDATE CASCADE
 
 );
 
-CREATE TABLE IF NOT EXISTS asignacion (
+CREATE TABLE  asignacion (
 
   id_asignacion serial NOT NULL,
   finalidad character varying(100),
@@ -272,7 +271,7 @@ CREATE TABLE IF NOT EXISTS asignacion (
   
 );
 
-CREATE TABLE IF NOT EXISTS asignacion_definitiva
+CREATE TABLE  asignacion_definitiva
 (
   nombre character varying(10),
   id_asignacion integer NOT NULL,
@@ -285,7 +284,7 @@ CREATE TABLE IF NOT EXISTS asignacion_definitiva
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-CREATE TABLE IF NOT EXISTS asignacion_periodo
+CREATE TABLE  asignacion_periodo
 (
   id_asignacion serial NOT NULL,
   fecha_inicio date,
@@ -297,7 +296,7 @@ CREATE TABLE IF NOT EXISTS asignacion_periodo
       ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS esta_formada
+CREATE TABLE  esta_formada
 (
   nombre character varying(10) NOT NULL,
   id_asignacion serial NOT NULL,
@@ -312,7 +311,7 @@ CREATE TABLE IF NOT EXISTS esta_formada
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-CREATE TABLE IF NOT EXISTS solicitud (
+CREATE TABLE  solicitud (
 
   id_solicitud serial NOT NULL,
   nombre character varying(70),  --Contiene nombre-apelido del docente o el nombre de una org.
@@ -337,7 +336,7 @@ CREATE TABLE IF NOT EXISTS solicitud (
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-CREATE TABLE IF NOT EXISTS solicitud_multi_evento (
+CREATE TABLE  solicitud_multi_evento (
 
 id_solicitud serial NOT NULL,
 fecha_fin date,
@@ -347,7 +346,7 @@ CONSTRAINT fk_solicitud_multi_evento FOREIGN KEY (id_solicitud)	REFERENCES solic
 
 );
 
-CREATE TABLE IF NOT EXISTS multi_evento (
+CREATE TABLE  multi_evento (
 
 id_solicitud serial NOT NULL,
 fecha date NOT NULL,
@@ -360,7 +359,7 @@ CONSTRAINT fk_multi_evento FOREIGN KEY (id_solicitud)
 
 );
 
-CREATE TABLE IF NOT EXISTS catedra (
+CREATE TABLE  catedra (
 
 id_asignacion serial NOT NULL,
 nro_doc character varying (20),
@@ -377,7 +376,7 @@ ON DELETE CASCADE ON UPDATE CASCADE
 
 );
 
-CREATE TABLE IF NOT EXISTS organizacion (
+CREATE TABLE  organizacion (
 
 id_organizacion serial NOT NULL,
 nombre character varying (40),

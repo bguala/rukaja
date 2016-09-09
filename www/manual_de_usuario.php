@@ -1,5 +1,5 @@
 <?php
-   
+    
     //ob_start() activa el almacenamiento en el buffer de salida. Mientras el almacenamiento interno este activo
     //no se enviara ninguna salida (como un archivo) desde el script php. Si el buffer esta activo la salida se
     //almacena en el buffer interno.
@@ -31,11 +31,12 @@
     
     //Limpia el buffer de salida.
     ob_end_clean();
-        
+    
     //Lee el archivo fuente y lo escribe en el buffer de salida.
     //El path al archivo lo especificamos mediante una ruta relativa donde subimos tres niveles hasta llegar al
     //disco C.
-    readfile('../../../proyectos/rukaja/rukaja_v2_0.pdf');
+    $path= toba_dir();
+    readfile("$path/proyectos/rukaja/rukaja_v2_0.pdf");
     
     exit();
 
