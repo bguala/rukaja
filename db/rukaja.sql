@@ -42,7 +42,7 @@ INSERT INTO sede (id_sede,descripcion,sigla,telefono,direccion) VALUES
 CREATE TABLE  tipo (
 
 id_tipo character varying (2) NOT NULL,
-descripcion character varying (32),
+descripcion character varying,
 
 CONSTRAINT pk_tipo PRIMARY KEY (id_tipo)
 
@@ -63,7 +63,7 @@ CREATE TABLE  aula (
 id_aula serial NOT NULL,
 capacidad integer,
 nombre character varying,
-ubicacion character varying (150), -- Para indicar la ubicacion del aula.
+ubicacion character varying, -- Para indicar la ubicacion del aula.
 id_tipo character varying (2),
 id_sede serial,
 eliminada boolean,
@@ -155,7 +155,7 @@ CONSTRAINT fk_docente FOREIGN KEY (tipo_doc,nro_doc) REFERENCES persona(tipo_doc
 
 CREATE TABLE  tipo_asignacion (
 
-tipo character varying (20) NOT NULL,
+tipo character varying NOT NULL,
 
 CONSTRAINT pk_tipo_asignacion PRIMARY KEY (tipo)
 
@@ -239,8 +239,8 @@ ON DELETE CASCADE ON UPDATE CASCADE
 CREATE TABLE  asignacion (
 
   id_asignacion serial NOT NULL,
-  finalidad character varying(100),
-  descripcion character varying(250),
+  finalidad character varying,
+  descripcion character varying,
   hora_inicio time without time zone,
   hora_fin time without time zone,
   cantidad_alumnos integer,
@@ -249,7 +249,7 @@ CREATE TABLE  asignacion (
   tipo_doc character varying(12),
   id_aula integer,
   modulo integer,
-  tipo_asignacion character varying(15),
+  tipo_asignacion character varying,
   id_periodo integer,
   id_responsable_aula integer,
   nombre character varying,
@@ -314,17 +314,17 @@ CREATE TABLE  esta_formada
 CREATE TABLE  solicitud (
 
   id_solicitud serial NOT NULL,
-  nombre character varying(70),  --Contiene nombre-apelido del docente o el nombre de una org.
-  
-  tipo_agente character varying (12), --Agregamos el tipo de agente para distinguir entre docente u org.
+  nombre character varying,  --Contiene nombre-apelido del docente o el nombre de una org.
+  tipo character varying(5),
+  tipo_agente character varying, --Agregamos el tipo de agente para distinguir entre docente u org.
   fecha date,
   capacidad integer,
-  finalidad character varying(100),
+  finalidad character varying,
   hora_inicio time without time zone,
   hora_fin time without time zone,
-  tipo_asignacion character varying (20),
+  tipo_asignacion character varying,
   id_sede serial NOT NULL,       --Guardamos quien recibe el pedido de aula.
-  estado character varying(12),
+  estado character varying,
   id_responsable integer,
   id_aula integer,
   id_sede_origen integer,         --Guardamos quien hizo el pedido de aula.
@@ -379,9 +379,9 @@ ON DELETE CASCADE ON UPDATE CASCADE
 CREATE TABLE  organizacion (
 
 id_organizacion serial NOT NULL,
-nombre character varying (40),
-telefono character varying (20),
-email character varying (40),
+nombre character varying,
+telefono character varying,
+email character varying,
 
 CONSTRAINT pk_organizacion PRIMARY KEY (id_organizacion)
 

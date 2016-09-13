@@ -49,19 +49,19 @@ INSERT INTO apex_objeto_db_registros (objeto_proyecto, objeto, max_registros, mi
 	'2940', --objeto
 	NULL, --max_registros
 	NULL, --min_registros
-	NULL, --punto_montaje
+	'21', --punto_montaje
 	'1', --ap
 	NULL, --ap_clase
 	NULL, --ap_archivo
 	'organizacion', --tabla
 	NULL, --tabla_ext
 	NULL, --alias
-	NULL, --modificar_claves
+	'0', --modificar_claves
 	'rukaja', --fuente_datos_proyecto
 	'rukaja', --fuente_datos
 	'1', --permite_actualizacion_automatica
 	NULL, --esquema
-	NULL  --esquema_ext
+	'public'  --esquema_ext
 );
 
 ------------------------------------------------------------
@@ -79,8 +79,8 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'organizacion_id_organizacion_seq', --secuencia
 	NULL, --largo
 	NULL, --no_nulo
-	NULL, --no_nulo_db
-	NULL, --externa
+	'0', --no_nulo_db
+	'0', --externa
 	NULL  --tabla
 );
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
@@ -89,12 +89,12 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'1150', --col_id
 	'nombre', --columna
 	'C', --tipo
-	NULL, --pk
+	'0', --pk
 	NULL, --secuencia
 	NULL, --largo
 	NULL, --no_nulo
-	NULL, --no_nulo_db
-	NULL, --externa
+	'0', --no_nulo_db
+	'0', --externa
 	NULL  --tabla
 );
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
@@ -103,12 +103,12 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'1151', --col_id
 	'telefono', --columna
 	'C', --tipo
-	NULL, --pk
+	'0', --pk
 	NULL, --secuencia
 	NULL, --largo
 	NULL, --no_nulo
-	NULL, --no_nulo_db
-	NULL, --externa
+	'0', --no_nulo_db
+	'0', --externa
 	NULL  --tabla
 );
 INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, columna, tipo, pk, secuencia, largo, no_nulo, no_nulo_db, externa, tabla) VALUES (
@@ -117,12 +117,12 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'1152', --col_id
 	'email', --columna
 	'C', --tipo
-	NULL, --pk
+	'0', --pk
 	NULL, --secuencia
 	NULL, --largo
 	NULL, --no_nulo
-	NULL, --no_nulo_db
-	NULL, --externa
+	'0', --no_nulo_db
+	'0', --externa
 	NULL  --tabla
 );
 --- FIN Grupo de desarrollo 0

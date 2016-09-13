@@ -77,10 +77,10 @@ INSERT INTO apex_objeto_db_registros_col (objeto_proyecto, objeto, col_id, colum
 	'C', --tipo
 	'1', --pk
 	'', --secuencia
-	'15', --largo
+	NULL, --largo
 	NULL, --no_nulo
 	'1', --no_nulo_db
-	NULL, --externa
+	'0', --externa
 	'tipo_asignacion'  --tabla
 );
 --- FIN Grupo de desarrollo 0
