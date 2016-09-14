@@ -144,6 +144,16 @@ class dt_persona extends toba_datos_tabla
                 }
             }            
         }
+        
+        function get_equipo_de_catedra($id_asignacion){
+            $sql="SELECT 
+                      t_c.nombre || ' ' || t_c.apellido as miembro
+                  FROM 
+                      catedra t_c
+                  WHERE t_c.id_asignacion=$id_asignacion";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
                       
                 
 }

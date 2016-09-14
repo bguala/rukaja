@@ -82,7 +82,9 @@ class ci_memorando_por_fecha extends toba_ci
             return ($meses[$mes_numerico]);
         }
         
+        //-----------------------------------------------------------------------------------------------
         //---- Pant Memorando ---------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------------------
         
         function conf__pant_memorando (toba_ei_pantalla $pantalla){
             $this->pantalla()->tab('pant_edicion')->desactivar();
@@ -110,18 +112,19 @@ class ci_memorando_por_fecha extends toba_ci
             $pdf=$salida->get_pdf();
             
             $pdf->ezSetMargins(58, 30, 35, 35);
-            $pdf->addJpegFromFile(toba_dir().'/www/img/encabezado_reporte.jpg', 35, 785, 260, 58);
+            $pdf->addJpegFromFile(toba_dir().'/proyectos/rukaja/www/img/encabezado_reporte.jpg', 35, 785, 260, 58);
             
             $alineacion_der=array('justification'=>'right');
             $alineacion_centro=array('justification'=>'center');
             
-            //$n=rand(0,999);
-            //$m=  rand(0, 99);
             $titulo="MEMORANDO   ............./............. \n\n";
             $pdf->ezText($titulo, 8, $alineacion_centro);
             
-            $inicio="Producido por : Dirección de Administración Académica \n\n";
-            $pdf->ezText(utf8_d_seguro($inicio), 8);
+            $ua=$this->dep('datos')->tabla('unidad_academica')->get_unidad_academica($this->s__id_sede);
+            $establecimiento=$ua[0]['establecimiento'];
+            
+            $inicio=  utf8_decode("Producido por : Dirección de ");
+            $pdf->ezText(utf8_d_seguro($inicio.$establecimiento."\n\n"), 8);
             
             $finalidad="Para Información de : Área de Serenos \n\n";
             $pdf->ezText(utf8_d_seguro($finalidad), 8);
@@ -171,11 +174,47 @@ class ci_memorando_por_fecha extends toba_ci
                 'responsable' => 'Responsable de Aula',
                 'catedra' => 'Docentes Sustitutos'
             );
+                        
+            $this->agregar_catedra($this->s__asignaciones);                                    
             
-            $alineacion=array('justification'=>'center');
-                                                
             $pdf->ezTable($this->s__asignaciones, $columnas, " ", $opciones);
             
+        }
+        
+        /*
+         * Esta funcion obtiene el equipo de catedra perteneciente a una asignacion periodica.
+         */
+        function agregar_catedra ($asignaciones){
+            $i=0;
+            $n=count($asignaciones);
+            while ($i < $n){
+                $id_asignacion=$asignaciones[$i]['id_asignacion'];
+                
+                $equipo_catedra=$this->dep('datos')->tabla('persona')->get_equipo_de_catedra($id_asignacion);
+                
+                $catedra=$this->toString($equipo_catedra);
+                
+                $this->s__asignaciones[$i]['catedra']=$catedra;
+                
+                $i++;
+            }
+        }
+        
+        function toString ($equipo_catedra){
+            $i=0;
+            $n=count($equipo_catedra);
+            $separador=" ; ";
+            $cadena=" ";
+            while($i < $n){
+                if($i != ($n - 1))
+                    $cadena .= (($equipo_catedra[$i]['miembro']) . $separador);
+                else
+                    $cadena .= ($equipo_catedra[$i]['miembro']);
+                
+                $i++;
+            }
+            
+            return $cadena;
         }
         
         function generar_cadena ($cantidad_caracteres){

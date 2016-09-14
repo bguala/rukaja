@@ -663,47 +663,6 @@ class ci_cargar_asignaciones extends toba_ci
             return $dias;
         }
         
-//        function cargar_form_definitivo (toba_ei_formulario $form){
-//           $efs=array(
-//               'fecha_inicio',
-//               'fecha_fin',
-//               'dias',
-//           );
-//           $form->set_efs_obligatorios($efs, FALSE);
-//           $form->desactivar_efs($efs);
-//                                       
-//           //$form->ef('tipo')->set_estado($asignacion[0]['tipo']);
-//           //$form->ef('dia_semana')->set_estado($asignacion[0]['dia']);
-//           //$form->set_datos($this->s__edicion[0]);
-//           $form->ef('finalidad')->set_estado("Se rompe???");
-//            
-//        }
-        
-//        function cargar_form_periodo (toba_ei_formulario $form){
-//            $efs=array('tipo','dia_semana');
-//            $form->set_efs_obligatorios($efs, FALSE);
-//            $form->desactivar_efs($efs);
-//            
-//            $sql="SELECT * , t_f.nombre as dia
-//                  FROM asignacion t_a 
-//                  JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-//                  JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
-//                  JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion)
-//                  JOIN esta_formada t_f ON (t_p.id_asignacion=t_f.id_asignacion)
-//                  WHERE t_a.id_asignacion={$this->s__id_asignacion}";
-//                  
-//            $asignaciones=toba::db('rukaja')->consultar($sql);
-//            
-//            $dias=array();
-//            foreach ($asignaciones as $clave=>$valor){
-//                $dias[]=$valor['dia'];
-//            }
-//            
-//            $form->ef('dias')->set_estado($dias);
-//            $form->ef('tipo')->set_estado($this->s__tipo);
-//            $form->set_datos($asignaciones[0]);
-//            
-//        }
         
         /*
          * Boton aceptar del formulario form_asignacion.
@@ -985,8 +944,12 @@ class ci_cargar_asignaciones extends toba_ci
                                                                    $dias=array(0 => $fecha_fin);
                                                                    $datos['fecha_fin']=$fecha_fin;
                                                                    $datos['dias']=$dias;
+                                                                   
                                                                    $this->registrar_asignacion($datos);
+                                                                   $secuencia= recuperar_secuencia('asignacion_id_asignacion_seq');
+                                                                   
                                                                    $this->registrar_asignacion_periodo($datos);
+                                                                   $this->registrar_equipo_de_catedra($secuencia);
                                                                }else{
                                                                    
                                                                }
@@ -1019,7 +982,10 @@ class ci_cargar_asignaciones extends toba_ci
                                                                    $datos['dias']=$dias;
                                                                                                                                       
                                                                    $this->registrar_asignacion($datos);
+                                                                   $secuencia= recuperar_secuencia('asignacion_id_asignacion_seq');
+                                                                   
                                                                    $this->registrar_asignacion_periodo($datos);
+                                                                   $this->registrar_equipo_de_catedra($secuencia);
                                                                }else{
                                                                    
                                                                }
@@ -1040,14 +1006,7 @@ class ci_cargar_asignaciones extends toba_ci
             //Agregamos el equipo de catedra si existe.
             if(count($this->s__docentes_seleccionados)>0){
                 foreach($this->s__docentes_seleccionados as $clave=>$docente){
-//                    $catedra=array(
-//                        'id_asignacion' => $secuencia,
-//                        //nro_doc y tipo_doc se pueden sacar cuando el sistema trabaje bien con las fuentes
-//                        //de datos mocovi y rukaja
-//                        'nro_doc' => $docente['nro_doc'],
-//                        'tipo_doc' => $docente['tipo_doc'],
-//                        'id_docente' => $docente['id_docente']
-//                    );
+                    
                     $docente['id_asignacion']=$secuencia;
                     
                     $this->dep('datos')->tabla('catedra')->nueva_fila($docente);
