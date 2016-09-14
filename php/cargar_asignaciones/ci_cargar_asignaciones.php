@@ -222,7 +222,7 @@ class ci_cargar_asignaciones extends toba_ci
                                                        t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
                                                 FROM periodo t_p 
                                                 JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
-                                                AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "
+                                                 "
                                                 . "AND t_p.id_sede=$id_sede)";
                                         $periodo=toba::db('rukaja')->consultar($sql_1);
                                         break;

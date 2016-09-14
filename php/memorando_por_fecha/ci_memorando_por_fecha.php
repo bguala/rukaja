@@ -6,7 +6,7 @@ class ci_memorando_por_fecha extends toba_ci
         protected $s__id_sede;
         protected $s__dia_consulta;
         protected $s__asignaciones;
-
+        protected $s__imagenes=array('');
 
         //---- Pant Edicion -----------------------------------------------------------------------------
     
@@ -24,6 +24,14 @@ class ci_memorando_por_fecha extends toba_ci
         }
         
         function evt__calendario__seleccionar_dia ($seleccion){
+            //Verificamos si existen aulas registradas en el sistema.
+            $aulas=$this->dep('datos')->tabla('aula')->get_aulas($this->s__id_sede);
+            if(count($aulas)==0){
+                $mensaje=" No existen aulas registradas en el sistema. ";
+                toba::notificacion()->agregar($mensaje, 'info');
+                return ;
+            }
+            
             $this->s__fecha_consulta="{$seleccion['anio']}-{$seleccion['mes']}-{$seleccion['dia']}";
             $this->s__fecha_reporte="{$seleccion['dia']}-{$seleccion['mes']}-{$seleccion['anio']}";
             

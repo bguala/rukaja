@@ -309,7 +309,7 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	NULL, --descripcion
 	NULL, --tip
 	'apex', --imagen_recurso_origen
-	'add.png', --imagen
+	'nucleo/agregar.gif', --imagen
 	NULL, --objetos
 	NULL, --eventos
 	NULL, --subclase
@@ -386,7 +386,7 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	NULL, --descripcion
 	NULL, --tip
 	'apex', --imagen_recurso_origen
-	'add_user_1.png', --imagen
+	'usuarios/usuario.gif', --imagen
 	NULL, --objetos
 	NULL, --eventos
 	NULL, --subclase

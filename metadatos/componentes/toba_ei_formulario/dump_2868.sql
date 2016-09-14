@@ -57,7 +57,7 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	NULL, --confirmacion
 	NULL, --estilo
 	'apex', --imagen_recurso_origen
-	'add.png', --imagen
+	'nucleo/agregar.gif', --imagen
 	'1', --en_botonera
 	NULL, --ayuda
 	'1', --orden
@@ -156,7 +156,7 @@ INSERT INTO apex_objeto_eventos (proyecto, evento_id, objeto, identificador, eti
 	NULL, --confirmacion
 	NULL, --estilo
 	'apex', --imagen_recurso_origen
-	'add_user_1.png', --imagen
+	'usuarios/usuario_nuevo.gif', --imagen
 	'1', --en_botonera
 	NULL, --ayuda
 	'4', --orden

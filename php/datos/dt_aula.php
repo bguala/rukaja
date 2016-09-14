@@ -10,6 +10,24 @@ class dt_aula extends toba_datos_tabla
                         ORDER BY nombre";
 		return toba::db('rukaja')->consultar($sql);
 	}
+                
+        /*
+         * Esta funcion se utiliza en la operacion 'Reportar Incidencia', para mostrar en un cuadro las aulas 
+         * pertenecientes al establecimiento del usuario logueado.
+         */
+        function get_aulas_incidencia ($where, $id_sede){
+            $sql="SELECT 
+                      t_au.id_aula, t_au.nombre, t_au.capacidad, t_s.descripcion as sede,
+                      t_u.descripcion as establecimiento
+                  FROM 
+                      aula t_au 
+                           JOIN sede t_s ON (t_au.id_sede=t_s.id_sede)
+                           JOIN unidad_academica t_u ON (t_s.sigla=t_u.sigla)
+                  WHERE t_au.id_sede=$id_sede
+                        AND (NOT t_au.eliminada)";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
         
         /*
          * quote le asigna comillas a una expresion para que pueda ser utilizada en una consulta

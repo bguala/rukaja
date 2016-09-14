@@ -40,6 +40,17 @@ class ci_calendario_comahue extends toba_ci
         }
         
         function evt__calendario__seleccionar_dia ($seleccion){
+            //Obtenemos la sede del usuario logueado en el sistema.
+            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
+            
+            //Verificamos si existen aulas registradas en el sistema.
+            $aulas=$this->dep('datos')->tabla('aula')->get_aulas($this->s__id_sede);
+            if(count($aulas)==0){
+                $mensaje=" No existen aulas registradas en el sistema. ";
+                toba::notificacion()->agregar($mensaje, 'info');
+                return ;
+            }
+                        
             $this->s__fecha_seleccionada=$seleccion;
             $this->set_pantalla('pant_horarios');
         }
@@ -63,11 +74,7 @@ class ci_calendario_comahue extends toba_ci
         
         //---- Formulario -------------------------------------------------------------------------------
         
-        function conf__formulario (toba_ei_formulario $form){
-            //Obtenemos la sede del usuario logueado en el sistema.
-            
-            $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
-           
+        function conf__formulario (toba_ei_formulario $form){         
                        
             $fecha="{$this->s__fecha_seleccionada['dia']}-{$this->s__fecha_seleccionada['mes']}-{$this->s__fecha_seleccionada['anio']}";
             $dia_numerico=date('N', strtotime($fecha));
@@ -81,6 +88,16 @@ class ci_calendario_comahue extends toba_ci
         }
         
         function evt__formulario__aceptar ($datos){
+            
+//            $anio_lectivo=date('Y', strtotime($this->s__fecha_consulta));
+//            $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
+//            
+//            if(count($periodo)==0){
+//                $mensaje=" No existen períodos académicos registrados en el sistema para el año actual ";
+//                toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+//                return ;
+//            }
+            
             $this->s__horarios_disponibles=array();
             $this->s__asignaciones=array();
             $this->s__asignaciones_periodo=array();
