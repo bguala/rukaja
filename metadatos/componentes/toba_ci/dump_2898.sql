@@ -159,10 +159,10 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1759', --dep_id
+	'1906', --dep_id
 	'2898', --objeto_consumidor
-	'2902', --objeto_proveedor
-	'cuadro_asignaciones', --identificador
+	'3015', --objeto_proveedor
+	'catedra', --identificador
 	NULL, --parametros_a
 	NULL, --parametros_b
 	NULL, --parametros_c
@@ -171,10 +171,10 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1760', --dep_id
+	'1759', --dep_id
 	'2898', --objeto_consumidor
-	'2903', --objeto_proveedor
-	'cuadro_asignaciones_periodo', --identificador
+	'2902', --objeto_proveedor
+	'cuadro_asignaciones', --identificador
 	NULL, --parametros_a
 	NULL, --parametros_b
 	NULL, --parametros_c
@@ -280,11 +280,11 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	'1341', --pantalla
 	'pant_periodo', --identificador
 	'3', --orden
-	'Asignación', --etiqueta
+	'Cátedra', --etiqueta
 	NULL, --descripcion
 	NULL, --tip
 	'apex', --imagen_recurso_origen
-	'nota.gif', --imagen
+	'usuarios/permisos.gif', --imagen
 	NULL, --objetos
 	NULL, --eventos
 	NULL, --subclase
@@ -338,7 +338,7 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 	'1341', --pantalla
 	'2898', --objeto_ci
 	'0', --orden
-	'1760'  --dep_id
+	'1906'  --dep_id
 );
 
 ------------------------------------------------------------

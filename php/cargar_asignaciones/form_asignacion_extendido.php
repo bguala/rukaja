@@ -4,7 +4,7 @@ class form_asignacion_extendido extends toba_ei_formulario
     function extender_objeto_js() {
         echo "
         
-        //Simulamos un ini__operacion a nivel de JS.
+        //Simulamos un ini__operacion a nivel JS.
         window.setTimeout('ocultar_campos()', 1000);
         
         function ocultar_campos () {
@@ -199,7 +199,7 @@ class form_asignacion_extendido extends toba_ei_formulario
             var id_periodo=this.ef('id_periodo').get_estado();
             
             if(id_periodo == 'nopar'){
-                alert('Debe elegir un periodo de tiempo');
+                //alert('Debe elegir un periodo de tiempo');
                 return false;
             }
             else{

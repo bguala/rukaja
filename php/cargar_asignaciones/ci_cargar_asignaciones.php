@@ -38,6 +38,8 @@ class ci_cargar_asignaciones extends toba_ci
         protected $s__periodo_analizado=false;
         protected $s__id_docente;
         protected $s__edicion;
+        protected $s__hora_inicio;
+        protected $s__hora_fin;
         
         //Guardamos la cantidad de dias que forman a un mes. Se configura teniendo en cuenta anios bisiestos.
         protected $_meses=array(
@@ -72,7 +74,8 @@ class ci_cargar_asignaciones extends toba_ci
             if(isset($datos_ad['id_aula'])){
                 $this->s__accion="Vinculo";
                 $this->s__aula_disponible=$datos_ad;
-                
+                $this->s__hora_inicio=$datos_ad['hora_inicio'];
+                $this->s__hora_fin=$datos_ad['hora_fin'];
                 //Eliminamos la informacion guardada en el arreglo $_SESSION.
                 toba::memoria()->limpiar_memoria();
                 
@@ -567,18 +570,12 @@ class ci_cargar_asignaciones extends toba_ci
             if(strcmp($this->s__accion, "Vinculo") != 0){
                 $form->set_titulo("Formulario para {$this->s__accion} Asignaciones");
             }
-            else{
-                $form->set_titulo("Formulario para Registrar Asignaciones");
-            }
-            
+                        
             switch($this->s__accion){
                 case "Nop"       : break;
                 case "Registrar" : break;
-                case "Vinculo"   : $form->set_datos($this->s__aula_disponible);
-                                   //De esta manera cargamos el dia en el multi_seleccion_check, de otra forma no funciono
-                                   $form->ef('dias')->set_estado(array($this->s__aula_disponible['dias']));
-                                   $form->set_solo_lectura(array('id_aula', 'dias', 'fecha_inicio', 'fecha_fin', 'tipo'));
-                                   $form->desactivar_efs(array('dia_semana'));
+                case "Vinculo"   :                                   
+                                   $form->colapsar();                                   
                                    break;
                 case "Borrar"    : 
                 case "Editar"    : 
@@ -731,6 +728,35 @@ class ci_cargar_asignaciones extends toba_ci
             $this->set_pantalla('pant_catedra');
         }
         
+        //---- Form Vinculo ----------------------------------------------------------------------------
+        
+        function conf__form_vinculo (toba_ei_formulario $form){
+            if(strcmp($this->s__accion, "Vinculo")==0){
+                $form->set_titulo(utf8_decode("Formulario para Registrar Vínculos"));
+                $form->descolapsar();
+                //Cargamos informacion del vinculo.
+                $form->set_datos($this->s__aula_disponible);
+                
+                $form->ef('fecha_inicio')->set_solo_lectura();              
+                $form->ef('id_aula')->set_solo_lectura();               
+                
+                $form->ef('hora_inicio')->set_estado($this->s__aula_disponible['hora_inicio']);
+                $form->ef('hora_fin')->set_estado($this->s__aula_disponible['hora_fin']);
+            }else{
+                $form->colapsar();
+            }
+        }
+        
+        function evt__form_vinculo__aceptar ($datos){
+            $this->s__aula_disponible=$datos;
+            $this->procesar_vinculo($datos);
+        }
+        
+        function evt__form_vinculo__agregar_catedra ($datos){
+            $this->s__aula_disponible=$datos;
+            $this->set_pantalla('pant_catedra');
+        }
+        
         function registrar_asignacion ($datos){
                        
             //Evitamos guardar valores nulos en la base de datos, veremos si postgres admite conversion implicita
@@ -763,18 +789,10 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         function registrar_asignacion_periodo ($datos){
-            //$cuatrimestre=$this->obtener_cuatrimestre();
-            //$fecha=  getdate();
-            $secuencia=recuperar_secuencia('asignacion_id_asignacion_seq');
-//            $dato=array(
-//              
-//              'cuatrimestre' => $cuatrimestre,
-//              'anio' => $fecha['year'],
-//              
-//            );
             
+            $secuencia=recuperar_secuencia('asignacion_id_asignacion_seq');            
             
-            //registramos una tupla en la tabla asignacion_periodo
+            //Registramos una tupla en la tabla asignacion_periodo
             $periodo=array(
                     'id_asignacion' => $secuencia,
                     'fecha_inicio' => $datos['fecha_inicio'],
@@ -874,6 +892,7 @@ class ci_cargar_asignaciones extends toba_ci
          * Permite cargar una asignacion definitiva o por periodo. 
          */
         function procesar_carga ($datos){
+            $this->procesar_edicion($datos);
             //-- Check en sesion
             $hora_inicio=toba::memoria()->get_dato_instancia(100);
             $hora_fin=toba::memoria()->get_dato_instancia(101);
@@ -1098,22 +1117,39 @@ class ci_cargar_asignaciones extends toba_ci
         }
         
         /*
-         * Esta funcion gestiona un vinculo establecido entre operaciones. Realiza una validacion de 
-         * horas y produce la carga de datos en el sistema
+         * Esta funcion gestiona un vinculo establecido entre las operaciones 'Calendario Comahue' y 
+         * 'Cargar Asignaciones'. Realiza una validacion de  horas y produce la carga de datos en el sistema.
+         * Si ocurre algun problema volvemos a autocompletar el formulario.
          */
         function procesar_vinculo ($datos){
-            $hora_inicio=$this->s__aula_disponible['hora_inicio'];
+            
+            if(strcmp($datos['tipo_asignacion'], "CURSADA")==0){
+                $mensaje="No se puede seleccionar el tipo de asignacion CURSADA porque es incompatible con "
+                        . "una asignación por periodo. ";
+                toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                return ;
+            }
+            
             $hora_inicio_datos="{$datos['hora_inicio']}:00";
-            $hora_fin=$this->s__aula_disponible['hora_fin'];
             $hora_fin_datos="{$datos['hora_fin']}:00";
             
-            if(($hora_inicio_datos < $hora_fin_datos) && (($hora_inicio_datos >= $hora_inicio) && ($hora_inicio_datos <= $hora_fin)) && ($hora_fin_datos <= $hora_fin)){
-               $this->procesar_carga($datos);
+            if(($hora_inicio_datos < $hora_fin_datos) && (($hora_inicio_datos >= $this->s__hora_inicio) && ($hora_inicio_datos <= $this->s__hora_fin)) && ($hora_fin_datos <= $this->s__hora_fin)){
+               //print_r($datos);exit();               
+               $this->registrar_asignacion($datos);
+               
+               $datos['fecha_fin']=$datos['fecha_inicio'];
+               $datos['dias']=array($datos['fecha_inicio']);
+               $this->registrar_asignacion_periodo($datos);
+               
+               $secuencia=  recuperar_secuencia('asignacion_id_asignacion_seq');
+               $this->registrar_equipo_de_catedra($secuencia);
                $this->s__accion="Nop";
             }
             else{
-                $mensaje=" El horario especificado no pertenece al rango disponible : $hora_inicio y $hora_fin hs ";
-                toba::notificacion()->agregar($mensaje);
+                $this->s__aula_disponible['hora_inicio']=$this->s__hora_inicio;
+                $this->s__aula_disponible['hora_fin']=$this->s__hora_fin;
+                $mensaje=" El horario especificado no pertenece al rango disponible : {$this->s__hora_inicio} y {$this->s__hora_fin} hs ";
+                toba::notificacion()->agregar($mensaje, 'info');
             }
         }
         
@@ -1142,7 +1178,19 @@ class ci_cargar_asignaciones extends toba_ci
          * 
          */
         function procesar_edicion ($datos){
-                       
+            print_r($datos);print_r($this->s__id_asignacion);
+            $catedra=$this->dep('datos')->tabla('persona')->get_catedra($this->s__id_asignacion);
+            print_r("<br><br>Este es el equipo de catedra<br><br>");print_r($catedra);
+            $this->dep('datos')->tabla('catedra')->set_tope_max_filas(count($catedra));
+            $this->dep('datos')->tabla('catedra')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
+            $docentes=$this->dep('datos')->tabla('catedra')->get_filas();
+            print_r("<br><br>Estas son los docentes del datos tabla multiple <br><br>");
+            print_r($docentes);
+            $this->dep('datos')->tabla('catedra')->eliminar_todo();
+            $doc=$this->dep('datos')->tabla('catedra')->get_filas();
+            if(count($doc)==0)
+                print_r("<br><br>No hy docentes en el datos_tabla multiple");
+            exit();
             if(strcmp($this->s__tipo, "Definitiva")==0){
                 $this->dep('datos')->tabla('asignacion')->cargar(array('id_asignacion'=>$this->s__id_asignacion));
                 $asignacion=$this->dep('datos')->tabla('asignacion')->get();

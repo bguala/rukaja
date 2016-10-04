@@ -16,6 +16,12 @@ class dt_aula extends toba_datos_tabla
          * pertenecientes al establecimiento del usuario logueado.
          */
         function get_aulas_incidencia ($where, $id_sede){
+            if(isset($where)){
+                $where = ($where . " AND t_au.id_sede=$id_sede AND (NOT t_au.eliminada) ");
+            }else{
+                $where=" t_au.id_sede=$id_sede AND (NOT t_au.eliminada) ";
+            }
+            
             $sql="SELECT 
                       t_au.id_aula, t_au.nombre, t_au.capacidad, t_s.descripcion as sede,
                       t_u.descripcion as establecimiento
@@ -23,8 +29,7 @@ class dt_aula extends toba_datos_tabla
                       aula t_au 
                            JOIN sede t_s ON (t_au.id_sede=t_s.id_sede)
                            JOIN unidad_academica t_u ON (t_s.sigla=t_u.sigla)
-                  WHERE t_au.id_sede=$id_sede
-                        AND (NOT t_au.eliminada)";
+                  WHERE $where ";
             
             return toba::db('rukaja')->consultar($sql);
         }

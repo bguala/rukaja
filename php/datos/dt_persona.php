@@ -154,6 +154,15 @@ class dt_persona extends toba_datos_tabla
             
             return toba::db('rukaja')->consultar($sql);
         }
+        
+        function get_catedra ($id_asignacion){
+            $sql="SELECT *, 'MIEMBRO' as tipo
+                  FROM 
+                      catedra  
+                  WHERE id_asignacion=$id_asignacion";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
                       
                 
 }

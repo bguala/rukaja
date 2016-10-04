@@ -282,6 +282,18 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
+	'1905', --dep_id
+	'2866', --objeto_consumidor
+	'3014', --objeto_proveedor
+	'form_vinculo', --identificador
+	NULL, --parametros_a
+	NULL, --parametros_b
+	NULL, --parametros_c
+	NULL, --inicializar
+	NULL  --orden
+);
+INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
+	'rukaja', --proyecto
 	'1804', --dep_id
 	'2866', --objeto_consumidor
 	'2932', --objeto_proveedor
@@ -331,11 +343,12 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 		<tr>
 			<td>
 				<fieldset style="border-radius:15px;">
-					[dep id=form_asignacion]</fieldset>
+					<p>[dep id=form_asignacion]</p><p>[dep id=form_vinculo]</p></fieldset>
 			</td>
 		</tr>
 	</tbody>
-</table>', --template
+</table>
+<p>&nbsp;</p>', --template
 	NULL, --template_impresion
 	'21'  --punto_montaje
 );
@@ -481,6 +494,13 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 	'2866', --objeto_ci
 	'1', --orden
 	'1713'  --dep_id
+);
+INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
+	'rukaja', --proyecto
+	'1331', --pantalla
+	'2866', --objeto_ci
+	'3', --orden
+	'1905'  --dep_id
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto

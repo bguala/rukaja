@@ -348,7 +348,7 @@ class dt_asignacion extends toba_datos_tabla
             $asig_periodo=toba::db('rukaja')->consultar($sql_2);
             
             //eliminamos las asignaciones definitivas que estan solapadas con dos o mas asignaciones por periodo
-            $this->descartar_asignaciones_definitivas($asig_periodo, &$asig_definitiva);
+            //$this->descartar_asignaciones_definitivas($asig_periodo, &$asig_definitiva);
             
             $this->unificar_asignaciones(&$asig_periodo, $asig_definitiva);
             
@@ -440,10 +440,10 @@ class dt_asignacion extends toba_datos_tabla
         function get_asignaciones_definitivas_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo){
             
             $sql="SELECT 
-                      t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.facultad, 
+                      t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.facultad, t_a.id_asignacion,
                       t_au.nombre as aula, t_au.capacidad, t_au.id_aula, t_au.capacidad, 
                       t_a.nro_doc, t_a.tipo_doc, t_a.nombre || ' ' || t_a.apellido as responsable,
-                      'Definitiva' as tipo, t_a.cantidad_alumnos as cant_alumnos
+                      'Definitiva' as tipo, t_a.cantidad_alumnos as cant_alumnos, t_d.nombre as dia
                   FROM
                       asignacion t_a 
                            JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
@@ -465,7 +465,7 @@ class dt_asignacion extends toba_datos_tabla
         function get_asignaciones_periodo_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo, $fecha){
             $sql="SELECT 
                       t_a.finalidad, t_a.id_aula, t_au.nombre as aula, t_a.hora_inicio, t_a.hora_fin, 
-                      t_a.tipo_asignacion, 
+                      t_a.tipo_asignacion, t_a.id_asignacion,
                       t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos
                   FROM
                       asignacion t_a 
@@ -490,7 +490,7 @@ class dt_asignacion extends toba_datos_tabla
          */
         function get_asignaciones_periodo_por_fecha_examen ($id_sede, $dia, $id_periodo, $fecha){
             $sql="SELECT 
-                      t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.tipo_asignacion,
+                      t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.tipo_asignacion, t_a.id_asignacion,
                       t_au.id_aula, t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos
                   FROM
                       asignacion t_a 
@@ -922,6 +922,16 @@ class dt_asignacion extends toba_datos_tabla
                   FROM 
                       esta_formada t_f 
                   WHERE t_f.id_asignacion=$id_asignacion";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        function get_titular ($id_asignacion){
+            $sql="SELECT 
+                      nombre, apellido, nro_doc, tipo_doc, legajo, 'TITULAR' as tipo
+                  FROM
+                      asignacion
+                  WHERE id_asignacion=$id_asignacion";
             
             return toba::db('rukaja')->consultar($sql);
         }

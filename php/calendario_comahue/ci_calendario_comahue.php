@@ -12,9 +12,9 @@ class ci_calendario_comahue extends toba_ci
         protected $s__horarios_disponibles=array();      //Guarda todos los horarios disponibles para una fecha especifica
         protected $s__id_sede;                           //Guarda la sede del usuario logueado
         protected $s__asignaciones=array();              //Guarda las asignaciones que hay que mostrar en el cuadro
-        protected $s__asignaciones_periodo;              //Guarda las asignaciones por periodo que estan solapadas con asignaciones definitivas
         protected $s__datos_filtro=array();              //Guarda un cjto de registros filtrados
-        protected $s__asig_solapadas=null;
+        protected $s__catedra=array();
+        protected $s__finalidad;
         
                 
         //-----------------------------------------------------------------------------------------------
@@ -306,48 +306,54 @@ class ci_calendario_comahue extends toba_ci
         }
         
         function evt__cuadro_asignaciones__ver ($datos){
-            //debemos extraer las asig_per solapadas con asig_definitivas. Las asig_per estan en 
-            //s__asignaciones_periodo
-            $this->s__asig_solapadas=$this->extraer_asignaciones_solapadas($datos);
+            $docentes=$this->dep('datos')->tabla('persona')->get_catedra($datos['id_asignacion']);
+            $this->s__catedra=$this->dep('datos')->tabla('asignacion')->get_titular($datos['id_asignacion']);
+            $this->unificar(&$this->s__catedra, $docentes);
             
-            if(count($this->s__asig_solapadas)==0){
-                $mensaje=" No existen asignaciones por período solapadas ";
+            if(count($this->s__catedra)==0){
+                $mensaje=" La asignación seleccionada no posee un equipo de cátedra registrado en el sistema. ";
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
-            }
-            else{
-                $this->set_pantalla("pant_periodo");
+                return ;
             }
             
+            $this->s__finalidad=$datos['finalidad'];
+            $this->set_pantalla('pant_periodo');            
         }
         
-        function extraer_asignaciones_solapadas ($datos){            
-            $asig_solapadas=array();
-            foreach ($this->s__asignaciones_periodo as $clave=>$valor){
-                if($this->analizar_horario($datos, $valor)){
-                    //agregamos valores existentes pra el corte de control
-                    $valor['finalidad_def']=$datos['finalidad'];
-                    $valor['hora_inicio_def']=$datos['hora_inicio'];
-                    $valor['hora_fin_def']=$datos['hora_fin'];
-                    $asig_solapadas[]=$valor;
-                }
+        function unificar ($titular, $catedra){
+            foreach ($catedra as $key=>$docente){
+                $titular[]=$docente;
             }
-            return $asig_solapadas;
         }
         
-        function analizar_horario ($datos, $valor){
-            $id_aula_def=$datos['id_aula'];
-            $hora_inicio_def="{$datos['hora_inicio']}:00";
-            $hora_fin_def="{$datos['hora_fin']}:00";
-            
-            $id_aula_per=$valor['id_aula'];
-            $hora_inicio_per="{$valor['hora_inicio']}:00";
-            $hora_fin_per="{$valor['hora_fin']}:00";
-            
-            return (($id_aula_def == $id_aula_per) && (($hora_inicio_per >= $hora_inicio_def && $hora_inicio_per <= $hora_fin_def && $hora_fin_per <= $hora_fin_def) 
-                   || ($hora_inicio_per >= $hora_inicio_def && $hora_inicio_per <= $hora_inicio_def) 
-                   || ($hora_fin_per >= $hora_inicio_def && $hora_fin_per <= $hora_inicio_def) 
-                   ));
-        }
+//        function extraer_asignaciones_solapadas ($datos){            
+//            $asig_solapadas=array();
+//            foreach ($this->s__asignaciones_periodo as $clave=>$valor){
+//                if($this->analizar_horario($datos, $valor)){
+//                    //agregamos valores existentes pra el corte de control
+//                    $valor['finalidad_def']=$datos['finalidad'];
+//                    $valor['hora_inicio_def']=$datos['hora_inicio'];
+//                    $valor['hora_fin_def']=$datos['hora_fin'];
+//                    $asig_solapadas[]=$valor;
+//                }
+//            }
+//            return $asig_solapadas;
+//        }
+        
+//        function analizar_horario ($datos, $valor){
+//            $id_aula_def=$datos['id_aula'];
+//            $hora_inicio_def="{$datos['hora_inicio']}:00";
+//            $hora_fin_def="{$datos['hora_fin']}:00";
+//            
+//            $id_aula_per=$valor['id_aula'];
+//            $hora_inicio_per="{$valor['hora_inicio']}:00";
+//            $hora_fin_per="{$valor['hora_fin']}:00";
+//            
+//            return (($id_aula_def == $id_aula_per) && (($hora_inicio_per >= $hora_inicio_def && $hora_inicio_per <= $hora_fin_def && $hora_fin_per <= $hora_fin_def) 
+//                   || ($hora_inicio_per >= $hora_inicio_def && $hora_inicio_per <= $hora_inicio_def) 
+//                   || ($hora_fin_per >= $hora_inicio_def && $hora_fin_per <= $hora_inicio_def) 
+//                   ));
+//        }
         
                 
         //---- obtener asignaciones segun fecha ---------------------------------------------------------
@@ -359,7 +365,7 @@ class ci_calendario_comahue extends toba_ci
             $this->s__asignaciones=$this->procesar_periodo($periodo, 'hr');
             
             if(count($this->s__asignaciones)==0){
-                //$this->s__mostrar_mensaje=TRUE;
+                
                 $mensaje="No existen asignaciones definitivas registradas en el sistema para el día seleccionado";
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
             }
@@ -381,7 +387,7 @@ class ci_calendario_comahue extends toba_ci
             $periodo=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($this->s__fecha_consulta, $anio_lectivo, $this->s__id_sede);
             
             $asignaciones=$this->procesar_periodo($periodo, 'hd');            
-                        
+            
             //obtenemos todas las aulas involucradas 
             $aulas=$this->obtener_aulas($asignaciones);
             toba::memoria()->set_dato_instancia(0, $this->s__id_sede);
@@ -600,37 +606,15 @@ class ci_calendario_comahue extends toba_ci
             $this->pantalla()->tab("pant_edicion")->desactivar();
             $this->pantalla()->tab("pant_horarios")->desactivar();
         }
-        
-        //---- Cuadro Asignaciones Periodo --------------------------------------------------------------
-        
-        function conf__cuadro_asignaciones_periodo (toba_ei_cuadro $cuadro){
-            if(count($this->s__asig_solapadas)>0){
-                $cuadro->descolapsar();
-                $cuadro->set_titulo("Asignaciones solapadas ");
-                $cuadro->set_datos($this->s__asig_solapadas);
-            }
-            
-            $this->s__asig_solapadas=null;
-        }
-        
+                
         function evt__volver_horarios (){
             $this->set_pantalla("pant_horarios");
         }
         
-//        function agregar_capacidad (){
-//            $aulas_con_capacidad=$this->dep('datos')->tabla('aula')->get_aulas_mas_capacidad($this->s__id_sede);
-//            
-//            $longitud=count($this->s__horarios_disponibles);
-//            
-//            foreach ($aulas_con_capacidad as $clave=>$valor){
-//                for($i=0;$i<$longitud;$i++){
-//                    $elto=$this->s__horarios_disponibles[$i];
-//                    if($valor['id_aula'] == $elto['id_aula']){
-//                        $this->s__horarios_disponibles[$i]['capacidad']=$valor['capacidad'];
-//                    }                                                            
-//                }
-//            }
-//        }
+        function conf__catedra (toba_ei_cuadro $cuadro){
+            $cuadro->set_titulo(utf8_decode("Equipo de cátedra completo de: {$this->s__finalidad}"));
+            $cuadro->set_datos($this->s__catedra);
+        }
                 
 }
 
