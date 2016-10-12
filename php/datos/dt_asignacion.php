@@ -699,7 +699,7 @@ class dt_asignacion extends toba_datos_tabla
          * El periodo actual se obtiene a partir de la fecha actual.
          */
         function get_asignaciones ($where, $id_periodo){
-            //El JOIN con dia es necesario porque sino el where no nos sirve.
+            //--El JOIN con dia es necesario porque sino el where no nos sirve.
             $sql="( SELECT t_a.id_asignacion, t_a.nro_doc, t_a.tipo_doc, 
                            t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_dia.nombre as dia, 
                            (t_a.nombre || ' ' || t_a.apellido) as responsable, 'Definitiva' as tipo,

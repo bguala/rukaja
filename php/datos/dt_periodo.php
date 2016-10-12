@@ -321,6 +321,33 @@ class dt_periodo extends toba_datos_tabla
             
             return toba::db('rukaja')->consultar($sql);
         }
+        
+        /*
+         * Esta funcion se utiliza en la operacion 'Cargar Asignaciones' para obtener todos los periodos academicos
+         * registrados en el sistema para el anio_lectivo actual. 
+         */
+        function get_periodos_academicos ($id_sede){
+            //$anio_lectivo=date('Y');
+            $sql="(SELECT 
+                       t_p.id_periodo, 'Cuatrimestre' as tipo_periodo 
+                   FROM 
+                       periodo t_p 
+                           JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo)
+                   WHERE 
+                         (t_p.id_sede=$id_sede) ) 
+                  
+                   UNION 
+                  
+                  (SELECT 
+                       t_p.id_periodo, 'Examen Final' as tipo_periodo
+                   FROM 
+                       periodo t_p 
+                           JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo)
+                   WHERE 
+                         (t_p.id_sede=$id_sede) )";
+            
+            return (toba::db('rukaja')->consultar($sql));
+        }
 
 
 }

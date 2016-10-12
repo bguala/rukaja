@@ -371,9 +371,10 @@ apellido character varying,
 legajo integer,
 
 CONSTRAINT pk_catedra PRIMARY KEY (id_asignacion,id_docente),
-CONSTRAINT fk_catedra_asignacion FOREIGN KEY (id_asignacion) REFERENCES asignacion(id_asignacion)
-ON DELETE CASCADE ON UPDATE CASCADE
-
+CONSTRAINT fk_asignacion_catedra FOREIGN KEY (id_asignacion)
+      REFERENCES asignacion (id_asignacion) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+	  
 );
 
 CREATE TABLE  organizacion (
