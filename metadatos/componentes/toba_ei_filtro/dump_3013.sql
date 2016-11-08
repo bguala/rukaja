@@ -101,7 +101,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'cadena', --tipo
 	'nombre', --nombre
-	'nombre', --expresion
+	't_au.nombre', --expresion
 	'Nombre', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio
@@ -159,7 +159,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'rukaja', --objeto_ei_filtro_proyecto
 	'numero', --tipo
 	'capacidad', --nombre
-	'capacidad', --expresion
+	't_au.capacidad', --expresion
 	'Capacidad', --etiqueta
 	NULL, --descripcion
 	'0', --obligatorio

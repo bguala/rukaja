@@ -16,14 +16,16 @@ class Filtro {
     
     public function filtrar ($datos){
         $this->s__datos_filtrados=array();
-            //print_r($datos);            
+            
             foreach ($datos as $clave=>$valor){
                                            
                 switch($clave){
                     case 'capacidad' : $this->filtrar_horarios($valor['valor'], 'capacidad', "{$valor['condicion']}"); 
                                        break;
                                    
-                    case 'hora_inicio' : $condicion="{$valor['condicion']}";
+                    case 'hora_inicio' : //--Puede ser es_igual_a, entre etc.
+                                         $condicion="{$valor['condicion']}";
+                                         //--Es el dato que especifica el usuario.
                                          $valor_filtro=(strcmp($condicion, "entre")==0) ? ($valor['valor']) : ("{$valor['valor']}:00") ;
                                          $this->filtrar_horarios($valor_filtro, 'hora_inicio', $condicion);
                                          break;
@@ -36,10 +38,7 @@ class Filtro {
                     default : print_r('Algo anda mal'); break;              
                 }
             }
-            
-            //print_r("Estos son los horarios filtrados");
-            //print_r($this->s__datos_filtrados);
-            
+                        
             return $this->s__datos_filtrados;
     }
     
@@ -53,15 +52,20 @@ class Filtro {
      */
     private function filtrar_horarios ($valor_filtro, $columna_filtro, $operador){
         foreach ($this->s__horarios_disponibles as $clave=>$valor){
+            
             $dato=$this->obtener_opcion_busqueda($valor, $columna_filtro);
-            print_r("Este es el dato obtenido : $dato \n");
+            
             $agregar_al_filtro=FALSE;
             switch($operador){
                 case 'es_igual_a' : $tipo=  gettype($valor_filtro);
-                                    $true=$valor_filtro == '08:00:00';
-                                    print_r("Este es el tipo : $tipo : $true\n");
-                                    if($valor_filtro == $dato){
-                                        $agregar_al_filtro=TRUE;
+                                    if(strcmp($tipo, 'String')==0){
+                                        if(strcmp($valor_filtro , $dato)==0){
+                                            $agregar_al_filtro=TRUE;
+                                        }
+                                    }else{
+                                        if($valor_filtro == $dato){
+                                            $agregar_al_filtro=TRUE;
+                                        }
                                     } break;
 
                 case 'es_distinto_de' : if($valor_filtro != $dato){
@@ -82,7 +86,7 @@ class Filtro {
 
                 case 'es_menor_igual_que' : if($dato <= $valor_filtro){
                                                     $agregar_al_filtro=TRUE;
-                                              } break;
+                                            } break;
 
                 case 'entre' : $hora_inicio="{$valor_filtro['desde']}:00";
                                $hora_fin="{$valor_filtro['hasta']}:00";
@@ -94,13 +98,12 @@ class Filtro {
             }
 
             if($agregar_al_filtro){
-                //agregamos el horario disponible al arreglo s__datos_filtrados. Se reutiliza la funcion
-                //existe.
-                print_r("Este es el valor : $valor \n");
-                $existe=$this->existe($this->s__datos_filtrados, $valor);
-                if(!$existe){
-                    //agregamos al final
+                //--Agregamos el horario disponible al arreglo s__datos_filtrados. Se reutiliza la funcion
+                //existe.             
+                if(!$this->existe($this->s__datos_filtrados, $valor)){
+                    //--Agregamos al final.
                     $this->s__datos_filtrados[]=$valor;
+                    
                 }
 
             }
@@ -131,13 +134,15 @@ class Filtro {
      */
     function existe ($aulas, $aula){
         $existe=FALSE;
-
+                
         if(count($aulas) != 0){
             $indice=0;
             $longitud=count($aulas);
             while(($indice < $longitud) && !$existe){
-                //strcmp($aulas[$indice]['id_aula'], $aula['id_aula'])==0
-                $existe=($aulas[$indice]['id_aula'] == $aula['id_aula']) ? TRUE : FALSE;
+                //--Debemos verificar que todo el horario no este repetido, tambien usamos hora_inicio y hora_fin.
+                $existe=($aulas[$indice]['id_aula'] == $aula['id_aula'] && 
+                         strcmp($aulas[$indice]['hora_inicio'], $aula['hora_inicio'])==0 &&
+                         strcmp($aulas[$indice]['hora_fin'], $aula['hora_fin'])==0 ) ? TRUE : FALSE;
                 $indice += 1;
             }
         }

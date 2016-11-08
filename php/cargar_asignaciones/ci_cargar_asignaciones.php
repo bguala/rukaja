@@ -224,9 +224,13 @@ class ci_cargar_asignaciones extends toba_ci
             switch($tipo_asignacion){
                 case 'CURSADA'        : 
                 case 'EXAMEN PARCIAL' :
-                case 'EVENTO'         :
+                case 'EVENTO'         : //|| ' ( ' || t_p.fecha_inicio || ' - ' || t_p.fecha_fin || ' ) '
                 case 'CONSULTA'       : $sql_1="SELECT t_p.id_periodo,
-                                                       t_c.numero || ' ' || 'CUATRIMESTRE' as descripcion 
+                                                       t_c.numero || ' ' || 'CUATRIMESTRE' || 
+                                                       ' ( ' || extract(day from t_p.fecha_inicio) || '/' || 
+                                                       extract(month from t_p.fecha_inicio) || '/' || extract(year from t_p.fecha_inicio) || ' - ' ||
+                                                       extract(day from t_p.fecha_fin) || '/' || extract(month from t_p.fecha_fin) || '/' ||
+                                                       extract(year from t_p.fecha_fin) || ' ) '  as descripcion 
                                                 FROM periodo t_p 
                                                 JOIN cuatrimestre t_c ON (t_p.id_periodo=t_c.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
                                                  "
@@ -235,7 +239,11 @@ class ci_cargar_asignaciones extends toba_ci
                                         break;
                 
                 case 'EXAMEN FINAL'   : $sql_2="SELECT t_p.id_periodo,
-                                                       'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' as descripcion
+                                                       'TURNO DE EXAMEN' || ' ' || t_ef.turno || ' ' || t_ef.numero || ' ' || 'LLAMADO' ||
+                                                       ' ( ' || extract(day from t_p.fecha_inicio) || '/' || extract(month from t_p.fecha_inicio) ||
+                                                       '/' || extract(year from t_p.fecha_inicio) || ' - ' ||
+                                                       extract(day from t_p.fecha_fin) || '/' || extract(month from t_p.fecha_fin) || '/' ||
+                                                       extract(year from t_p.fecha_fin) || ' ) ' as descripcion
                                                 FROM periodo t_p 
                                                 JOIN examen_final t_ef ON (t_p.id_periodo=t_ef.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
                                                 AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))"
@@ -243,7 +251,10 @@ class ci_cargar_asignaciones extends toba_ci
                                         $periodo=toba::db('rukaja')->consultar($sql_2);
                                         break;
                 default : $sql_3="SELECT t_p.id_periodo,
-                                         'CURSO DE INGRESO' || ' ' || t_ci.facultad || ' ' || t_ci.nombre as descripcion
+                                         'CURSO DE INGRESO' || ' ' || t_ci.facultad || ' ' || t_ci.nombre || ' ( ' || 
+                                         extract(day from t_p.fecha_inicio) || '/' || extract(month from t_p.fecha_inicio) || '/' ||
+                                         extract(year from t_p.fecha_inicio) || ' - ' || extract(day from t_p.fecha_fin) || '/' ||
+                                         extract(month from t_p.fecha_fin) || '/' || extract(year from t_p.fecha_fin) || ' ) ' as descripcion
                                   FROM periodo t_p 
                                   JOIN curso_ingreso t_ci ON (t_p.id_periodo=t_ci.id_periodo AND t_p.anio_lectivo=$anio_lectivo  
                                   AND (('$fecha' <= t_p.fecha_inicio) OR ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin)) "

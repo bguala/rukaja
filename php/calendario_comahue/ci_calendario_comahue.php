@@ -416,6 +416,7 @@ class ci_calendario_comahue extends toba_ci
                 
                 switch ($valor['tipo_periodo']){
                     case 'Cuatrimestre' : if(strcmp($accion, 'hd')==0){
+                                              //--Devuelve asignaciones definitivas y periodicas para calculo de hd.
                                               $cuatrimestre=$this->dep('datos')->tabla('asignacion')->get_asignaciones_cuatrimestre($this->s__id_sede, utf8_decode($this->s__dia_consulta), $valor['id_periodo'], $this->s__fecha_consulta);
                                           }
                                           else{
@@ -439,32 +440,35 @@ class ci_calendario_comahue extends toba_ci
             }
             
             if((count($cuatrimestre)>0) && (count($examen_final)>0)){
-                if(strcmp($accion, 'hd')==0){
-                    //Debemos iniciar descarte y unificacion.
-                    //asig_definitivas = cuatrimestre, asig_periodo = examen final.
-                    //$this->descartar_asignaciones_definitivas($examen_final, &$cuatrimestre);
-
+                if(strcmp($accion, 'hd')==0){                   
+                    
+                    //--En cuatrimestre tenemos asignaciones definitivas y periodicas. De esta manera tenemos las
+                    //asignaciones definitvas/periodicas para el cuatrimestre, y las periodicas para examenes 
+                    //finales.
                     $this->unificar_asignaciones(&$examen_final, $cuatrimestre);
-
+                    
                     return $examen_final;
                 }
                 else{
-                    //Debemos unificar periodo con examen final.
-                    $this->unificar_asignaciones(&$periodos, $examen_final);
-                    $this->s__asignaciones_periodo=$periodo;
+                    //--Debemos unificar periodos con examen final, porque se obtienen en forma separada.
+                    $this->unificar_asignaciones(&$examen_final, $periodos);
+                    //Si vamos a mostrar horarios registrados debemos tener en cuenta las asig_def, guardadas en
+                    //cuatrimestre!!!!.
+                    $this->unificar_asignaciones(&$cuatrimestre, $periodos);
+                    //$this->s__asignaciones_periodo=$periodo;
                     return $cuatrimestre;
                 }
             }
             
             if((count($cuatrimestre)>0) && (count($examen_final)==0)){
                 if(strcmp($accion, 'hd')==0){
-                    //devolvemos solo cuatrimestre
+                    //--Devolvemos solo cuatrimestre.
+                    //Y que pasa con las asig_per???????. Ya estan incluidas en la estructura cuatrimestre.
                     return $cuatrimestre;
                 }
                 else{
-                    //Devolvemos cuatrimestre y guardamos en una variable de sesion el resultado obtenido en 
-                    //periodo.
-                    $this->s__asignaciones_periodo=$periodos;
+                    $this->unificar_asignaciones(&$cuatrimestre, $periodos);
+                    //$this->s__asignaciones_periodo=$periodos;
                     return $cuatrimestre;
                 }
             }
@@ -472,20 +476,26 @@ class ci_calendario_comahue extends toba_ci
             if((count($cuatrimestre)==0) && (count($examen_final)>0)){
                 if(strcmp($accion, 'hd')==0){
                     //Devolvemos solo examen final.
+                    //Y que ocurre con las asig_per para cuatrimestre???, Si existen deben estar incluidas en la 
+                    //estructura cuatrimestre. Si cuatrimestre==0 no existen registradas asig_def y per..
                     return $examen_final;
                 }
                 else{
-                    $this->s__asignaciones_periodo=$examen_final;
-                    return $cuatrimestre;
+                    //--Si queremos mostrar asignaciones registradas debemos incluir periodos, porque para esta
+                    //opcion se obtienen de forma separada a las asig_def.
+                    $this->unificar_asignaciones(&$examen_final, $periodos);
+                    //$this->s__asignaciones_periodo=$examen_final;
+                    return $examen_final;
                 }
             }
             
             if((count($cuatrimestre)==0) && (count($examen_final)==0)){
                 if(strcmp($accion, 'hr')==0){
-                    $this->s__asignaciones_periodo=$periodos;
+                    //--Devolvemos periodos pertenecientes a cuatrimestres, si existen.
+                    return $periodos;
                 }
                 
-                //Devolvemos vacio.
+                //--Devolvemos un arreglo vacio.
                 return array();
                                
             }

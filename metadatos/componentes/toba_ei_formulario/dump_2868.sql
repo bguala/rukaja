@@ -640,7 +640,7 @@ INSERT INTO apex_objeto_ei_formulario_ef (objeto_ei_formulario_fila, objeto_ei_f
 	'cantidad_alumnos', --identificador
 	'ef_editable_numero', --elemento_formulario
 	'cantidad_alumnos', --columnas
-	'0', --obligatorio
+	'1', --obligatorio
 	'0', --oculto_relaja_obligatorio
 	'14', --orden
 	'Cantidad de Alumnos', --etiqueta

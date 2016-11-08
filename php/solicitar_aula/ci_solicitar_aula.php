@@ -467,25 +467,15 @@ class ci_solicitar_aula extends toba_ci
         function evt__filtro__limpiar (){
             $this->s__datos_filtrados=array();
         }
-                
-        //---- Form Datos -------------------------------------------------------------------
-        
-//        function conf__form_datos (toba_ei_formulario $form){
-//            if(count($this->s__horarios_disponibles)==0){
-//                $form->colapsar();
-//            }
-//            else{
-//                $form->descolapsar();
-//                $form->set_datos($this->s__datos_form);
-//            }
-//        }
-        
+                        
         //---- Cuadro -----------------------------------------------------------------------
         
         function conf__cuadro (toba_ei_cuadro $cuadro){
-            //Finalizamos la ejecucion en cada caso. Asi evitamos hacer comparaciones sin sentido.
+            $fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
+            //--Finalizamos la ejecucion en cada caso. Asi evitamos hacer comparaciones sin sentido.
             if(count($this->s__datos_filtrados)>0){
-                $cuadro->set_titulo("Horarios Disponibles");
+                $descripcion=  strtoupper("Horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
+                $cuadro->set_titulo(utf8_decode($descripcion));
                 $cuadro->set_datos($this->s__datos_filtrados);
                 return ; 
             }
@@ -495,16 +485,16 @@ class ci_solicitar_aula extends toba_ci
             }
             if(count($this->s__horarios_disponibles)>0 && count($this->s__hd_global)==0){
                 $cuadro->descolapsar();
-                $fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
-                $descripcion=  strtoupper("horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
+                //$fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
+                $descripcion=  strtoupper("Horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
                 $cuadro->set_titulo(utf8_decode($descripcion));
                 $cuadro->set_datos($this->s__horarios_disponibles);
                 return ;
             }
             if(count($this->s__horarios_disponibles)==0 && count($this->s__hd_global)>0){
                 $cuadro->descolapsar();
-                $fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
-                $descripcion=  strtoupper("horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
+                //$fecha=date('d-m-Y', strtotime($this->s__fecha_consulta));
+                $descripcion=  strtoupper("Horarios disponibles para el día {$this->obtener_dia(date('N', strtotime($this->s__fecha_consulta)))} $fecha");
                 $cuadro->set_titulo(utf8_decode($descripcion));
                 $cuadro->set_datos($this->s__hd_global);
                 return ; //Lo dejamos igual.

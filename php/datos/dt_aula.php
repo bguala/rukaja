@@ -21,7 +21,7 @@ class dt_aula extends toba_datos_tabla
             }else{
                 $where=" t_au.id_sede=$id_sede AND (NOT t_au.eliminada) ";
             }
-            
+            print_r($where);
             $sql="SELECT 
                       t_au.id_aula, t_au.nombre, t_au.capacidad, t_s.descripcion as sede,
                       t_u.descripcion as establecimiento

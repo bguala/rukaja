@@ -150,21 +150,21 @@ class ci_memorando_por_fecha extends toba_ci
         }
         
         function agregar_tabla (Cezpdf $pdf){
-            //definimos el formato de la tabla 
+            //--Definimos el formato de la tabla.
             $opciones=array(
                 'splitRows' => 0,
                 'rowGraph' => 0,
                 'showHeadings' => true,
                 'titleFontSize' => 6,
-                'fontSize' => 6, //definimos el tamanio de fuente
-                'shadeCol' => array(0.9,0.9,0.9),//especificamos el color de cada fila
+                'fontSize' => 6, //--Definimos el tamanio de fuente.
+                'shadeCol' => array(0.9,0.9,0.9),//--Especificamos el color de cada fila.
                 'xOrientation' => 'center',
                 'width' => 500,
                 'xPos' => 'centre',
                 'yPos' => 'centre',
             );
             
-            //Definimos las columnas de la tabla.
+            //--Definimos las columnas de la tabla.
             $columnas=array(
                 'finalidad' => 'Materia/Curso/Evento',
                 'hora_inicio' => 'Hora Inicio',

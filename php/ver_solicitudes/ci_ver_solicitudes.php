@@ -102,8 +102,6 @@ class ci_ver_solicitudes extends toba_ci
         
 	function conf__cuadro(toba_ei_cuadro $cuadro)
 	{           
-            //Obtenemos el correo electronico del responsable de aula que hizo el pedido para notificar 
-            //resultados.
             //Se necesita id_sede para obtener las solicitudes que pertenecen al establecimiento del usuario
             //logueado.
             $this->s__id_sede=$this->dep('datos')->tabla('sede')->get_id_sede();
