@@ -150,6 +150,12 @@ class ci_ver_solicitudes extends toba_ci
          *    
          */
 	function evt__cuadro__seleccion($datos){
+            
+            if(strcmp($datos['estado'], 'PENDIENTE') != 0){
+                $mensaje=" Solamente se pueden analizar solicitudes en estado PENDIENTE. ";
+                toba::notificacion()->agregar($mensaje, 'info');
+                return ;
+            }
 	    //Necesitamos todos los datos de la solicitud para:
             //a) pasarla a estado finalizada.
             //b) registrar la solicitud si existe algun espacio disponible. 
@@ -215,7 +221,10 @@ class ci_ver_solicitudes extends toba_ci
                 
                 
             }else{
-                $mensaje=" No es posible conceder el período actual. ";
+                
+                $this->pasar_a_estado_finalizada('RECHAZADA');
+                
+                $mensaje=" No es posible conceder el período actual. No hay espacios disponibles. ";
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
                 //Esta funcionalidad se puede implemetar mas adelante.
                 
@@ -481,7 +490,7 @@ class ci_ver_solicitudes extends toba_ci
          */
         function evt__cuadro__edicion_parcial ($datos){
             //Si el estado de la solicitud es pendiente, podemos editar finalidad y responsable de aula.
-            if(strcmp($datos['estado'], 'PENDIENTE')==0 || strcmp($datos['estado'], 'FINALIZADA')==0){
+            if(strcmp($datos['estado'], 'PENDIENTE')==0 || strcmp($datos['estado'], 'FINALIZADA ACEPTADA')==0){
                 $datos['tipo_edicion']='edicion_parcial';
                 toba::vinculador()->navegar_a('rukaja', 3571, $datos);
             }
@@ -497,7 +506,7 @@ class ci_ver_solicitudes extends toba_ci
                 $datos['tipo_edicion']='edicion_total';
                 toba::vinculador()->navegar_a('rukaja', 3571, $datos);
             }else{
-                $mensaje="No es posible hacer una edición total de una solicitud en estado finalizada. En este caso"
+                $mensaje="No es posible llevar a cabo una edición total de una solicitud en estado FINALIZADA. En este caso"
                         . " solamente se puede editar el responsable de aula y la finalidad, lo que constituye "
                         . "una edición parcial.";
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
@@ -514,13 +523,39 @@ class ci_ver_solicitudes extends toba_ci
             //La unica solucion que encontre a este problema consiste en usar un bloque try-catch, que capture 
             //la excepcion y no haga nada con ella. 
             try{
+                //--Eliminamos la solictud de la tabla idem.
                 $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$datos['id_solicitud']));
                 $solicitud=$this->dep('datos')->tabla('solicitud')->get();
                 
+                //--Obtenemos la asignacion derivada de una solicitud, si existe, teniendo en cuenta los 
+                //--siguientes atributos: hora_inicio, hora_fin, id_aula, dia, fecha. 
+                //--La asignacion se obtiene correctamente a partir del dia y la fecha. La asignacion en 
+                //--cuestion es periodica.
+                $fecha=$solicitud['fecha'];
+                $dia=$this->obtener_dia(date('N', strtotime($fecha)));
+                $asignacion=$this->dep('datos')->tabla('asignacion')->get_asignacion($solicitud['hora_inicio'],
+                        $solicitud['hora_fin'], $solicitud['id_aula'], $dia, $fecha);
+                 
+                //--Eliminamos la solicitud. Tambien se produce una excepcion si usamos eliminar_fila.
                 $this->dep('datos')->tabla('solicitud')->eliminar_todo();
-                $this->dep('datos')->tabla('solicitud')->sincronizar();
+                $this->dep('datos')->tabla('solicitud')->sincronizar();        
+                
             }catch(toba_error $e){
-                //No procesamos la excepcion porque se produce lo que nos interesa, que es eliminar una solicitud. 
+                //No procesamos la excepcion porque se produce lo que nos interesa, que es eliminar una solicitud.
+                try{
+                //--Ahora falta eliminar la posible asignacion concedida. Pero hay problemas con el id_.
+                //--Habria que utilizar otros datos para poder recuperar el mismo, ellos son:
+                //--hora_inicio, hora_fin, id_aula, dia, fecha.
+                    if(count($asignacion)>0){
+                        $this->dep('datos')->tabla('asignacion')->cargar(array('id_asignacion'=>$asignacion[0]['id_asignacion']));
+                        //$asignacion=$this->dep('datos')->tabla('asignacion')->get();
+
+                        $this->dep('datos')->tabla('asignacion')->eliminar_todo();
+                        $this->dep('datos')->tabla('asignacion')->sincronizar();
+                    }
+                } catch (toba_error $ex) {
+                    //No procesamos la excepcion porque se produce lo que nos interesa, que es eliminar una asignacion.
+                }
             }
         }
         
@@ -1003,37 +1038,47 @@ class ci_ver_solicitudes extends toba_ci
             
             $this->registrar_solicitud($datos, $dia, $this->s__datos_solcitud['fecha'], $fecha_fin);
             
+            //--Para no quedarnos en la misma pantalla con el formulario autocompletado.
+            $this->set_pantalla("pant_edicion");
+            
         }
         
         /*
-         * Esta funcion permite registrar una solicitud unica o multi-evento. Se emplean as tablas asignacion,
+         * Esta funcion permite registrar una solicitud unica o multi-evento. Se emplean las tablas asignacion,
          * asignacion_periodo y esta_formada.
          * @dia : si la solicitud es unica dia contiene un unico dia/fecha, caso contrario contiene una lista 
          * de dias/fechas. 
          */
         function registrar_solicitud ($datos, $dia, $fecha_inicio, $fecha_fin){
-            //Usamos el tipo de asignacion para buscar el periodo adecuado. Esto es viable porque tenemos
-            //la fecha exacta de la solicitud para hacer los calculos de hd. El id_periodo los obtenemos
-            //con el tipo de asignacion y el id_sede.
-            $id_periodo=$this->dep('datos')->tabla('periodo')->get_periodo_segun_asignacion($fecha_inicio, $this->s__datos_solcitud['tipo_asignacion'], $this->s__datos_solcitud['id_sede']);
+            
+            $anio_lectivo=date('Y', strtotime($fecha_inicio));
+            
+            $periodos=$this->dep('datos')->tabla('periodo')->get_periodo_calendario($fecha_inicio, $anio_lectivo, $this->s__datos_solcitud['id_sede']);
+            
+            $id_=$this->obtener_periodo($periodos, $this->s__datos_solcitud['tipo_asignacion']);
                         
-            //Usamos ambos arreglos, $datos y $s__datos_solcitud.
+            if(strcmp($this->s__datos_solcitud['tipo_agente'], "Organizacion")==0){
+                $apellido=' . ';
+            }else{
+                $apellido=$this->s__datos_responsable[0]['apellido'];
+            }
+            //--Usamos ambos arreglos, $datos y $s__datos_solcitud.
             $asignacion=array(
                 'finalidad' => $datos['finalidad'],
                 'descripcion' => $datos['descripcion'],
                 'hora_inicio' => $datos['hora_inicio'],
                 'hora_fin' => $datos['hora_fin'],
-                'cantidad_alumnos' => $datos['cantidad'],
+                'cantidad_alumnos' => $datos['capacidad'],
                 'facultad' => $this->s__datos_solcitud['facultad'],
                 'nro_doc' => '',
                 'tipo_doc' => '',
                 'id_aula' => $this->s__datos_solcitud['id_aula'],
                 'modulo' => 1,
                 'tipo_asignacion' => $this->s__datos_solcitud['tipo_asignacion'],
-                'id_periodo' => $id_periodo[0]['id_periodo'],
+                'id_periodo' => $id_,
                 'id_responsable_aula' => $this->s__datos_solcitud['id_responsable'],
                 'nombre' => $this->s__datos_responsable[0]['nombre'],
-                'apellido' => $this->s__datos_responsable[0]['apellido'],
+                'apellido' => $apellido,
                 'legajo' => $this->s__datos_responsable[0]['legajo'],
             );
                         
@@ -1051,10 +1096,54 @@ class ci_ver_solicitudes extends toba_ci
                        
             //Pasamos la solicitud a estado finalizada. Para ello solamente necesitamos el id_solicitud guardado
             //en la variable s__datos_solcitud. Internamente vamos a utilizar datos_tabla.
-            $this->pasar_a_estado_finalizada();
+            $this->pasar_a_estado_finalizada('ACEPTADA');
             
             //Enviamos una notificacion al interesado.
-            $this->notificar();
+            //$this->notificar();
+        }
+        
+        /*
+         * Esta funcion devuelve un periodo academico adecuado al tipo de asignacion vinculado a la solicitud.
+         * @$periodos: contiene 1 o mas periodos academicos.
+         * @$tipo_asignacion: puede contener 'CURSADA', 'EVENTO', 'CONSULTA' etc.
+         */
+        function obtener_periodo ($periodos, $tipo_asignacion){
+            //--Si obtenemos un unico periodo, lo utilizamos en cualquier tipo de asignacion. Esto no afecta el 
+            //--proceso de calculo de hd.
+            if(count($periodos)==1){
+                return $periodos[0]['id_periodo'];
+            }
+            
+            //--Si accedemos a esta rama es porque hay dos periodos que tienen incluida la fecha_inicio de la
+            //--solicitud. Debemos buscar el periodo adecuado.
+            $id=0;
+            $fin=FALSE;
+            $i=0;
+            $n=count($periodos);
+            while($i<$n && !$fin){
+                $periodo=$periodos[$i]['tipo_periodo'];
+                
+                switch($tipo_asignacion){
+                    case 'CURSADA'        :
+                    case 'EXAMEN PARCIAL' :
+                    case 'EVENTO'         :
+                    case 'CONSULTA'       : if(strcmp($periodo, 'Cuatrimestre')==0){
+                                                $fin=TRUE;
+                                                $id=$periodo[$i]['id_periodo'];
+                                            }
+                                            break;
+
+                    case 'EXAMEN FINAL'   : if(strcmp($periodo, 'Examen Final')==0){
+                                                $fin=TRUE;
+                                                $id=$periodo[$i]['id_periodo'];
+                                            }
+                                            break;
+                }
+                
+                $i++;
+            }
+                       
+            return $id;
         }
         
         function registrar_asignacion ($datos){
@@ -1328,9 +1417,10 @@ class ci_ver_solicitudes extends toba_ci
         
         /*
          * Se utiliza para pasar una solicitud a estado finalizada.
+         * @$resultado: contiene 'ACEPTADA' o 'RECHAZADA'.
          */
-        function pasar_a_estado_finalizada (){
-            $this->s__datos_solcitud['estado']="FINALIZADA";
+        function pasar_a_estado_finalizada ($resultado){
+            $this->s__datos_solcitud['estado']="FINALIZADA $resultado";
             $this->dep('datos')->tabla('solicitud')->cargar(array('id_solicitud'=>$this->s__datos_solcitud['id_solicitud']));
             $this->dep('datos')->tabla('solicitud')->set($this->s__datos_solcitud);
             $this->dep('datos')->tabla('solicitud')->sincronizar();

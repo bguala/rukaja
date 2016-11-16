@@ -31,7 +31,7 @@ class dt_solicitud extends toba_datos_tabla
 
             }else{ //Solicitudes en nuestra dependencia.
                 $where_a=" t_s.id_sede=t_s1.id_sede AND t_s.id_sede=$id_sede
-                           AND t_s.fecha>='$fecha' AND t_a.id_aula=t_s.id_aula AND (t_s.estado <> 'FINALIZADA') ";
+                           AND t_s.fecha>='$fecha' AND t_a.id_aula=t_s.id_aula AND ((t_s.estado <> 'FINALIZADA ACEPTADA') OR (t_s.estado <> 'FINALIZADA RECHAZADA')) ";
 
             }
 

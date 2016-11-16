@@ -264,7 +264,7 @@ class ci_memorando_por_fecha extends toba_ci
                 
                     //debemos iniciar descarte y unificacion
                     //asig_definitivas = cuatrimestre, asig_periodo = examen final.
-                    $this->descartar_asignaciones_definitivas($examen_final, &$cuatrimestre);
+                    //$this->descartar_asignaciones_definitivas($examen_final, &$cuatrimestre);
 
                     $this->unificar_asignaciones(&$examen_final, $cuatrimestre);
 
@@ -275,7 +275,7 @@ class ci_memorando_por_fecha extends toba_ci
             
             if((count($cuatrimestre)>0) && (count($examen_final)==0)){
                 
-                    //devolvemos solo cuatrimestre
+                    //--Devolvemos solo cuatrimestre.
                     return $cuatrimestre;
                 
                 
@@ -283,14 +283,14 @@ class ci_memorando_por_fecha extends toba_ci
             
             if((count($cuatrimestre)==0) && (count($examen_final)>0)){
                 
-                    //devolvemos solo examen final
+                    //--Devolvemos solo examen final.
                     return $examen_final;
                 
             }
             
             if((count($cuatrimestre)==0) && (count($examen_final)==0)){
                                 
-                //devolvemos vacio
+                //--Devolvemos vacio.
                 return array();
                                
             }

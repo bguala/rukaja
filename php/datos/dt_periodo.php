@@ -156,7 +156,7 @@ class dt_periodo extends toba_datos_tabla
         
         /*
          * Esta funcion se utiliza en las operaciones que requieren calcular espacios disponibles
-         * (Calendario Comahue, Generar Solicitud, Ver Solicitudes, Seleccionar Aula). Nos permite 
+         * (Calendario Comahue, Solicitar Aula, Ver Solicitudes, Seleccionar Aula). Nos permite 
          * obtener periodos para comenzar el calculo de horarios disponibles.
          * @$id_sede : es necesario incluirlo en la consulta porque cada establecimiento crea su propio
          * calendario.

@@ -30,11 +30,26 @@ class dt_organizacion extends toba_datos_tabla
          * Esta funcion se utiliza en la operacion Solicitar/Reservar Aula para verificar si una organizacion 
          * ya existe en el sistema.
          */
-        function get_organizacion ($id_organizacion){
+        function get_organizacion ($nombre_org, $telefono_org, $email_org){
             $sql="SELECT *
                   FROM 
                       organizacion 
-                  WHERE id_organizacion=$id_organizacion";
+                  WHERE nombre='$nombre_org' 
+                        AND telefono='$telefono_org' 
+                        AND email='$email_org'";
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion permite obtener los datos de una organizacion a partir de su id_ para autocompletar un 
+         * formulario utilizado para editar.
+         */
+        function get_organizacion_id ($id_){
+            $sql="SELECT *
+                  FROM
+                      organizacion
+                  WHERE id_organizacion=$id_";
+            
             return toba::db('rukaja')->consultar($sql);
         }
 

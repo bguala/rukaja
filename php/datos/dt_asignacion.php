@@ -465,8 +465,9 @@ class dt_asignacion extends toba_datos_tabla
         function get_asignaciones_periodo_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo, $fecha){
             $sql="SELECT 
                       t_a.finalidad, t_a.id_aula, t_au.nombre as aula, t_a.hora_inicio, t_a.hora_fin, 
-                      t_a.tipo_asignacion, t_a.id_asignacion,
-                      t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos
+                      t_a.tipo_asignacion, t_a.id_asignacion, t_f.nombre as dia, t_a.facultad, 
+                      t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos,
+                      t_a.nombre || ' ' || t_a.apellido as responsable
                   FROM
                       asignacion t_a 
                           JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
@@ -491,7 +492,8 @@ class dt_asignacion extends toba_datos_tabla
         function get_asignaciones_periodo_por_fecha_examen ($id_sede, $dia, $id_periodo, $fecha){
             $sql="SELECT 
                       t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.tipo_asignacion, t_a.id_asignacion,
-                      t_au.id_aula, t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos
+                      t_au.id_aula, t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos,
+                      t_a.facultad, t_a.nombre || ' ' || t_a.apellido as responsable 
                   FROM
                       asignacion t_a 
                            JOIN periodo t_per ON (t_a.id_periodo=t_per.id_periodo)
@@ -747,11 +749,11 @@ class dt_asignacion extends toba_datos_tabla
                         t_a.hora_fin,
                         t_au.nombre as aula,
                         t_a.facultad,
-                        (t_pe.nombre || ' ' || t_pe.apellido) as responsable
+                        (t_a.nombre || ' ' || t_a.apellido) as responsable
                     FROM 
                         asignacion t_a 
                             JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                            JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
+                            --JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
                             JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))
                             JOIN esta_formada t_f ON (t_p.id_asignacion=t_f.id_asignacion )
                     WHERE t_au.id_sede=$id_sede 
@@ -765,7 +767,7 @@ class dt_asignacion extends toba_datos_tabla
         }
         
         /*
-         * @$fecha: contiene una fecha seleccionada de un calendario.
+         * @$fecha: contiene una fecha de consulta seleccionada de un calendario.
          */
         function get_asignaciones_memo_por_examen_final ($dia, $periodo, $id_sede, $fecha){           
             $sql_2="SELECT 
@@ -774,11 +776,11 @@ class dt_asignacion extends toba_datos_tabla
                         t_a.hora_fin,
                         t_au.nombre as aula,
                         t_a.facultad,
-                        (t_pe.nombre || ' ' || t_pe.apellido) as responsable
+                        (t_a.nombre || ' ' || t_a.apellido) as responsable
                     FROM
                         asignacion t_a 
                             JOIN aula t_au ON (t_a.id_aula=t_au.id_aula)
-                            JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
+                            --JOIN persona t_pe ON (t_a.nro_doc=t_pe.nro_doc)
                             JOIN asignacion_periodo t_p ON (t_a.id_asignacion=t_p.id_asignacion AND ('$fecha' BETWEEN t_p.fecha_inicio AND t_p.fecha_fin))
                             JOIN esta_formada t_f ON (t_p.id_asignacion=t_f.id_asignacion )
                     WHERE t_au.id_sede=$id_sede 
@@ -932,6 +934,23 @@ class dt_asignacion extends toba_datos_tabla
                   FROM
                       asignacion
                   WHERE id_asignacion=$id_asignacion";
+            
+            return toba::db('rukaja')->consultar($sql);
+        }
+        
+        /*
+         * Esta funcion se utiliza para buscar una asignacion en el sistema derivada de una solicitud.
+         */
+        function get_asignacion ($hora_inicio, $hora_fin, $id_aula, $dia, $fecha){
+            $sql="SELECT t_a.id_asignacion
+                  FROM asignacion t_a
+                  JOIN asignacion_periodo t_pe ON (t_a.id_asignacion=t_pe.id_asignacion AND ('$fecha' BETWEEN t_pe.fecha_inicio AND t_pe.fecha_fin))
+                  JOIN esta_formada t_ef ON (t_ef.id_asignacion=t_ef.id_asignacion)
+                  WHERE t_a.hora_inicio='$hora_inicio' 
+                        AND t_a.hora_fin='$hora_fin' 
+                        AND t_a.id_aula=$id_aula 
+                        AND t_ef.nombre='$dia' 
+                        AND t_ef.fecha='$fecha' ";
             
             return toba::db('rukaja')->consultar($sql);
         }

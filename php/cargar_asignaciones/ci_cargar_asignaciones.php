@@ -1198,12 +1198,6 @@ class ci_cargar_asignaciones extends toba_ci
          * 
          */
         function procesar_edicion ($datos){
-//            print_r("<br><br> Estos son los docentes seleccionados: <br><br>");
-//            print_r($this->s__docentes_seleccionados);
-//            print_r("<br><br> Este es el contenido de s__edicion: <br><br>");
-//            print_r($this->s__edicion);
-//            print_r("<br><br> Este es el contenido de datos: <br><br>");
-//            print_r($datos);
             
             //--Esta informacion se guarda en sesion si el usuario abre el pop-up aula.
             $hora_inicio=toba::memoria()->get_dato_instancia(100);

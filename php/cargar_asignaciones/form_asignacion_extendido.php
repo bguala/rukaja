@@ -97,6 +97,8 @@ class form_asignacion_extendido extends toba_ei_formulario
                             this.ef('dias').ocultar();
                             this.ef('dias').set_obligatorio(false);
                             
+//                            var nodo=this.ef('finalidad').nodo();
+//                            alert(nodo.id);
                             //Debemos desactivar el boton 'Analizar Periodo'.
                             //this.desactivar_boton('agregar_dias');
                             

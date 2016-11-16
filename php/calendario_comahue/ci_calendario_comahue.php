@@ -366,7 +366,7 @@ class ci_calendario_comahue extends toba_ci
             
             if(count($this->s__asignaciones)==0){
                 
-                $mensaje="No existen asignaciones definitivas registradas en el sistema para el día seleccionado";
+                $mensaje="No existen asignaciones definitivas y periódicas registradas en el sistema para el día seleccionado";
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
             }
         }

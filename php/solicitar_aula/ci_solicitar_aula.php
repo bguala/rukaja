@@ -57,7 +57,7 @@ class ci_solicitar_aula extends toba_ci
                 
                 switch ($datos['estado']){
                 //Si la solicitud esta en estado finalizada solamente podemos editar docente y finalidad.
-                case 'FINALIZADA' :
+                case 'FINALIZADA ACEPTADA' :
                     //Este atributo se setea en cada rama porque en sesion existe array([tm]=>1), lo que hace
                     //que se ejecute una rama en el conf__cuadro donde se hace una consulta sql con un atributo
                     //null. Como consecuencia se genera un error.
@@ -620,7 +620,7 @@ class ci_solicitar_aula extends toba_ci
                                                                        $form->ef('tipo_agente')->set_estado('Docente');
                                                                        break;
                                                                    
-                                                 case 'Organizacion' : $organizacion=$this->dep('datos')->tabla('organizacion')->get_organizacion($this->s__datos_solicitud['id_responsable']);
+                                                 case 'Organizacion' : $organizacion=$this->dep('datos')->tabla('organizacion')->get_organizacion_id($this->s__datos_solicitud['id_responsable']);
                                                                        
                                                                        $form->ef('tipo_agente')->set_estado('Organizacion');
                                                                        $form->ef('org')->set_estado($organizacion[0]['id_organizacion']);
@@ -751,16 +751,16 @@ class ci_solicitar_aula extends toba_ci
         //------------------------------------------------------------------------------------------
 
 	function evt__formulario__alta($datos)
-	{
-            //Si el usuario especifica otro tipo de asignacion debemos guardarlo en la base de datos para que este
-            //disponible en otro momento.
+	{        
+            //--Si el usuario especifica otro tipo de asignacion debemos guardarlo en la base de datos para que este
+            //--disponible en otro momento.
             if(strcmp('OTRO', $datos['tipo_asignacion'])==0){
                 $this->dep('datos')->tabla('tipo_asignacion')->nueva_fila(array('tipo'=>  strtoupper($datos['tipo_nombre'])));
                 $this->dep('datos')->tabla('tipo_asignacion')->sincronizar();
                 $this->dep('datos')->tabla('tipo_asignacion')->resetear();
             }
             
-            //Registramos una nueva organizacion en el sistema.
+            //--Registramos una nueva organizacion en el sistema.
             if(strcmp('Organizacion', $datos['tipo_agente'])==0){
                 //Si no iniciamos una busqueda por popup de la organizacion en s__id_responsable se guarda una 
                 //cadena vacia, caso contrario se guarda un numero como string. Si tenemos una cadena vacia
@@ -768,9 +768,9 @@ class ci_solicitar_aula extends toba_ci
                 //atributo de tipo serial y el rango de valores de este tipo de dato comienza en 1.                
                 $id=  intval($this->s__id_responsable);
                                             
-                //Verificamos si la organizacion ya existe en el sistema.               
-                if($id != 0){ //Si la organizacion no existe, la registramos en el sistema.
-                    $organizacion=$this->dep('datos')->tabla('organizacion')->get_organizacion($id);
+                //--Verificamos si la organizacion ya existe en el sistema.               
+                if($id == 0){ //--Si la organizacion no existe, la registramos en el sistema.
+                    $organizacion=$this->dep('datos')->tabla('organizacion')->get_organizacion($datos['nombre_org'], $datos['telefono_org'], $datos['email_org']);
                                         
                     if(count($organizacion)==0){
                         $organizacion=array(
@@ -791,22 +791,16 @@ class ci_solicitar_aula extends toba_ci
                         //la secuencia no se resetea, debemos hacerlo manualmente desde postgres con la siguiente 
                         //sentencia select setval('tabla_id_seq', nuevo_valor, 't' )
                         $this->s__id_responsable=  recuperar_secuencia('organizacion_id_organizacion_seq');
+                        
                     }//Si la organizacion ya existe usamos el contenido de s__id_responsable.
                     
-                }else{
-                    //Si el usuario edita una solicitud, puede ocurrir que no realice una busqueda por popup, entonces
-                    //el id_responsable queda con una cadena vacia. Pero si hace una busqueda en id_responsable queda
-                    //un valor concreto. Debemos guardar en id_responsable el id de datos_solicitud.
-                    $this->s__id_responsable=$this->s__datos_solicitud['id_responsable'];
                 }
             }
-            
-            //Anteriormente se hacia un chequeo de horarios, ya no es necesario, porque se hace en el cliente.
-            
+                        
             switch($this->s__accion){
                 case 'registrar'        : $this->registrar_solicitud($datos);
                                           break;
-                //En ambos casos hacemos lo mismo.
+                //--En ambos casos hacemos lo mismo.
                 case 'edicion_parcial'  : 
                 case 'edicion_total'    : $this->edicion($datos);
                                           toba::vinculador()->navegar_a('rukaja', 3573);
@@ -905,8 +899,16 @@ class ci_solicitar_aula extends toba_ci
                                               
                                               //Si la solicitud es multi-evento debemos editar la fecha_fin y la
                                               //lista de dias. Lo mas conveniente es borrar la solicitud y volverla a cargar, 
-                                              //el problema surge con la lista de dias del multivento y las buledeces del datos_tabla
+                                              //el problema surge con la lista de dias del multievento y las buledeces del datos_tabla
                                               //al momento de cargarlo con multiples registros.
+                                              
+                                              //--En esta seccion podemos editar parte de una asignacion derivada de una 
+                                              //--solicitud. Si el estado de la solicitud es 'FINALIZADA ACEPTADA', solamente
+                                              //--podemos editar datos del responsable de aula y el nombre de la solicitud.
+                                              if(strcmp($this->s__datos_solicitud['estado'], 'FINALIZADA ACEPTADA')==0){
+                                                  //--Pero el principal inconveniente es encontrar la asignacion adecuada,
+                                                  //--porque los id_ difieren entre si.
+                                              }
                                                                                                                                                                                         
                                               break;
                 }
@@ -982,22 +984,18 @@ class ci_solicitar_aula extends toba_ci
          * completamente esta funcion para editar multi_eventos. Cambio a futuro.
          */
         function registrar_solicitud ($datos){
-            //Guardamos en nombre la cambinacion nombre-apellido para un docente o el nombre completo de una 
-            //organizacion.
+            //--Guardamos en nombre la cambinacion nombre-apellido para un docente o el nombre completo de una 
+            //--organizacion.
             $nombre=(strcmp($datos['tipo_agente'], 'Docente')==0) ? strtoupper(($datos['nombre'])." ".($datos['apellido'])) : (strtoupper($datos['nombre_org'])) ;
                         
-            //Fecha de solicitud.
+            //--Fecha de solicitud.
             $fecha= date('d-m-Y', strtotime($this->s__fecha_consulta));           
             
-            //Guardamos el id_sede del establecimiento al que le hacemos un pedido de aula.
+            //--Guardamos el id_sede del establecimiento al que le hacemos un pedido de aula.
             $id_sede=$this->s__datos_cuadro['id_sede'];
             //$tipo=  gettype($this->s__id_responsable);
-            
-            $descripcion="$nombre ha registrado una SOLICITUD de aula para el dia $fecha, en su Establecimiento. ";
-
-            $asunto="SOLICITUD DE AULA";
-            
-            //Depuramos el arreglo $datos utilizando lo estrictamente necesario para registrar una solicitud.
+                                    
+            //--Depuramos el arreglo $datos utilizando lo estrictamente necesario para registrar una solicitud.
             $solicitud=array(
                 'nombre' => $nombre,
                 'fecha' => $fecha,
@@ -1051,24 +1049,28 @@ class ci_solicitar_aula extends toba_ci
                 }
             }
             
+            //$descripcion="$nombre ha registrado una SOLICITUD de aula para el dia $fecha, en su Establecimiento. ";
+
+            //$asunto="SOLICITUD DE AULA";
+            
             //Obtenemos el correo electronico del destinatario del pedido de aula.
-            $destinatario=$this->dep('datos')->tabla('administrador')->get_correo_electronico($id_sede);
+            //$destinatario=$this->dep('datos')->tabla('administrador')->get_correo_electronico($id_sede);
             
             //Creamos un objeto para enviar un email de notificacion.
-            $email=new Email();
-            $envio=$email->enviar_email($destinatario[0]['correo_electronico'], $asunto, $descripcion);
+            //$email=new Email();
+            //$envio=$email->enviar_email($destinatario[0]['correo_electronico'], $asunto, $descripcion);
             
-            if(!$envio){
-                toba::notificacion()->agregar(utf8_decode('La solicitud se registró en forma exitosa, pero se produjo un error al intentar enviar un email de notificación.'), 'error');
-                //$this->s__solicitud_registrada=FALSE;
-            }
-            else{
+//            if(!$envio){
+//                toba::notificacion()->agregar(utf8_decode('La solicitud se registró en forma exitosa, pero se produjo un error al intentar enviar un email de notificación.'), 'info');
+//                //$this->s__solicitud_registrada=FALSE;
+//            }
+            //else{
                 $mensaje=' La solicitud se registró en forma exitosa ';
                 toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
                 //El pedido de pagina genera que el formulario se pueda cargar  nuevamente con datos por defecto
                 //pero esto no tiene sentido porque cargamos la solicitud y nos vamos a la pantalla pant_reserva.
                 //$this->s__solicitud_registrada=TRUE;
-            }
+            //}
             
             //Debemos bajar el horario disponible seleccionado del arreglo hd_global u horarios_disponibles, para
             //que no vuelva a aparecer en el 'cuadro' de la pantalla pant_reserva. Para ello usamos los datos
