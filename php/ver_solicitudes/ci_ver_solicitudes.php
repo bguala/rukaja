@@ -575,6 +575,7 @@ class ci_ver_solicitudes extends toba_ci
             //Usamos la cadena 'au' para extraer las asignaciones pertenecientes a un aula en particular. 
             //Es una condicion mas dentro de la funcion procesar_periodo.
             $asignaciones=$this->procesar_periodo($periodo, 'au');
+            
             //Creamos una estructura para el aula seleccionada. Esto se debe a que la funcion calcular_horarios_
             //disponibles de la clase HorariosDisponibes recibe un arreglo de aulas_ua, cuyo formato es
             //(id_aula, aula). Si no usamos esta estructura array ( array() ), vemos una disponibilidad total
@@ -661,6 +662,9 @@ class ci_ver_solicitudes extends toba_ci
             //cuadro_espacio_ocupado :D, -_-
             if(count($horarios) > 0){
                 $this->s__horarios_libres=$horarios; //contiene los horarios que conciden con el requerimiento
+            }else{
+                toba::notificacion()->agregar("No existen horarios disponibles alternativos", 'info');
+                return ;
             }
             
         }
@@ -721,7 +725,8 @@ class ci_ver_solicitudes extends toba_ci
         
         function verificar_existencia_de_horario ($horario){
             $resultado=false;
-            if(($horario['hora_inicio'] <= $this->s__hora_inicio)&&($horario['hora_fin'] >= $this->s__hora_fin)){
+            
+            if(($this->s__datos_solcitud['hora_inicio'] >= $horario['hora_inicio']) && ($this->s__datos_solcitud['hora_inicio'] <= $horario['hora_fin']) && ($this->s__datos_solcitud['hora_fin'] <= $horario['hora_fin'])){
                 $resultado=true;
             }
             return $resultado;
@@ -847,40 +852,7 @@ class ci_ver_solicitudes extends toba_ci
             $this->s__datos_filtro=$this->s__filtro->filtrar($datos);
         }
         
-        /*
-         * cuadro_aulas contiene todos los horarios disponibles que no coinciden con el requerimiento registrado
-         */
-        function conf__cuadro_aulas (toba_ei_cuadro $cuadro){
-            //los datos filtrados tienen prioridad para ser cargados en el cuadro
-            if(count($this->s__datos_filtro)>0){
-                $cuadro->set_datos($this->s__datos_filtro);
-            }
-            else{
-                if(count($this->s__horarios_libres) > 0){
-                    $cuadro->descolapsar();  
-                    $cuadro->set_datos($this->s__horarios_disponibles);
-                    $cuadro->set_titulo("HORARIOS DISPONIBLES ALTERNATIVOS");
-                    //$cuadro->colapsar();
-                }
-                else{
-                    $cuadro->set_titulo("HORARIOS DISPONIBLES ALTERNATIVOS");
-                    $cuadro->set_datos($this->s__horarios_disponibles);
-                }
-            }
-                       
-        }
-        
-        function evt__cuadro_aulas__enviar (){
-            if($this->s__notificar){
-                toba::vinculador()->navegar_a("", 3525);
-            }
-            else{
-                $mensaje=" Para realizar notificaciones debe descargar previemente un archivo PDF. "
-                        . "Presione el botón Descargar Archivo PDF";
-                toba::notificacion()->agregar(utf8_decode($mensaje));
-            }
-        }
-        
+                        
         function evt__volver (){
             switch($this->s__pantalla_actual){
                 case "pant_busqueda"   : $this->set_pantalla('pant_edicion'); 
@@ -896,11 +868,8 @@ class ci_ver_solicitudes extends toba_ci
          */
         function conf__cuadro_espacio_ocupado (toba_ei_cuadro $cuadro){
 
-            //$this->pantalla()->tab('pant_edicion')->desactivar();
-            //$this->pantalla()->tab('pant_asignacion')->desactivar();
-            //$this->pantalla();
             if(count($this->s__horarios_libres) > 0){
-                $cuadro->set_titulo("Horarios Disponibles ");
+                $cuadro->set_titulo("HORARIOS DISPONIBLES ALTERNATIVOS");
                 $cuadro->set_datos($this->s__horarios_libres);
             }
             else{
@@ -910,12 +879,10 @@ class ci_ver_solicitudes extends toba_ci
         }
         
         function evt__cuadro_espacio_ocupado__asignar ($datos){
-            //para cargar form_datos
-            $this->s__hora_inicio=$datos['hora_inicio'];
-            $this->s__hora_fin=$datos['hora_fin'];
-            $this->s__id_aula=$datos['id_aula'];
-            $this->s__nombre_aula=$datos['aula'];
-            
+            //--Configuramos los datos de la solicitud inicial para autocompletar sin problemas el formulario.
+            $this->s__datos_solcitud['id_aula']=$datos['id_aula'];
+            $this->s__datos_solcitud['aula']=$datos['aula'];
+                        
             $this->set_pantalla('pant_asignacion');
         }
         
@@ -1059,8 +1026,12 @@ class ci_ver_solicitudes extends toba_ci
                         
             if(strcmp($this->s__datos_solcitud['tipo_agente'], "Organizacion")==0){
                 $apellido=' . ';
+                $nro_doc=' - ';
+                $tipo_doc=' - ';
             }else{
                 $apellido=$this->s__datos_responsable[0]['apellido'];
+                $nro_doc=$this->s__datos_responsable[0]['nro_docum'];
+                $tipo_doc=$this->s__datos_responsable[0]['tipo_docum'];
             }
             //--Usamos ambos arreglos, $datos y $s__datos_solcitud.
             $asignacion=array(
@@ -1070,8 +1041,8 @@ class ci_ver_solicitudes extends toba_ci
                 'hora_fin' => $datos['hora_fin'],
                 'cantidad_alumnos' => $datos['capacidad'],
                 'facultad' => $this->s__datos_solcitud['facultad'],
-                'nro_doc' => '',
-                'tipo_doc' => '',
+                'nro_doc' => $nro_doc,
+                'tipo_doc' => $tipo_doc,
                 'id_aula' => $this->s__datos_solcitud['id_aula'],
                 'modulo' => 1,
                 'tipo_asignacion' => $this->s__datos_solcitud['tipo_asignacion'],

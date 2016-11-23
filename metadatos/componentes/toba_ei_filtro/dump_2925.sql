@@ -132,7 +132,7 @@ INSERT INTO apex_objeto_ei_filtro_col (objeto_ei_filtro_col, objeto_ei_filtro, o
 	'107', --objeto_ei_filtro_col
 	'2925', --objeto_ei_filtro
 	'rukaja', --objeto_ei_filtro_proyecto
-	'cadena', --tipo
+	'numero', --tipo
 	'capacidad', --nombre
 	'capacidad', --expresion
 	'Capacidad', --etiqueta

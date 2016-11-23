@@ -138,18 +138,6 @@ INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objet
 );
 INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
 	'rukaja', --proyecto
-	'1800', --dep_id
-	'2923', --objeto_consumidor
-	'2927', --objeto_proveedor
-	'cuadro_aulas', --identificador
-	NULL, --parametros_a
-	NULL, --parametros_b
-	NULL, --parametros_c
-	NULL, --inicializar
-	NULL  --orden
-);
-INSERT INTO apex_objeto_dependencias (proyecto, dep_id, objeto_consumidor, objeto_proveedor, identificador, parametros_a, parametros_b, parametros_c, inicializar, orden) VALUES (
-	'rukaja', --proyecto
 	'1799', --dep_id
 	'2923', --objeto_consumidor
 	'2926', --objeto_proveedor
@@ -244,7 +232,7 @@ INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, id
 	NULL, --subclase_archivo
 	NULL, --template
 	NULL, --template_impresion
-	NULL  --punto_montaje
+	'21'  --punto_montaje
 );
 INSERT INTO apex_objeto_ci_pantalla (objeto_ci_proyecto, objeto_ci, pantalla, identificador, orden, etiqueta, descripcion, tip, imagen_recurso_origen, imagen, objetos, eventos, subclase, subclase_archivo, template, template_impresion, punto_montaje) VALUES (
 	'rukaja', --objeto_ci_proyecto
@@ -305,13 +293,6 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 );
 INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
 	'rukaja', --proyecto
-	'1349', --pantalla
-	'2923', --objeto_ci
-	'2', --orden
-	'1800'  --dep_id
-);
-INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id) VALUES (
-	'rukaja', --proyecto
 	'1350', --pantalla
 	'2923', --objeto_ci
 	'0', --orden
@@ -349,6 +330,12 @@ INSERT INTO apex_objetos_pantalla (proyecto, pantalla, objeto_ci, orden, dep_id)
 ------------------------------------------------------------
 -- apex_eventos_pantalla
 ------------------------------------------------------------
+INSERT INTO apex_eventos_pantalla (pantalla, objeto_ci, evento_id, proyecto) VALUES (
+	'1349', --pantalla
+	'2923', --objeto_ci
+	'1845', --evento_id
+	'rukaja'  --proyecto
+);
 INSERT INTO apex_eventos_pantalla (pantalla, objeto_ci, evento_id, proyecto) VALUES (
 	'1350', --pantalla
 	'2923', --objeto_ci

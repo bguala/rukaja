@@ -1006,7 +1006,7 @@ class ci_cargar_asignaciones extends toba_ci
                                                                }
                                     
                                                                 if(!($this->mismos_dias($datos['dias'], $lista_dias))){
-                                                                    $mensaje="Acaba de modifcar la lista de días elegidos y no seleccionó nuevamente un aula";
+                                                                    $mensaje="Acaba de modificar la lista de días elegidos y no seleccionó nuevamente un aula";
                                                                     toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
                                                                     toba::memoria()->limpiar_datos_instancia();
                                                                     return ;
@@ -1154,7 +1154,7 @@ class ci_cargar_asignaciones extends toba_ci
             $hora_fin_datos="{$datos['hora_fin']}:00";
             
             if(($hora_inicio_datos < $hora_fin_datos) && (($hora_inicio_datos >= $this->s__hora_inicio) && ($hora_inicio_datos <= $this->s__hora_fin)) && ($hora_fin_datos <= $this->s__hora_fin)){
-               //print_r($datos);exit();               
+                            
                $this->registrar_asignacion($datos);
                
                $datos['fecha_fin']=$datos['fecha_inicio'];

@@ -465,7 +465,8 @@ class dt_asignacion extends toba_datos_tabla
         function get_asignaciones_periodo_por_fecha_cuatrimestre ($id_sede, $dia, $id_periodo, $fecha){
             $sql="SELECT 
                       t_a.finalidad, t_a.id_aula, t_au.nombre as aula, t_a.hora_inicio, t_a.hora_fin, 
-                      t_a.tipo_asignacion, t_a.id_asignacion, t_f.nombre as dia, t_a.facultad, 
+                      t_a.tipo_asignacion, t_a.id_asignacion, t_f.nombre as dia, t_a.facultad,
+                      t_a.nro_doc, t_a.tipo_doc,
                       t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos,
                       t_a.nombre || ' ' || t_a.apellido as responsable
                   FROM
@@ -493,6 +494,7 @@ class dt_asignacion extends toba_datos_tabla
             $sql="SELECT 
                       t_a.finalidad, t_a.hora_inicio, t_a.hora_fin, t_a.tipo_asignacion, t_a.id_asignacion,
                       t_au.id_aula, t_au.capacidad, 'Periodo' as tipo, t_a.cantidad_alumnos as cant_alumnos,
+                      t_a.nro_doc, t_a.tipo_doc,
                       t_a.facultad, t_a.nombre || ' ' || t_a.apellido as responsable 
                   FROM
                       asignacion t_a 
@@ -607,7 +609,9 @@ class dt_asignacion extends toba_datos_tabla
          * Esta funcion devuelve el cjto de horarios ocupados en un aula especifica.
          * Se usa para calcular horarios disponibles en un aula, en la operacion Visualizacion de Usos Diarios.
          * Como debemos devolver las asignaciones para un aula en particular necesitamos el id_aula en lugar del
-         * id_sede. 
+         * id_sede.
+         * Se reutiliza en la operacion Ver Solicitudes, para calcular horarios disponibles en un aula en 
+         * particular. 
          */
         function get_asignaciones_por_aula_cuatrimestre ($dia, $id_periodo, $fecha, $id_aula){
             $sql_1="SELECT 
@@ -617,11 +621,11 @@ class dt_asignacion extends toba_datos_tabla
                         t_a.hora_fin,
                         t_a.finalidad,
                         t_ua.descripcion, 
-                        (t_p.nombre || ' ' || t_p.apellido) as responsable 
+                        (t_a.nombre || ' ' || t_a.apellido) as responsable 
                            
                     FROM
                         asignacion t_a 
-                            JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc)
+                            --JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc)
                             JOIN aula t_aula ON (t_a.id_aula=t_aula.id_aula)
                             JOIN unidad_academica t_ua ON (t_ua.sigla=t_a.facultad)
                             JOIN asignacion_definitiva t_ad ON (t_a.id_asignacion=t_ad.id_asignacion)
@@ -639,11 +643,11 @@ class dt_asignacion extends toba_datos_tabla
                         t_a.hora_fin,
                         t_a.finalidad,
                         t_ua.descripcion,
-                        (t_p.nombre || ' ' || t_p.apellido) as responsable
+                        (t_a.nombre || ' ' || t_a.apellido) as responsable
                            
                     FROM
                         asignacion t_a
-                            JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc)
+                            --JOIN persona t_p ON (t_a.nro_doc=t_p.nro_doc)
                             JOIN aula t_aula ON (t_a.id_aula=t_aula.id_aula)
                             JOIN unidad_academica t_ua ON (t_a.facultad=t_ua.sigla)
                             JOIN asignacion_periodo t_pe ON (t_a.id_asignacion=t_pe.id_asignacion AND ('$fecha' BETWEEN t_pe.fecha_inicio AND t_pe.fecha_fin))
@@ -657,7 +661,7 @@ class dt_asignacion extends toba_datos_tabla
             
             //eliminamos las asignaciones definitivas que esten solapadas con las asignaciones por 
             //periodo. Las asignaciones por periodo tienen prioridad.
-            $this->descartar_asignaciones_definitivas($asig_periodo, &$asig_definitivas);
+            //$this->descartar_asignaciones_definitivas($asig_periodo, &$asig_definitivas);
             
             //generamos un arreglo con todas las asignaciones por aula.
             $this->unificar_asignaciones(&$asig_periodo, $asig_definitivas);

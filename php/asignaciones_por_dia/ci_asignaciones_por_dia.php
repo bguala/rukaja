@@ -30,7 +30,6 @@ class ci_asignaciones_por_dia extends toba_ci
         protected $s__dia;                                 
 
         protected $s__id_sede;
-
         
         //-----------------------------------------------------------------------------------
         //---- Pant Edicion -----------------------------------------------------------------
@@ -45,20 +44,25 @@ class ci_asignaciones_por_dia extends toba_ci
 
 	function evt__formulario__alta($datos)
 	{
+            //--Antes de cambiarnos de pantalla, verificamos existencia de periodos.
+            $anio_lectivo=$datos['anio_lectivo'];
+            $cuatrimestre=(strcmp('Primer Cuatrimestre', $datos['cuatrimestre'])==0) ? 1 : 2;
+            $id_periodo=$this->dep('datos')->tabla('periodo')->get_id_periodo($cuatrimestre, $anio_lectivo, $this->s__id_sede);
+            if(!isset($id_periodo)){
+                $mensaje="No existe un período académico registrado en el sistema para {$datos['cuatrimestre']} $anio_lectivo ";
+                toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
+                return ;
+            }
             
-            //creamos un objeto excel
-            //$excel=new PHPExcel();
+            //--Guardamos numero de cuatrimestre, anio lectivo y una lista de dias. Tambien incluimos el 
+            //id_periodo.
+            $datos['id_periodo']=$id_periodo['id_periodo'];
+            
             $this->s__datos=$datos;
             $this->s__hoja_activa=0;
             
-            //$this->iniciar_proceso($datos, $excel);
             $this->set_pantalla('pant_reporte');
-            //creamos un archivo temporal, con el objeto phpexcel ya configurado
-            //$this->crear_archivo_temporal($excel);
-            
-            //enviamos el reporte al cliente
-            //$this->enviar_archivo();
-            
+                        
 	}
         
         function conf__form (toba_ei_formulario $form){
@@ -71,111 +75,51 @@ class ci_asignaciones_por_dia extends toba_ci
         }
         
         /*
-         * iniciar proceso se cambia por vista_excel
+         * Esta funcion genera el archivo excel que enviamos al cliente.
          */
         function vista_excel (toba_vista_excel $salida){
-            //procesamos los dias seleccionados. Esto implica modificar en excel.
+            //--Procesamos los dias seleccionados. Esto implica modificar en excel.
             $excel=$salida->get_excel();
             $dias=$this->s__datos['dia'];
-            $anio_lectivo=$this->s__datos['anio_lectivo'];
-            $cuatrimestre=(strcmp('Primer Cuatrimestre', $this->s__datos['cuatrimestre'])==0) ? 1 : 2;
-            $id_periodo=$this->dep('datos')->tabla('periodo')->get_id_periodo($cuatrimestre, $anio_lectivo, $this->s__id_sede);
-            if(!isset($id_periodo)){
-                $mensaje="No existe un período académico registrado en el sistema para {$this->s__datos['cuatrimestre']} $anio_lectivo ";
-                toba::notificacion()->agregar(utf8_decode($mensaje), 'info');
-            }
-            else{
-                $sin_asignaciones=FALSE;
-                $dias_sin_asig="";
-                //Recorremos los dias seleccionados por el usuario. La idea es por cada dia generar el reporte
-                //adecuado.
-                foreach ($dias as $dia){
-                    //obtenemos las asignaciones para armar el reporte.
-                    $asignaciones=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_dia($id_periodo['id_periodo'], $dia);                
-                    if(count($asignaciones)>0){
-                        //configuramos el excel para agregar las asignaciones pertenecientes a dia. Al finalizar esta 
-                        //rutina la variable s__contador_merge queda ubicada en el lugar exacto para empezar un nuevo
-                        //reporte para otro dia seleccionado en el multi_seleccion_check.
-                        $this->s__asignaciones=$asignaciones;
-                        $this->s__dia=$dia;
-                        $this->generar_reporte($excel);
-                        
-                        
-                    }
-                    else{
-                        $sin_asignaciones=TRUE;
-                        $dias_sin_asig .= $dia.", ";
-                    }
-                    $excel->createSheet();
-                    $this->s__hoja_activa += 1;
-                    //reseteamos el contador_merge para empezar el reporte en la misma posicion pero en otra
-                    //hoja de calculo.
-                    $this->s__contador_merge=2;
-                }
-                
-                if($sin_asignaciones){
-                    $mensaje="No existen asignaciones registradas en el sistema para los dias $dias_sin_asig";
-                }
-            }
             
-            $salida->set_nombre_archivo("Asignaciones {$this->s__datos['cuatrimestre']} $anio_lectivo.xls");
-        }
-        
-        /*
-         * Esta funcion crea un archivo temporal a partir de un objeto PHPExcel.
-         */
-        function crear_archivo_temporal (PHPExcel $excel){
-//            $clase='PHPExcel_Writer_Excel5';
-//            $archivo = explode('_', $clase);
-//            $archivo = implode('/', $archivo).'.php';
-            //incluimos la clase que nos permite escribir el excel un archivo temporal
-            require_once('3ros/phpExcel/PHPExcel/Writer/Excel5.php');
-            //require_once('3ros/phpExcel/PHPExcel/IOFactory.php');
-            $writer = new PHPExcel_Writer_Excel5($excel);
-            //guardamos el path del archivo temporal, C:/......./mi_proyecto/temp/ concatenado con el 
-            //nombre del archivo.
-            $this->s__temp_salida = toba::proyecto()->get_path_temp().'/'.uniqid();
-            //crea el archivo temporal que contiene el excel 
-            $writer->save($this->s__temp_salida);
-        }
-        
-        /*
-         * Esta funcion envia el reporte creado al cliente.
-         */
-        function enviar_archivo (){
-            $longitud = filesize($this->s__temp_salida);
-            if (file_exists($this->s__temp_salida)) {
-                    //obtenemos el file pointer del archivo temporal donde esta el reporte
-                    $fp = fopen($this->s__temp_salida, 'r');
-                    $this->cabecera_http($longitud);
-                    fpassthru($fp);
-                    fclose($fp);
-                    unlink($this->s__temp_salida);
+            $sin_asignaciones=FALSE;
+            $dias_sin_asig="";
+            //--Recorremos los dias seleccionados por el usuario. La idea es por cada dia generar el reporte
+            //--adecuado.
+            foreach ($dias as $dia){
+                //obtenemos las asignaciones para armar el reporte.
+                $asignaciones=$this->dep('datos')->tabla('asignacion')->get_asignaciones_por_dia($this->s__datos['id_periodo'], $dia);                
+                if(count($asignaciones)>0){
+                    //--configuramos el excel para agregar las asignaciones pertenecientes a dia. Al finalizar esta 
+                    //--rutina la variable s__contador_merge queda ubicada en el lugar exacto para empezar un nuevo
+                    //--reporte para otro dia seleccionado en el multi_seleccion_check.
+                    $this->s__asignaciones=$asignaciones;
+                    $this->s__dia=$dia;
+                    $this->generar_reporte($excel);
+
+
+                }
+                else{
+                    $sin_asignaciones=TRUE;
+                    $dias_sin_asig .= $dia.", ";
+                }
+                $excel->createSheet();
+                $this->s__hoja_activa += 1;
+                //--Reseteamos el contador_merge para empezar el reporte en la misma posicion pero en otra
+                //--hoja de calculo.
+                $this->s__contador_merge=2;
             }
-            else{
-                toba::notificacion()->agregar("No existe un archivo temporal fuente", $nivel);
+
+            if($sin_asignaciones){
+                $mensaje="No existen asignaciones registradas en el sistema para los dias $dias_sin_asig";
             }
+                        
+            $salida->set_nombre_archivo("Asignaciones {$this->s__datos['cuatrimestre']} {$this->s__datos['anio_lectivo']}.xls");
         }
-        
-        /*
-         * Esta funcion envia los headers necesarios al cliente para que se pueda concretar la transferencia
-         * de datos server-client.
-         */
-        function cabecera_http ($longitud){
-            header("Cache-Control: private");
-            header('Content-type: application/vnd.ms-excel');
-            header("Content-Length: $longitud");	
-            header("Content-Disposition: attachment; filename=\"{$this->s__nombre_archivo}\"");
-            header("Pragma: no-cache");
-            header("Expires: 0");
-        }
-                
+                        
         function cargar_aulas_ua (){
             $this->s__posicion_aula =array();
-            $nombre_usuario=toba::usuario()->get_id();
-            $id_sede=$this->dep('datos')->tabla('persona')->get_sede_para_usuario_logueado($nombre_usuario);
-            $id_sede=1;
-            $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($id_sede);
+            $aulas_ua=$this->dep('datos')->tabla('aula')->get_aulas_por_sede($this->s__id_sede);
             $this->s__aulas_ua=$aulas_ua;
         }
         
@@ -245,17 +189,17 @@ class ci_asignaciones_por_dia extends toba_ci
          * combina.
          */
         function crear_formato_reporte (PHPExcel $excel){
-            //agregamos al arreglo merge las columnas que debemos combinar
+            //--Agregamos al arreglo merge las columnas que debemos combinar
             $this->cargar_merge();
             $excel->getActiveSheet()->getColumnDimension('A')->setWidth(10.50);
             
-            //establecemos el ancho de las columnas B, C, D, E, ....... AI
+            //--Establecemos el ancho de las columnas B, C, D, E, ....... AI
             foreach ($this->s__columnas as $clave=>$valor){
                 $excel->getActiveSheet()->getColumnDimension($valor)->setWidth(6,29);
             }
             
-            //una vez que tenemos configurado el ancho de las columnas, realizamos las combinaciones 
-            //correspondientes a partir del arreglo s__merge
+            //--Una vez que tenemos configurado el ancho de las columnas, realizamos las combinaciones 
+            //--correspondientes a partir del arreglo s__merge
             foreach ($this->s__merge as $clave=>$valor){
                 $excel->getActiveSheet()->mergeCells($valor);
             }
@@ -263,12 +207,12 @@ class ci_asignaciones_por_dia extends toba_ci
         }
         
         /*
-         * Esta funcion permite llenar la primer fila de reporte con el rango de horarios 08 a 24 hs, la
+         * Esta funcion permite llenar la primer fila de reporte con el rango de horarios 08 a 23:45 hs, la
          * segunda fila con el texto 00 o 30 y la tercer fila con las auas de la UA.
          */
         function llenar_segmentos (PHPExcel $excel){
-            //llenamos la primer fila del reporte, cuando el s__contador_merge esta en 2. En este caso debemos 
-            //agregar los horarios a las celdas que estan combinadas.
+            //--Llenamos la primer fila del reporte, cuando el s__contador_merge esta en 2. En este caso debemos 
+            //--agregar los horarios a las celdas que estan combinadas.
             $this->cargar_hora();
             //$excel->setActiveSheetIndex(0);
             $indice=0;
@@ -304,12 +248,12 @@ class ci_asignaciones_por_dia extends toba_ci
             }
             
             $this->s__contador_merge += 1;
-            //llenamos la segunda fila del reporte, cuando el s__contador_merge esta en 3. En este caso debemos 
-            //agregar en las celdas que no estan combinadas el texto 00 o 30.
-            //Aqui es donde debemos configurar el arreglo posicion_hora con el siguiente formato 
-            //(hora => columna).
-            //s__columnas(B(0), C(1), D(2), E(3), ..., AI) = s__hora(08:00(0), 08:30(1), 09:00(2), 09:30(3), ...)
-            //esto nos permite utilizar como indice el atributo clave.
+            //--Llenamos la segunda fila del reporte, cuando el s__contador_merge esta en 3. En este caso debemos 
+            //--agregar en las celdas que no estan combinadas el texto 00 o 30.
+            //--Aqui es donde debemos configurar el arreglo posicion_hora con el siguiente formato 
+            //--(hora => columna).
+            //--s__columnas(B(0), C(1), D(2), E(3), ..., AI) = s__hora(08:00(0), 08:30(1), 09:00(2), 09:30(3), ...)
+            //--esto nos permite utilizar como indice el atributo clave.
             foreach($this->s__columnas as $clave=>$valor){
                 if(($clave % 2) == 0){
                     $excel->getActiveSheet()->getCell("$valor{$this->s__contador_merge}")->setDataType(PHPExcel_Cell_DataType::TYPE_STRING);
@@ -321,17 +265,17 @@ class ci_asignaciones_por_dia extends toba_ci
                     $excel->getActiveSheet()->getStyle("$valor{$this->s__contador_merge}")->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
                 }
                 
-                //(08:00 => B, 08:30 =>C, 09:00 => D), necesitamos saber las coordenadas especificas , a partir 
-                //de una hora, para merguear celdas.
+                //--(08:00 => B, 08:30 =>C, 09:00 => D), necesitamos saber las coordenadas especificas , a partir 
+                //--de una hora, para merguear celdas.
                 $this->s__posicion_hora[$this->s__hora[$clave]]=$valor;
             }
             
             $this->s__contador_merge += 1;
-            //LLenamos la columna A con las aulas de la UA correcta, en este caso el s__contador_merge empieza
-            //a funcionar con el valor 4. Se incrementa por cada cada aula agregada. A su vez debemos establecer
-            //la altura adecuada de las fila para poder guardar sin problemas la informacion relacionada a una
-            //asignacion. Entre otras cosas debemos alinear el texto.
-            //$excel->getActiveSheet()->getRowDimension($this->s__contador_merge)->setRowHeight(35);
+            //--LLenamos la columna A con las aulas de la UA correcta, en este caso el s__contador_merge empieza
+            //--a funcionar con el valor 4. Se incrementa por cada cada aula agregada. A su vez debemos establecer
+            //--la altura adecuada de las fila para poder guardar sin problemas la informacion relacionada a una
+            //--asignacion. Entre otras cosas debemos alinear el texto.
+            //--$excel->getActiveSheet()->getRowDimension($this->s__contador_merge)->setRowHeight(35);
             $a='A';
             foreach ($this->s__aulas_ua as $clave=>$valor){
                 $excel->getActiveSheet()->setCellValue("$a{$this->s__contador_merge}", $valor['aula']);
@@ -365,12 +309,12 @@ class ci_asignaciones_por_dia extends toba_ci
                 $this->s__contador_merge += 1;
             }
             
-            //cuando el proceso anterior termina debemos sumarle 3 unidades al contador y no tocarlo nunca mas 
-            //hasta que el proceso vuelva a empezar con otro dia de la semana. Podemos recibir hasta 7 dias.
-            //Esto es importante si queremos crear un reporte debajo de otro, en la misma hoja de calculo. 
-            //Pero si recibimos 7 dias es mas conveniente crear una hoja de calculo nueva para cada dia 
-            //de la semana. Para lograr esto ultimo debemos resetear contador_merge cuando el proceso
-            //de configuracion termina.
+            //--Cuando el proceso anterior termina debemos sumarle 3 unidades al contador y no tocarlo nunca mas 
+            //--hasta que el proceso vuelva a empezar con otro dia de la semana. Podemos recibir hasta 7 dias.
+            //--Esto es importante si queremos crear un reporte debajo de otro, en la misma hoja de calculo. 
+            //--Pero si recibimos 7 dias es mas conveniente crear una hoja de calculo nueva para cada dia 
+            //--de la semana. Para lograr esto ultimo debemos resetear contador_merge cuando el proceso
+            //--de configuracion termina.
             $this->s__contador_merge += 3;
             //$excel->getActiveSheet()->setCellValue("$a{$this->s__contador_merge}", "A E O T");
             
@@ -381,10 +325,10 @@ class ci_asignaciones_por_dia extends toba_ci
          */
         function completar_reporte (PHPExcel $excel){
             
-            //debemos tener cuidado con el formato de la hora. Desde postgres extraemos la hora con el siguiente
-            //formato hh:mm:ss, ejemplo 08:00:00.
-            //Si en posicion_hora guardamos hh:mm la comparacion no es exitosa por lo tanto el reporte no se 
-            //puede concretar.
+            //--Debemos tener cuidado con el formato de la hora. Desde postgres extraemos la hora con el siguiente
+            //--formato hh:mm:ss, ejemplo 08:00:00.
+            //--Si en posicion_hora guardamos hh:mm la comparacion no es exitosa por lo tanto el reporte no se 
+            //--puede concretar.
             
             foreach ($this->s__asignaciones as $clave=>$asignacion){
                 
@@ -398,7 +342,7 @@ class ci_asignaciones_por_dia extends toba_ci
                 
                 $excel->getActiveSheet()->getCell("$primer_columna$fila")->setDataType(PHPExcel_Cell_DataType::TYPE_STRING);
                 
-                //agregamos un color de fondo
+                //--Agregamos un color de fondo
                 $excel->getActiveSheet()->getStyle("$primer_columna$fila")->getFill()->applyFromArray(
                        array( 
                            'type' => PHPExcel_Style_Fill::FILL_SOLID, 
@@ -406,9 +350,9 @@ class ci_asignaciones_por_dia extends toba_ci
                        )
                 );
                 $dato_celda=  strtoupper($asignacion['dato_celda']);
-                //debemos decodificar la informacion de la celda para que no se trunque en el reporte final.
+                //--Debemos decodificar la informacion de la celda para que no se trunque en el reporte final.
                 $excel->getActiveSheet()->setCellValue("$primer_columna$fila", utf8_encode($dato_celda));
-                //ajustamos el texto a la celda
+                //--Ajustamos el texto a la celda
                 $excel->getActiveSheet()->getStyle("$primer_columna$fila")->getAlignment()->setVertical(PHPExcel_Style_Alignment::HORIZONTAL_JUSTIFY);
                                 
             }
